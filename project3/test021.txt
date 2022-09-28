@@ -1,0 +1,10 @@
+//test boolean computation
+
+main 
+
+bool a;
+
+{
+   let a = true and (false or (true and not false) or false); 
+   call printBool(a);
+}.

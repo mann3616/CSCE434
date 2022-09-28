@@ -1,0 +1,20 @@
+main
+
+int a, b, c, d, e;
+
+{
+    let a = call readInt();
+    let b = call readInt();
+    let c = call readInt();
+    let d = call readInt();
+    let e = call readInt();
+
+    if (a ^ b * c + d < e) then
+        call printInt(a ^ b * c + d );
+    else
+        call printInt(e);
+    fi;
+}.
+
+// Kyle Owens
+// Test complex if statement relation using all expression types

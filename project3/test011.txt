@@ -1,0 +1,9 @@
+main
+	int printFloat;
+{
+	let printFloat = 15;
+	call printInt(printFloat);
+}.
+
+// Braedon Lindsey
+// defining variables that overshadow builtin names

@@ -1,0 +1,43 @@
+main 
+int f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33;
+{
+    let f1 = 1;
+    call printInt(f1);
+    let f2 = 1;
+    let f3 = 1;
+    let f4 = 1;
+    let f5 = 1;
+    let f6 = 1;
+    let f7 = 1;
+    let f8 = 1;
+    let f9 = 1;
+    let f10 = 1;
+    let f11 = 1;
+    let f12 = 1;
+    let f13 = 1;
+    let f14 = 1;
+    let f15 = 1;
+    let f16 = 1;
+    let f17 = 1;
+    let f18 = 1;
+    let f19 = 1;
+    let f20 = 1;
+    let f21 = 1;
+    let f22 = 1;
+    let f23 = 1;
+    let f24 = 1;
+    let f25 = 1;
+    let f26 = 1;
+    let f27 = 1;
+    let f28 = 1;
+    let f29 = 1;
+    let f30 = 1;
+    let f30 = 1;
+    let f32 = 1;
+    let f33 = 1;
+    call printInt(f1);
+}.
+
+// Lance Abuan
+// This tests the reading of the input file, simple multiplication, 
+// and checking if return statement stops output.

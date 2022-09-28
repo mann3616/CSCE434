@@ -1,0 +1,22 @@
+//print Ints
+
+main
+
+int a, b, c;
+
+{
+    let b = call readInt();
+    let a = b;
+    let c = b;
+    let a--;
+    let c++;
+    call printInt(a);
+    call println();
+    call printInt(b);
+    call println();
+    call printInt(c);
+    call println();
+}.
+
+// Matthew Tran
+// increment and decrement

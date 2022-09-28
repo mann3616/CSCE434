@@ -1,0 +1,21 @@
+// if statement and int arithmetic
+main
+
+int a, b, c;
+
+{
+    let a = call readInt();
+    let b = call readInt();
+
+    if (a == b) then
+        call printInt(a * b);
+    else
+        let c = call readInt();
+        if (a < b) then
+            call printInt(b - a);
+        else
+            call printInt(a / b);
+        fi;
+        call printInt(c);
+    fi;
+}.

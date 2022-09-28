@@ -1,0 +1,12 @@
+// Eval x at compile time
+main
+
+int x;
+
+{
+    let x = 4 + 2 * 3 ^ 2 / 3;
+    call printInt(x);
+}.
+
+// Max Smith
+// Proper expression evaluation/operator precedence

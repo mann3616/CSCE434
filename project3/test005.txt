@@ -1,0 +1,20 @@
+main
+int x,y,z;
+{
+	let x = call readInt();
+	let y = call readInt();
+	let z = call readInt();
+	call printInt(x);
+	call println();
+	call printInt(y);
+	call println();
+	call printInt(z);
+	call println();
+    if (x > y) then
+    	call printInt(x+y/z);
+    	call println();
+    fi;
+}.
+
+// Different DLX gen engine
+// org proj3/test3

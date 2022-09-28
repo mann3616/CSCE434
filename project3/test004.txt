@@ -1,0 +1,20 @@
+//if statement
+main
+int x;
+{
+    let x = call readInt();
+    call printInt(x);
+    call println();
+    if (x < 2) then
+        call printInt(x*2);
+        call println();
+    else 
+        call printInt(100*x);
+        call println();
+    fi;
+    call printInt(10+1);
+    call println();
+}.
+
+// Different DLX code gen engine
+// org proj3/test1

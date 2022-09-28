@@ -1,0 +1,43 @@
+main
+int x,y,z,a;
+{	
+	let x = 2;
+	let y = call readInt();
+	let z = call readInt();
+	let a = 1;
+	if (x != y - 2) then
+	    if (y+x >= z) then
+   		    if (x < y) then
+		        let z = 1;
+		    fi;
+			call printInt(y);
+			call println();
+		else
+			call printInt(z);
+			call println();
+			let z = call readInt();
+			let a = 2;
+		fi;
+	else
+		call printInt(x);
+		call println();
+	fi;
+
+	if (a != 1) then
+	     	call printInt(a);
+			call println();
+	fi;
+	let a = x * y *z;
+
+	call printInt(a);
+	call println();
+	call printInt(x);
+	call println();
+	call printInt(y);
+	call println();
+	call printInt(z);
+	call println();
+}.
+
+// Different DLX gen engine
+// org proj3/test13

@@ -1,0 +1,14 @@
+// There must be only 1 instruction for setting a
+main
+int a;
+{
+	let a = ( ( ( 2 + 1 ) * 2 ) / 2 ) - 1;
+	call printInt(a);
+	call println();
+	let a = 5*3+7;
+	call printInt(a);
+	call println();
+}.
+
+// Different DLX gen engine
+// org proj3/test5

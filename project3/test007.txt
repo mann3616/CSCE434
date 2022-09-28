@@ -1,0 +1,14 @@
+main
+int temp, f, num;
+{
+	let temp = 2;
+	let f = 3;
+	call printInt(temp * f + 3*f - temp);
+	call println();
+	let num = call readInt();
+	call printInt(num);
+	call println();
+}. 
+
+// Different DLX gen engine
+// org proj3/test8

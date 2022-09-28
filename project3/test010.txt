@@ -1,0 +1,24 @@
+main
+{
+		if (1 == 2) then
+				call printInt(1);
+				if (2 == 1) then
+						call printInt(2);
+				else
+						call printInt(3);
+				fi;
+		else
+				call printInt(4);
+				if (1 == 1) then
+						call printInt(5);
+				else
+						call printInt(6);
+				fi;
+		fi;
+		call println();
+		return;
+		call printInt(7);
+}.
+
+// Rushil Udani
+// nested if statements, early return
