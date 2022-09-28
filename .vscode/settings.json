@@ -1,0 +1,10 @@
+{
+    "java.project.sourcePaths": [
+        "src"
+    ],
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "d:\\forks\\engr-cse-csce434-f22-testcases\\lib\\commons-cli-1.5.0-javadoc.jar",
+        "d:\\forks\\engr-cse-csce434-f22-testcases\\lib\\commons-cli-1.5.0.jar"
+    ]
+}
