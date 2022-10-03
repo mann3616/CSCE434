@@ -76,6 +76,9 @@ public class Compiler {
             }
         }
         public void put(int val){
+                //if(val== 2){
+                 //   System.out.println(val);
+                //}
             if(hm.containsKey(val)){
                 list.getOp(hm.get(val));
             }else{
@@ -300,17 +303,27 @@ public class Compiler {
     private Token literal () {
         return matchNonTerminal(NonTerminal.LITERAL);
     }
+    ArrayList<ArrayList<Integer>> loads = new ArrayList<>();
     private void deallocate(int reg){
+        // if(reg == 6){
+        //    System.out.print(reg+" ");
+        // }
         if(IDENT_REG.containsKey(reg)){
             instructions.add(DLX.assemble(DLX.STW, reg, 30, 4*IDENT_REG.get(reg).address));
             for(String i: IDENT_MEM.keySet()){
                 if(IDENT_MEM.get(i).regno == reg){
                     IDENT_MEM.get(i).regno = -1;
+                    // if(reg == 6){
+                    //     System.out.println(i + " " + 4*IDENT_REG.get(reg).address);
+                    // }
                     break;
                 }
             }
             IDENT_REG.remove(reg);
         }
+        // else if(reg == 6){
+        //     System.out.println();
+        // }
     }
     // designator = ident { "[" relExpr "]" }
     // Problem is that the regno 2 is still under i even though that regno has already been used for other situations
@@ -322,13 +335,20 @@ public class Compiler {
 
         String var = scope+":"+ident.lexeme();
         Result x = IDENT_MEM.get(var);
-        int reg = lru.last();
-        deallocate(reg);
-        lru.put(reg);
+        if(x.regno != -1){
+            //System.out.println("-1: "+var + " is " + x.regno);
+            lru.get(x.regno);
+            return x;
+        }
+        int reg = allocate().regno;
+        //System.out.println(var + " is " + reg);
         instructions.add(DLX.assemble(DLX.LDW, reg, 30, 4*x.address));
+        if(!loads.isEmpty()){
+            loads.get(loads.size()-1).add(DLX.assemble(DLX.LDW, reg, 30, 4*x.address));
+        }
         x.regno = reg;
-        x.kind = x.REG;
-        IDENT_REG.put(x.regno, x);
+        IDENT_REG.put(reg, x);
+        IDENT_MEM.put(var, x);
         return x;
     }
 
@@ -339,6 +359,7 @@ public class Compiler {
             Result x = new Result();
             x.kind = Result.VAR;
             x.address = ++maxed * -1;
+            //System.out.println(id + " " + x.address*4);
             if(type.kind() == Kind.FLOAT){
                 x.isFloat = true;
             }else {
@@ -350,6 +371,7 @@ public class Compiler {
                 x = new Result();
                 x.kind = Result.VAR;
                 x.address = ++maxed * -1;
+                //System.out.println(id + " " + x.address*4);
                 if(type.kind() == Kind.FLOAT){
                     x.isFloat = true;
                 }else {
@@ -424,14 +446,16 @@ public class Compiler {
                 }
                 break;
             }
-            instructions.add(DLX.assemble(DLX.STW, obj.regno, 30, obj.address*4));
+            deallocate(obj.regno);
             return;
         }
         Token tok = expectRetrieve(NonTerminal.ASSIGN_OP);
         if(tok.kind()== Kind.ASSIGN){
+            IDENT_REG.remove(obj.regno);
             Result second = relExpr(scope);
-            instructions.add(DLX.assemble(DLX.STW, second.regno, 30, obj.address*4));
-            instructions.add(DLX.assemble(DLX.LDW, obj.regno, 30, obj.address*4));
+            obj.regno = second.regno;
+            IDENT_REG.put(obj.regno, obj);
+            deallocate(obj.regno);
             return;
         }
         if(!obj.isFloat){
@@ -456,7 +480,6 @@ public class Compiler {
                 instructions.add(DLX.assemble(DLX.POW, obj.regno, obj.regno, second.regno));
                 break;
             }
-            instructions.add(DLX.assemble(DLX.STW, obj.regno, 30, obj.address*4));
         }else{
             Result second = relExpr(scope);
             switch(tok.kind()){
@@ -476,8 +499,8 @@ public class Compiler {
                 instructions.add(DLX.assemble(DLX.fDIV, obj.regno, obj.regno, second.regno));
                 break;
             }
-            instructions.add(DLX.assemble(DLX.STW, obj.regno, 30, obj.address*4));
         }
+        deallocate(obj.regno);
     }
     private Result returnStat(String scope){
         if(!have(Kind.SEMICOLON)){
@@ -486,75 +509,79 @@ public class Compiler {
         return null;
     }
     private void ifStat(String scope){
+        loads.add(new ArrayList<Integer>());
         Result b = relation(scope);
         expect(Kind.THEN);
         int getem = instructions.size();
+        lru.get(b.regno);
         statSeq(scope);
         instructions.add(getem, DLX.assemble(DLX.BEQ, b.regno, instructions.size()-getem+2));
         getem = instructions.size();
+        instructions.addAll(loads.remove(loads.size()-1));
+        lru.get(b.regno);
         if(accept(Kind.ELSE)){
+            loads.add(new ArrayList<Integer>());
             statSeq(scope);
+            instructions.add(getem, DLX.assemble(DLX.BNE, b.regno, instructions.size()-getem+1));
+            instructions.addAll(loads.remove(loads.size()-1));
         }
-        instructions.add(getem, DLX.assemble(DLX.BNE, b.regno, instructions.size()-getem+1));
         expect(Kind.FI);
     }
-    private Result allocate(Result obj1, Result obj2){
-        if(obj1.kind == Result.CONST){
-            return obj1;
-        } else if(obj2.kind == Result.CONST){
-            return obj2;
-        } else {
-            int reg = lru.last();
-            lru.put(reg);
-            deallocate(reg);
-            Result obj3 = new Result();
-            obj3.regno = reg;
-            obj3.isFloat = obj1.isFloat;
-            obj3.kind = Result.CONST;
-            return obj3;
-        }
-    }
     private Result groupExpr(String scope){
+        Result x = new Result();
+        x.kind = Result.CONST;
         if(accept(Kind.NOT)){
-            Result s = relExpr(scope);
-            instructions.add(DLX.assemble(DLX.XORI, s.regno, s.regno, 1));
-            return s;
+            Result xx = relExpr(scope);
+            x.regno = xx.regno;
+            instructions.add(DLX.assemble(DLX.XORI, x.regno, xx.regno, 1));
+            x.isFloat = false;
+            return x;
         }
         if(have(NonTerminal.LITERAL)){
             Token tok = expectRetrieve(NonTerminal.LITERAL);
-            Result x = new Result();
-            int reg = lru.last();
-            x.regno = reg;
+            x = allocate();
             x.kind = Result.CONST;
-            deallocate(reg);
-            lru.put(reg);
             switch(tok.kind()){
                 case INT_VAL:
                 int val = Integer.parseInt(tok.lexeme());
-                instructions.add(DLX.assemble(DLX.ADDI, reg, 0, val));
+                instructions.add(DLX.assemble(DLX.ADDI, x.regno, 0, val));
                 x.isFloat = false;
                 return x;
                 case FLOAT_VAL:
                 float fval = Float.parseFloat(tok.lexeme());
-                instructions.add(DLX.assemble(DLX.fADDI, reg, 0, fval));
+                instructions.add(DLX.assemble(DLX.fADDI, x.regno, 0, fval));
                 x.isFloat = true;
                 return x;
                 case TRUE:
-                instructions.add(DLX.assemble(DLX.ADDI, reg, 0, 1));
+                instructions.add(DLX.assemble(DLX.ADDI, x.regno, 0, 1));
+                x.isFloat = false;
                 return x;
                 case FALSE:
+                instructions.add(DLX.assemble(DLX.ADDI, x.regno, 0, 0));
+                x.isFloat = false;
                 return x;
             }
         }
         if(have(NonTerminal.DESIGNATOR)){
-            return designator(scope);
+            Result xx = designator(scope);
+            x.regno = allocate().regno;
+            instructions.add(DLX.assemble(DLX.ADD, x.regno, xx.regno, 0));
+            x.isFloat = xx.isFloat;
+            return x;
         }
         if(have(NonTerminal.RELATION)){
-            return relation(scope);
+            Result xx = relation(scope);
+            x.regno = xx.regno;
+            lru.get(x.regno);
+            x.isFloat = xx.isFloat;
+            return x;
         }
-        if(have(NonTerminal.FUNC_CALL)){
-            expect(NonTerminal.FUNC_CALL);
-            return funcCall(scope);
+        if(accept(NonTerminal.FUNC_CALL)){
+            Result xx = funcCall(scope);
+            x.regno = xx.regno;
+            lru.get(x.regno);
+            x.isFloat = xx.isFloat;
+            return x;
         }
         String errorMessage = reportSyntaxError(NonTerminal.GROUP_EXPRESSION);
         throw new QuitParseException(errorMessage);
@@ -563,10 +590,8 @@ public class Compiler {
         Result obj = groupExpr(scope);
         if(accept(NonTerminal.POW_OP)){
             Result obj2 = powExpr(scope);
-            Result obj3 = allocate(obj, obj2);
-            obj3.isFloat = false;
-            instructions.add(DLX.assemble(DLX.POW, obj3.regno, obj.regno, obj2.regno));
-            return obj3;
+            instructions.add(DLX.assemble(DLX.POW, obj.regno, obj.regno, obj2.regno));
+            lru.get(obj.regno);
         }
         return obj;
     }
@@ -575,39 +600,39 @@ public class Compiler {
         if(have(NonTerminal.MULT_OP)){
             Token tok = expectRetrieve(NonTerminal.MULT_OP);
             Result obj2 = multExpr(scope);
-            Result obj3 = allocate(obj, obj2);
-            obj.isFloat = obj2.isFloat || obj3.isFloat;
+            obj.isFloat = obj.isFloat || obj2.isFloat;
             if(obj.isFloat){
                 switch(tok.kind()){
                     case MUL: 
-                    instructions.add(DLX.assemble(DLX.fMUL, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.fMUL, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case DIV:
-                    instructions.add(DLX.assemble(DLX.fDIV, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.fDIV, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case MOD: 
-                    instructions.add(DLX.assemble(DLX.fMOD, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.fMOD, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case AND: 
-                    instructions.add(DLX.assemble(DLX.AND, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.AND, obj.regno, obj.regno, obj2.regno));
+                    break;
                 }
             }else {
                 switch(tok.kind()){
                     case MUL: 
-                    instructions.add(DLX.assemble(DLX.MUL, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.MUL, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case DIV:
-                    instructions.add(DLX.assemble(DLX.DIV, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.DIV, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case MOD: 
-                    instructions.add(DLX.assemble(DLX.MOD, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.MOD, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case AND: 
-                    instructions.add(DLX.assemble(DLX.AND, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.AND, obj.regno, obj.regno, obj2.regno));
+                    break;
                 }
             }
+            lru.get(obj.regno);
         }
         return obj;
     }
@@ -616,33 +641,34 @@ public class Compiler {
         if(have(NonTerminal.ADD_OP)){
             Token tok = expectRetrieve(NonTerminal.ADD_OP);
             Result obj2 = addExpr(scope);
-            Result obj3 = allocate(obj, obj2);
-            obj.isFloat = obj2.isFloat || obj3.isFloat;
+            obj.isFloat = obj.isFloat || obj2.isFloat;
             if(obj.isFloat){
                 switch(tok.kind()){
                     case ADD: 
-                    instructions.add(DLX.assemble(DLX.fADD, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.fADD, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case SUB:
-                    instructions.add(DLX.assemble(DLX.fSUB, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.fSUB, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case OR: 
-                    instructions.add(DLX.assemble(DLX.OR, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.OR, obj.regno, obj.regno, obj2.regno));
+                    break;
                 }
             }else {
                 switch(tok.kind()){
                     case ADD: 
-                    instructions.add(DLX.assemble(DLX.ADD, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    //System.out.println("Is this illegal addExpr");
+                    instructions.add(DLX.assemble(DLX.ADD, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case SUB:
-                    instructions.add(DLX.assemble(DLX.SUB, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.SUB, obj.regno, obj.regno, obj2.regno));
+                    break;
                     case OR: 
-                    instructions.add(DLX.assemble(DLX.OR, obj3.regno, obj.regno, obj2.regno));
-                    return obj3;
+                    instructions.add(DLX.assemble(DLX.OR, obj.regno, obj.regno, obj2.regno));
+                    break;
                 }
             }
+            lru.get(obj.regno);
         }
         return obj;
     }
@@ -651,32 +677,31 @@ public class Compiler {
         if(have(NonTerminal.REL_OP)){
             Token tok = expectRetrieve(NonTerminal.REL_OP);
             Result obj2 = relExpr(scope);
-            Result obj3 = allocate(obj, obj2);
-            instructions.add(DLX.assemble(DLX.SUB, obj3.regno, obj.regno, obj2.regno));
+            instructions.add(DLX.assemble(DLX.SUB, obj.regno, obj.regno, obj2.regno));
             switch(tok.kind()){
                 case EQUAL_TO:
-                instructions.add(DLX.assemble(DLX.BEQ, obj3.regno, 3));
+                instructions.add(DLX.assemble(DLX.BEQ, obj.regno, 3));
                 break;
                 case NOT_EQUAL:
-                instructions.add(DLX.assemble(DLX.BNE, obj3.regno, 3));
+                instructions.add(DLX.assemble(DLX.BNE, obj.regno, 3));
                 break;
                 case LESS_EQUAL:
-                instructions.add(DLX.assemble(DLX.BLE, obj3.regno, 3));
+                instructions.add(DLX.assemble(DLX.BLE, obj.regno, 3));
                 break;
                 case LESS_THAN:
-                instructions.add(DLX.assemble(DLX.BLT, obj3.regno, 3));
+                instructions.add(DLX.assemble(DLX.BLT, obj.regno, 3));
                 break;
                 case GREATER_EQUAL:
-                instructions.add(DLX.assemble(DLX.BGE, obj3.regno, 3));
+                instructions.add(DLX.assemble(DLX.BGE, obj.regno, 3));
                 break;
                 case GREATER_THAN:
-                instructions.add(DLX.assemble(DLX.BGT, obj3.regno, 3));
+                instructions.add(DLX.assemble(DLX.BGT, obj.regno, 3));
                 break;
             }
-            instructions.add(DLX.assemble(DLX.ADDI, obj3.regno, 0, 0));
+            instructions.add(DLX.assemble(DLX.ADDI, obj.regno, 0, 0));
             instructions.add(DLX.assemble(DLX.BSR, 2));
-            instructions.add(DLX.assemble(DLX.ADDI, obj3.regno, 0, 1));
-            return obj3;
+            instructions.add(DLX.assemble(DLX.ADDI, obj.regno, 0, 1));
+            lru.get(obj.regno);
         }
         return obj;
     }
@@ -692,42 +717,45 @@ public class Compiler {
         deallocate(reg);
         Result res = new Result();
         res.regno = reg;
-        return res;
-    }
-    private Result allocate(Result obj1){
-        int reg = lru.last();
-        lru.put(reg);
-        deallocate(reg);
-        Result res = new Result();
-        res.regno = reg;
+        res.kind = Result.CONST;
         return res;
     }
     //Function
     private Result funcCall(String scope){
         String n = expectRetrieve(Kind.IDENT).lexeme();
         expect(Kind.OPEN_PAREN);
-        Result a = allocate();
+        Result a = new Result();
+        a.kind = Result.CONST;
         switch (n){
             case "printInt":
-            Result x = relExpr(scope);
-            printInt(x.regno);
+            a.regno = relExpr(scope).regno;
+            a.isFloat = false;
+            printInt(a.regno);
             break;
             case "printFloat":
-            Result y = relExpr(scope);
-            printFloat(y.regno);
+            a.regno = relExpr(scope).regno;
+            a.isFloat = true;
+            printFloat(a.regno);
             break;
             case "printBool":
-            Result z = relExpr(scope);
-            printBool(z.regno);
+            a.regno = relExpr(scope).regno;
+            a.isFloat = false;
+            printBool(a.regno);
             break;
             case "readInt":
+            a.regno = allocate().regno;
             readInt(a.regno);
+            a.isFloat = false;
             break;
             case "readFloat":
+            a.regno = allocate().regno;
             readFloat(a.regno);
+            a.isFloat = true;
             break;
             case "readBool":
+            a.regno = allocate().regno;
             readBool(a.regno);
+            a.isFloat = false;
             break;
             case "println":
             println();
