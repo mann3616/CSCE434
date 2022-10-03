@@ -1,0 +1,5 @@
+// write int
+main {
+    call printInt(1);
+    call printInt(2);
+}.

@@ -1,0 +1,23 @@
+// read and print vars
+main
+
+int x;
+float fX;
+bool bX;
+
+{
+    let x = call readInt();
+
+    call printInt(x);
+    call println();
+
+    let fX = call readFloat();
+
+    call printFloat(fX);
+    call println();
+
+    let bX = call readBool();
+
+    call printBool(bX);
+    call println();
+}.

@@ -1,0 +1,36 @@
+main
+
+int input, myvar;
+
+function tailSumIter (int n) : int
+{
+    int sum;
+
+    let sum = 0;
+    repeat
+        let sum += n;
+        let n--;
+    until (n <= 0);
+    return sum;
+};
+
+function tailSumRecur (int n, int sum) : int
+{
+    if (n == 0) then
+        return sum;
+    fi;
+    return call tailSumRecur(n - 1, sum + n);
+};
+
+{
+    let input = call readInt();
+    let myvar = call tailSumIter(input);
+
+    call printInt(myvar);
+    call println();
+
+    let myvar = call tailSumRecur(input, 0);
+
+    call printInt(myvar);
+    call println();
+}.
