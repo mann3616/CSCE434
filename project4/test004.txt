@@ -1,0 +1,29 @@
+main
+
+bool[2][3] b1, b2;
+
+{
+    let b1[0][0] = true;
+    let b1[0][1] = false;
+    let b1[0][2] = not b1[0][1];
+    let b1[1][0] = b1[0][0] and b1[0][2];
+    let b1[1][1] = b1[0][1] and b1[1][0];
+    let b1[1][2] = not (b1[0][1] or b1[1][1]);
+
+    call printBool(b1[0][0]);
+    call printBool(b1[0][1]);
+    call printBool(b1[0][2]);
+    call printBool(b1[1][0]);
+    call printBool(b1[1][1]);
+    call printBool(b1[1][2]);
+    call println();
+
+    let b2 = b1;
+    call printBool(b2[0][0]);
+    call printBool(b2[0][1]);
+    call printBool(b2[0][2]);
+    call printBool(b2[1][0]);
+    call printBool(b2[1][1]);
+    call printBool(b2[1][2]);
+    call println();
+}.

@@ -1,0 +1,8 @@
+Computation[main:()->void]
+  StatementSequence
+    FunctionCall[printInt:(int)->void]
+      ArgumentList
+        IntegerLiteral[1]
+    FunctionCall[printInt:(int)->void]
+      ArgumentList
+        IntegerLiteral[2]

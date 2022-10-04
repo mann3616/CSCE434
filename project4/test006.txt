@@ -1,0 +1,5 @@
+main
+int x,y,z;
+{
+	let a = 2;
+}.
