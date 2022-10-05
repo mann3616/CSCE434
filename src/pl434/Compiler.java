@@ -169,7 +169,35 @@ public class Compiler {
         instructions = new ArrayList<>();
     }
 
+    private SymbolTable symbolTable;
+    private void initSymbolTable (){
+    }
+    private void enterScope(){
+        symbolTable.addScope();
+    }
+    private void exitScope(){
+        symbolTable.popScope();
+    }
+    private Symbol tryResolveVariable (Token ident){
+        //TODO: Try resolving variable, handle SymbolNotFoundError
+        try{
+            return symbolTable.lookup(ident.lexeme());
+        }catch (SymbolNotFoundError e){
+            throw new QuitParseException(e.getMessage());
+        }
+    }
+
+    private Symbol tryDeclareVariable (Token ident){
+        //TODO: Try declaring variable, handle RedeclarationError
+        try{
+            return symbolTable.insert(ident.lexeme());
+        }catch(RedeclarationError e){
+            throw new QuitParseException(e.getMessage());
+        }
+    }
+
     public int[] compile () {
+        initSymbolTable();
         try {
             computation();
             return instructions.stream().mapToInt(Integer::intValue).toArray();
@@ -936,5 +964,8 @@ public class Compiler {
         expect(Kind.PERIOD);
         instructions.add(DLX.assemble(DLX.RET, 0));
 
+    }
+    public ast.AST genAST(){
+        return new ast.AST();
     }
 }

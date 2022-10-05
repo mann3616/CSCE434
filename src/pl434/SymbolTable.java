@@ -1,22 +1,39 @@
 package pl434;
 
+import java.util.HashMap;
+import java.util.Stack;
 
 public class SymbolTable {
 
     // TODO: Create Symbol Table structure
-
+    Stack<HashMap<String, Symbol>> stack = new Stack<>();
+    int addy;
     public SymbolTable () {
+        addy = 0;
         throw new RuntimeException("Create Symbol Table and initialize predefined functions");
     }
 
     // lookup name in SymbolTable
     public Symbol lookup (String name) throws SymbolNotFoundError {
-        throw new RuntimeException("implement lookup variable");
+        if(stack.peek().containsKey(name)){
+            return stack.peek().get(name);
+        }
+        throw new SymbolNotFoundError(name);
     }
 
     // insert name in SymbolTable
     public Symbol insert (String name) throws RedeclarationError {
-        throw new RuntimeException("implement insert variable");
+        if(stack.peek().containsKey(name)){
+            throw new RedeclarationError(name);
+        }
+        stack.peek().put(name, new Symbol(name, -4 * ++addy));
+        return stack.peek().get(name);
+    }
+    public void addScope(){
+        stack.push(new HashMap<>());
+    }
+    public void popScope(){
+        stack.pop();
     }
 
 }

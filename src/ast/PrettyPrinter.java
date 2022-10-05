@@ -27,6 +27,14 @@ public class PrettyPrinter implements NodeVisitor {
         }
         depth--;
     }
+    @Override
+    public void visit (FunctionBody node){
+        println(node, "");
+        depth++;
+        node.declaration().accept(this);
+        node.sequence().accept(this);
+        depth--;
+    }
 
     @Override
     public void visit (VariableDeclaration node) {
@@ -59,6 +67,47 @@ public class PrettyPrinter implements NodeVisitor {
         node.variables().accept(this);
         node.functions().accept(this);
         node.mainStatementSequence().accept(this);
+        depth--;
+    }
+    @Override
+    public void visit(RepeatStatement node){
+        println(node, "");
+        depth++;
+        node.sequence().accept(this);
+        node.relation().accept(this);
+        depth--;
+    }
+    @Override
+    public void visit(WhileStatement node){
+        println(node, "");
+        depth++;
+        node.relation().accept(this);
+        node.sequence().accept(this);
+        depth--;
+    }
+    @Override
+    public void visit(ReturnStatement node){
+        println(node, "");
+        depth++;
+        node.relation().accept(this);
+        depth--;
+    }
+    @Override
+    public void visit(IfStatement node){
+        println(node, "");
+        depth++;
+        node.relation().accept(this);
+        node.sequence().accept(this);
+        node.else_sequence().accept(this);
+        depth--;
+    }
+    @Override
+    public void visit(Assignment node){
+        println(node, "");
+        depth++;
+        node.destination().accept(this);
+        node.sequence().accept(this);
+        node.else_sequence().accept(this);
         depth--;
     }
 }

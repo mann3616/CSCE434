@@ -1,6 +1,6 @@
 package ast;
 
-
+import pl434.Token;
 
 public abstract class Node implements Visitable {
 
@@ -28,17 +28,13 @@ public abstract class Node implements Visitable {
     public String toString () {
         return this.getClass().getName() + "(" + lineNumber() + "," + charPosition() + ")";
     }
-
     // Some factory method
     public static Statement newAssignment (int lineNum, int charPos, Expression dest, Token assignOp, Expression src) {
 
     }
-
     public static Expression newExpression (Expression leftSide, Token op, Expression rightSide) {
 
     }
-
     public static Expression newLiteral (Token tok) {
- 
     }
 }

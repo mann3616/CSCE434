@@ -5,10 +5,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import ast.*;
 
 // You need to put jar files in lib/ in your classpath
 import org.apache.commons.cli.*;
-
 public class CompilerTester {
 
     public static void main(String[] args) {
@@ -17,6 +17,7 @@ public class CompilerTester {
         options.addOption("i", "in", true, "Data File");
         options.addOption("nr", "reg", true, "Num Regs");
         options.addOption("b", "asm", false, "Print DLX instructions");
+        options.addOption("a", "astOut", false, "Print AST");
         options.addOption("o", "opt", true, "Order-sensitive optimization -allowed to have multiple");
 
         HelpFormatter formatter = new HelpFormatter();
@@ -69,34 +70,25 @@ public class CompilerTester {
             numRegs = 24;
         }
 
+        
         Compiler c = new Compiler(s, numRegs);
-        int[] program = c.compile();
-        if (c.hasError()) {
-            System.err.println("Error compiling file");
-            System.err.println(c.errorReport());
-            System.exit(-4);
-        }
+        AST ast = c.genAST();
+        // For PA4 you are not required to generate and execute any code
 
-        if (cmd.hasOption("asm")) {
-
-            String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
-            try (PrintStream out = new PrintStream(asmFile)) {
-                for (int i = 0; i < program.length; i++) {
-                    out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
-                }
+        if (cmd.hasOption("astOut")) {
+            String astFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_ast.txt";
+            try (PrintStream out = new PrintStream(astFile)) {
+                out.println(ast.printPreOrder());
             } catch (IOException e) {
-                System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
-                System.exit(-5);
+                System.err.println("Error accessing the ast file: \"" + astFile + "\"");
+                System.exit(-7);
             }
         }
 
-        DLX.load(program);
-        try {
-            DLX.execute(in);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("IOException inside DLX");
-            System.exit(-6);
+        if (c.hasError()) {
+            System.out.println("Error parsing file.");
+            System.out.println(c.errorReport());
+            System.exit(-8);
         }
     }
 }
