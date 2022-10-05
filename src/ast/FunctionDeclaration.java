@@ -1,6 +1,5 @@
 package ast;
 
-import java.util.function.Function;
 import pl434.*;
 public class FunctionDeclaration extends Node implements Declaration{
     private Symbol function;

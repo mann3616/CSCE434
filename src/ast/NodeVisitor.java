@@ -3,13 +3,16 @@ package ast;
 public interface NodeVisitor {
 
     // literal
+    /**
+     * @param node
+     */
     public void visit (BoolLiteral node);
     public void visit (IntegerLiteral node);
     public void visit (FloatLiteral node);
 
     // designator
     public void visit (AddressOf node);
-    public void visit (ArrayIndex node);
+    // public void visit (ArrayIndex node);
     public void visit (Dereference node);
 
     // groupExpr

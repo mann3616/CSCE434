@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import pl434.Token.Kind;
-
+import ast.*;
 public class Compiler {
     class Result{
         int kind;
@@ -947,6 +947,7 @@ public class Compiler {
             return null;
         }
     }
+    Computation node;
     private void computation () {
         expect(Kind.MAIN);
         IDENT_FUNC.put("printInt", new func(""));
@@ -966,6 +967,6 @@ public class Compiler {
 
     }
     public ast.AST genAST(){
-        return new ast.AST();
+        return new ast.AST(node);
     }
 }

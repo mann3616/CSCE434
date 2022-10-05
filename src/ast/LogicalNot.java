@@ -1,12 +1,11 @@
 package ast;
 
-public class Assignment extends Node implements Statement{
-    private AddressOf addressOf;
+public class LogicalNot extends Node implements Expression{
+
     private Expression right;
-    protected Assignment(int lineNum, int charPos, AddressOf addressOf, Expression right) {
+    protected LogicalNot(int lineNum, int charPos, Expression right) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
-        this.addressOf = addressOf;
         this.right = right;
     }
 
@@ -15,11 +14,8 @@ public class Assignment extends Node implements Statement{
         // TODO Auto-generated method stub
         visitor.visit(this);
     }
-    public AddressOf addressOf(){
-        return this.addressOf;
-    }
+
     public Expression right(){
         return this.right;
     }
-    
 }

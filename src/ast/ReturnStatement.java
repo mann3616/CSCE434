@@ -1,10 +1,11 @@
 package ast;
 
 public class ReturnStatement extends Node implements Statement{
-
-    protected ReturnStatement(int lineNum, int charPos) {
+    private Expression relation;
+    protected ReturnStatement(int lineNum, int charPos, Expression relation) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
+        this.relation = relation;
     }
 
     @Override
@@ -12,6 +13,9 @@ public class ReturnStatement extends Node implements Statement{
         // TODO Auto-generated method stub
         visitor.visit(this);
         
+    }
+    public Expression relation(){
+        return this.relation;
     }
 
 }

@@ -29,12 +29,44 @@ public abstract class Node implements Visitable {
         return this.getClass().getName() + "(" + lineNumber() + "," + charPosition() + ")";
     }
     // Some factory method
-    public static Statement newAssignment (int lineNum, int charPos, Expression dest, Token assignOp, Expression src) {
-
+    public static Statement newAssignment (int lineNum, int charPos, AddressOf dest, Token assignOp, Expression src) {
+        switch(assignOp.kind()){
+            case ASSIGN: return new Assignment(lineNum, charPos, dest, src);
+            case ADD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Addition(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+            case SUB_ASSIGN: return new Assignment(lineNum, charPos, dest, new Subtraction(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+            case MUL_ASSIGN: return new Assignment(lineNum, charPos, dest, new Multiplication(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+            case MOD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Modulo(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+            case DIV_ASSIGN: return new Assignment(lineNum, charPos, dest, new Division(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+        }
+        throw new RuntimeException("Unable to make Statement with AssignOperation: " + assignOp.lexeme());
     }
     public static Expression newExpression (Expression leftSide, Token op, Expression rightSide) {
-
+        switch(op.kind()){
+            case NOT: return new LogicalNot(0, 0, rightSide);
+            case ADD: return new Addition(0, 0, leftSide, rightSide);
+            case SUB: return new Subtraction(0, 0, leftSide, rightSide);
+            case DIV: return new Division(0, 0, leftSide, rightSide);
+            case MUL: return new Multiplication(0, 0, leftSide, rightSide);
+            case MOD: return new Modulo(0, 0, leftSide, rightSide);
+            case OR: return new LogicalOr(0, 0, leftSide, rightSide);
+            case AND: return new LogicalAnd(0, 0, leftSide, rightSide);
+            case POW: return new Power(0, 0, leftSide, rightSide);
+            case LESS_EQUAL: return new Relation(0, 0, op, leftSide, rightSide);
+            case EQUAL_TO: return new Relation(0, 0, op, leftSide, rightSide);
+            case NOT_EQUAL: return new Relation(0, 0, op, leftSide, rightSide);
+            case LESS_THAN: return new Relation(0, 0, op, leftSide, rightSide);
+            case GREATER_EQUAL: return new Relation(0, 0, op, leftSide, rightSide);
+            case GREATER_THAN: return new Relation(0, 0, op, leftSide, rightSide);
+        }
+        throw new RuntimeException("Unable to make Expression with Operation: " + op.lexeme());
     }
     public static Expression newLiteral (Token tok) {
+        switch(tok.kind()){
+            case INT_VAL: return new IntegerLiteral(0, 0, tok.lexeme());
+            case FLOAT_VAL: return new IntegerLiteral(0, 0, tok.lexeme());
+            case TRUE: return new IntegerLiteral(0, 0, "true");
+            case FALSE: return new IntegerLiteral(0, 0, "false");
+        }
+        throw new RuntimeException("Unable to make Expression with Literal Type: " + tok.kind().toString() + " w/ value: " + tok.lexeme());
     }
 }

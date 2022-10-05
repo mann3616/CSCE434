@@ -1,12 +1,12 @@
 package ast;
 
-public class Assignment extends Node implements Statement{
-    private AddressOf addressOf;
-    private Expression right;
-    protected Assignment(int lineNum, int charPos, AddressOf addressOf, Expression right) {
+public class Power extends Node implements Expression{
+
+    private Expression left, right;
+    protected Power(int lineNum, int charPos, Expression left, Expression right) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
-        this.addressOf = addressOf;
+        this.left = left;
         this.right = right;
     }
 
@@ -15,11 +15,12 @@ public class Assignment extends Node implements Statement{
         // TODO Auto-generated method stub
         visitor.visit(this);
     }
-    public AddressOf addressOf(){
-        return this.addressOf;
+
+    public Expression left(){
+        return this.left;
     }
+
     public Expression right(){
         return this.right;
     }
-    
 }

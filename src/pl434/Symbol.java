@@ -41,6 +41,8 @@ public class Symbol {
             param += "bool";
         } else if(tt.getClass().equals(IntType.class)){
             param += "int";
+        } else if(tt.getClass().equals(VoidType.class)){
+            param += "void";
         }
         return param;
     }
