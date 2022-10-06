@@ -1,5 +1,7 @@
 package ast;
 
+import pl434.Symbol;
+
 public interface NodeVisitor {
 
     // literal

@@ -1,8 +1,8 @@
 package ast;
 import pl434.*;
-public class AddressOf extends Node {
+public class AddressOf extends Node implements Expression{
     private Symbol symbol;
-    protected AddressOf(int lineNum, int charPos, Symbol symbol) {
+    public AddressOf(int lineNum, int charPos, Symbol symbol) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.symbol = symbol;

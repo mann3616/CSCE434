@@ -8,12 +8,17 @@ public class Symbol {
     // TODO: Add other parameters like type
  
     private Type type;
+    
     int address;
     int regno;
 
     public Symbol (String name, int address) {
         this.name = name;
         this.address = address;
+    }
+    public Symbol (String name, Type type) {
+        this.name = name;
+        this.type = type;
     }
     public String name () {
         return name;
@@ -25,9 +30,13 @@ public class Symbol {
         ret += ":(";
         String param = "";
         for(Type tt : t.params()){
-            param += ", " + typeToString(tt);
+            param +=  ", " + typeToString(tt);
         }
-        ret += param.substring(2) + ")->" + typeToString(t.returnType());
+        String paramList = "";
+        if(!param.equals("")){
+            paramList = param.substring(2);
+        }
+        ret += paramList + ")->" + typeToString(t.returnType());
         return ret;
     }
     public String getTypeAsString(){
@@ -35,6 +44,7 @@ public class Symbol {
     }
     public static String typeToString(Type tt){
         String param = "";
+        // If this doesn't work use the toString functions
         if(tt.getClass().equals(FloatType.class)){
             param += "float";
         } else if(tt.getClass().equals(BoolType.class)){

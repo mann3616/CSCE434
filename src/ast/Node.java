@@ -21,12 +21,12 @@ public abstract class Node implements Visitable {
     }
 
     public String getClassInfo () {
-        return this.getClass().getName() + "(" + lineNumber() + "," + charPosition() + ")";
+        return this.getClass().getSimpleName();
     }
 
     @Override
     public String toString () {
-        return this.getClass().getName() + "(" + lineNumber() + "," + charPosition() + ")";
+        return this.getClass().getSimpleName();
     }
     // Some factory method
     public static Statement newAssignment (int lineNum, int charPos, AddressOf dest, Token assignOp, Expression src) {
@@ -37,8 +37,8 @@ public abstract class Node implements Visitable {
             case MUL_ASSIGN: return new Assignment(lineNum, charPos, dest, new Multiplication(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
             case MOD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Modulo(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
             case DIV_ASSIGN: return new Assignment(lineNum, charPos, dest, new Division(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+            default: throw new RuntimeException("Unable to make Statement with AssignOperation: " + assignOp.lexeme());
         }
-        throw new RuntimeException("Unable to make Statement with AssignOperation: " + assignOp.lexeme());
     }
     public static Expression newExpression (Expression leftSide, Token op, Expression rightSide) {
         switch(op.kind()){
@@ -57,8 +57,8 @@ public abstract class Node implements Visitable {
             case LESS_THAN: return new Relation(0, 0, op, leftSide, rightSide);
             case GREATER_EQUAL: return new Relation(0, 0, op, leftSide, rightSide);
             case GREATER_THAN: return new Relation(0, 0, op, leftSide, rightSide);
+            default: throw new RuntimeException("Unable to make Expression with Operation: " + op.lexeme());
         }
-        throw new RuntimeException("Unable to make Expression with Operation: " + op.lexeme());
     }
     public static Expression newLiteral (Token tok) {
         switch(tok.kind()){
@@ -66,7 +66,7 @@ public abstract class Node implements Visitable {
             case FLOAT_VAL: return new IntegerLiteral(0, 0, tok.lexeme());
             case TRUE: return new IntegerLiteral(0, 0, "true");
             case FALSE: return new IntegerLiteral(0, 0, "false");
+            default: throw new RuntimeException("Unable to make Expression with Literal Type: " + tok.kind().toString() + " w/ value: " + tok.lexeme());
         }
-        throw new RuntimeException("Unable to make Expression with Literal Type: " + tok.kind().toString() + " w/ value: " + tok.lexeme());
     }
 }

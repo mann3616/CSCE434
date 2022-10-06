@@ -4,7 +4,7 @@ public class BoolLiteral extends Node implements Expression{
 
     private String literal;
 
-    protected BoolLiteral(int lineNum, int charPos, String literal) {
+    public BoolLiteral(int lineNum, int charPos, String literal) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.literal = literal;

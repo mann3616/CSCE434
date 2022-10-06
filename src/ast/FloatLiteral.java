@@ -2,7 +2,7 @@ package ast;
 
 public class FloatLiteral extends Node implements Expression{
     private String literal;
-    protected FloatLiteral(int lineNum, int charPos, String literal) {
+    public FloatLiteral(int lineNum, int charPos, String literal) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.literal = literal;

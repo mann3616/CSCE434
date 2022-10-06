@@ -46,7 +46,7 @@ public enum ASTNonTerminal {
 
     private String nodeName;
     ASTNonTerminal(String nodeName) {
-        nodeName = nodeName;
+        this.nodeName = nodeName;
     }
 
 

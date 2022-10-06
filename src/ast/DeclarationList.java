@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class DeclarationList extends Node implements Iterable<Declaration>{
-    private ArrayList<Declaration> list;
-    protected DeclarationList(int lineNum, int charPos) {
+    public ArrayList<Declaration> list;
+    public DeclarationList(int lineNum, int charPos) {
         super(lineNum, charPos);
         list = new ArrayList<>();
         //TODO Auto-generated constructor stub
@@ -27,6 +27,6 @@ public class DeclarationList extends Node implements Iterable<Declaration>{
         return list.isEmpty();
     }
     public void add(VariableDeclaration decl){
-
+        list.add(decl);
     }
 }
