@@ -15,6 +15,7 @@ public class Compiler {
         int value;
         int address;
         String lexeme;
+        Expression expression;
         int regno = -1;
         int cond, fixuplocation;
         boolean isFloat;
@@ -162,6 +163,8 @@ public class Compiler {
     HashMap<String, func> IDENT_FUNC = new HashMap<>();
     HashMap<String, Result> IDENT_MEM = new HashMap<>();
     HashMap<Integer, Result> IDENT_REG = new HashMap<>();
+    HashMap<String, Type> IDENT_VARTYPE = new HashMap<>();
+
     LRU lru;
 
     public Compiler (Scanner scanner, int numRegs) {
@@ -398,14 +401,19 @@ public class Compiler {
             switch(type.kind()){
                 case FLOAT:
                     variableType = new FloatType();
+                    break;
                 case INT:
                     variableType = new IntType();
+                    break;
                 case BOOL:
                     variableType = new BoolType();
+                    break;
             }
 
             VariableDeclaration generatedVariable = new VariableDeclaration(lineNumber(), charPosition(), new Symbol(id, variableType));
             variableList.add(generatedVariable);
+            // store the variable name and its type
+            IDENT_VARTYPE.put(scope+":"+currentVariable.lexeme(), variableType);
             //System.out.println(id + " " + x.address*4);
             if(type.kind() == Kind.FLOAT){
                 x.isFloat = true;
@@ -422,6 +430,7 @@ public class Compiler {
                 //System.out.println(id + " " + x.address*4);
                 generatedVariable = new VariableDeclaration(lineNumber(), charPosition(), new Symbol(id, x.address));
                 variableList.add(generatedVariable);
+                IDENT_VARTYPE.put(scope+":"+currentVariable.lexeme(), variableType);
                 if(type.kind() == Kind.FLOAT){
                     x.isFloat = true;
                 }else {
@@ -512,12 +521,15 @@ public class Compiler {
             // Expression No idea
             // How to get current variable type?
             // Retain ident maps
-            // statementList.add(Node.newAssignment(lineNumber(), charPosition(), new AddressOf(lineNumber(), charPosition(), new Symbol(id, new Type())), tok, Expression));
+            // What is expression?
+            // Expression requires 
             IDENT_REG.remove(obj.regno);
-            Result second = relExpr(scope, statementList);
+            // StatementList is null since we don't want to add the resolve to the parent node but to this one
+            Result second = relExpr(scope, null);
             obj.regno = second.regno;
             IDENT_REG.put(obj.regno, obj);
             deallocate(obj.regno);
+            statementList.add(Node.newAssignment(tok.lineNumber(), tok.charPosition(), new AddressOf(lineNumber(), charPosition(), new Symbol(id, IDENT_VARTYPE.get(scope+":"+id))), tok, second.expression));
             return;
         }
         if(!obj.isFloat){
@@ -607,19 +619,23 @@ public class Compiler {
                 case INT_VAL:
                 int val = Integer.parseInt(tok.lexeme());
                 instructions.add(DLX.assemble(DLX.ADDI, x.regno, 0, val));
+                x.expression = new IntegerLiteral(lineNumber(), charPosition(), tok.lexeme());
                 x.isFloat = false;
                 return x;
                 case FLOAT_VAL:
                 float fval = Float.parseFloat(tok.lexeme());
                 instructions.add(DLX.assemble(DLX.fADDI, x.regno, 0, fval));
+                x.expression = new FloatLiteral(lineNumber(), charPosition(), tok.lexeme());
                 x.isFloat = true;
                 return x;
                 case TRUE:
                 instructions.add(DLX.assemble(DLX.ADDI, x.regno, 0, 1));
                 x.isFloat = false;
+                x.expression = new BoolLiteral(lineNumber(), charPosition(), tok.lexeme());
                 return x;
                 case FALSE:
                 instructions.add(DLX.assemble(DLX.ADDI, x.regno, 0, 0));
+                x.expression = new BoolLiteral(lineNumber(), charPosition(), tok.lexeme());
                 x.isFloat = false;
                 return x;
             }
@@ -629,6 +645,8 @@ public class Compiler {
             x.regno = allocate().regno;
             instructions.add(DLX.assemble(DLX.ADD, x.regno, xx.regno, 0));
             x.isFloat = xx.isFloat;
+            x.lexeme = xx.lexeme;
+            // Result should be dereference?
             return x;
         }
         if(have(NonTerminal.RELATION)){
@@ -639,10 +657,12 @@ public class Compiler {
             return x;
         }
         if(accept(NonTerminal.FUNC_CALL)){
+            // Calling a function!
             Result xx = funcCall(scope, statementList);
             x.regno = xx.regno;
             lru.get(x.regno);
             x.isFloat = xx.isFloat;
+            x.expression = xx.expression;
             return x;
         }
         String errorMessage = reportSyntaxError(NonTerminal.GROUP_EXPRESSION);
@@ -794,39 +814,46 @@ public class Compiler {
         Token parameterToken = currentToken;
         Result a = new Result();
         a.kind = Result.CONST;
+        Result result = new Result();
+        FuncType funcType;
+        Symbol function;
+
         switch (n){
             case "printInt":
-            a.regno = relExpr(scope, statementList).regno;
+            result = relExpr(scope, statementList);
+            a.regno = result.regno;
             a.isFloat = false;
             printInt(a.regno);
             returnType = new VoidType();
-            paramTypeList.add(new IntType());
-            if(a.lexeme != null){
-                argumentList.append(new AddressOf(parameterToken.lineNumber(), parameterToken.charPosition(), new Symbol(a.lexeme, new IntType())));
+            paramTypeList.append(new IntType());
+            if(result.lexeme != null){
+                argumentList.append(new AddressOf(parameterToken.lineNumber(), parameterToken.charPosition(), new Symbol(result.lexeme, new IntType())));
             }else{
                 argumentList.append(new IntegerLiteral(parameterToken.lineNumber(), parameterToken.charPosition(), parameterToken.lexeme()));
             }
             break;
             case "printFloat":
-            a.regno = relExpr(scope, statementList).regno;
-            a.isFloat = true;
+            result = relExpr(scope, statementList);
+            a.regno = result.regno;
+            a.isFloat = false;
             printFloat(a.regno);
             returnType = new VoidType();
-            paramTypeList.add(new FloatType());
-            if(a.lexeme != null){
-                argumentList.append(new AddressOf(parameterToken.lineNumber(), parameterToken.charPosition(), new Symbol(a.lexeme, new FloatType())));
+            paramTypeList.append(new FloatType());
+            if(result.lexeme != null){
+                argumentList.append(new AddressOf(parameterToken.lineNumber(), parameterToken.charPosition(), new Symbol(result.lexeme, new FloatType())));
             }else{
                 argumentList.append(new FloatLiteral(parameterToken.lineNumber(), parameterToken.charPosition(), parameterToken.lexeme()));
             }
             break;
             case "printBool":
-            a.regno = relExpr(scope, statementList).regno;
+            result = relExpr(scope, statementList);
+            a.regno = result.regno;
             a.isFloat = false;
             printBool(a.regno);
             returnType = new VoidType();
-            paramTypeList.add(new BoolType());
-            if(a.lexeme != null){
-                argumentList.append(new AddressOf(parameterToken.lineNumber(), parameterToken.charPosition(), new Symbol(a.lexeme, new BoolType())));
+            paramTypeList.append(new BoolType());
+            if(result.lexeme != null){
+                argumentList.append(new AddressOf(parameterToken.lineNumber(), parameterToken.charPosition(), new Symbol(result.lexeme, new BoolType())));
             }else{
                 argumentList.append(new BoolLiteral(parameterToken.lineNumber(), parameterToken.charPosition(), parameterToken.lexeme()));
             }
@@ -836,18 +863,27 @@ public class Compiler {
             readInt(a.regno);
             a.isFloat = false;
             returnType = new IntType();
+            funcType = new FuncType(paramTypeList, returnType);
+            function = new Symbol(n, funcType);
+            a.expression = new FunctionCall(lineNumber(), charPosition(), function, argumentList);
             break;
             case "readFloat":
             a.regno = allocate().regno;
             readFloat(a.regno);
             a.isFloat = true;
             returnType = new FloatType();
+            funcType = new FuncType(paramTypeList, returnType);
+            function = new Symbol(n, funcType);
+            a.expression = new FunctionCall(lineNumber(), charPosition(), function, argumentList);
             break;
             case "readBool":
             a.regno = allocate().regno;
             readBool(a.regno);
             a.isFloat = false;
             returnType = new BoolType();
+            funcType = new FuncType(paramTypeList, returnType);
+            function = new Symbol(n, funcType);
+            a.expression = new FunctionCall(lineNumber(), charPosition(), function, argumentList);
             break;
             case "println":
             println();
@@ -873,10 +909,12 @@ public class Compiler {
             }
         }
         expect(Kind.CLOSE_PAREN);
-        FuncType funcType = new FuncType(paramTypeList, returnType);
-        Symbol function = new Symbol(n, funcType);
+        funcType = new FuncType(paramTypeList, returnType);
+        function = new Symbol(n, funcType);
         FunctionCall functionCall = new FunctionCall(functionToken.lineNumber(), functionToken.charPosition(), function, argumentList);
-        statementList.add(functionCall);
+        if( !(statementList == null) ){
+            statementList.add(functionCall);
+        }
         return a;
     }
     private void setFuncVar(ArrayList<Result> res, String scope){

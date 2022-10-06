@@ -7,7 +7,7 @@ public class PrettyPrinter implements NodeVisitor {
     private String indent(){
         String indent = "";
         for(int i = 0;i<depth;i++)
-            indent+= " ";
+            indent+= "  ";
         return indent;
     }
     private void println (Node n, String message) {
@@ -108,6 +108,7 @@ public class PrettyPrinter implements NodeVisitor {
         println(node, "");
         depth++;
         node.addressOf().accept(this);
+        node.right().accept(this);
         depth--;
     }
     @Override
