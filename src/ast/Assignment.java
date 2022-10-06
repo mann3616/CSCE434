@@ -20,6 +20,5 @@ public class Assignment extends Node implements Statement{
     }
     public Expression right(){
         return this.right;
-    }
-    
+    }    
 }

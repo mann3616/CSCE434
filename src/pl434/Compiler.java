@@ -393,7 +393,18 @@ public class Compiler {
             Result x = new Result();
             x.kind = Result.VAR;
             x.address = ++maxed * -1;
-            VariableDeclaration generatedVariable = new VariableDeclaration(lineNumber(), charPosition(), new Symbol(id, x.address));
+            // Give the variable a type depending on type case
+            Type variableType = new VoidType();
+            switch(type.kind()){
+                case FLOAT:
+                    variableType = new FloatType();
+                case INT:
+                    variableType = new IntType();
+                case BOOL:
+                    variableType = new BoolType();
+            }
+
+            VariableDeclaration generatedVariable = new VariableDeclaration(lineNumber(), charPosition(), new Symbol(id, variableType));
             variableList.add(generatedVariable);
             //System.out.println(id + " " + x.address*4);
             if(type.kind() == Kind.FLOAT){
@@ -471,6 +482,7 @@ public class Compiler {
         return null;
     }
     private void letStat(String scope, StatementSequence statementList){
+        // Create assignment, add assignment to statement sequence
         String id = currentToken.lexeme();
         Result obj = designator(scope);
         if(have(NonTerminal.UNARY_OP)){
@@ -496,6 +508,11 @@ public class Compiler {
         }
         Token tok = expectRetrieve(NonTerminal.ASSIGN_OP);
         if(tok.kind()== Kind.ASSIGN){
+            // AddressOf Int linenum symbol
+            // Expression No idea
+            // How to get current variable type?
+            // Retain ident maps
+            // statementList.add(Node.newAssignment(lineNumber(), charPosition(), new AddressOf(lineNumber(), charPosition(), new Symbol(id, new Type())), tok, Expression));
             IDENT_REG.remove(obj.regno);
             Result second = relExpr(scope, statementList);
             obj.regno = second.regno;
