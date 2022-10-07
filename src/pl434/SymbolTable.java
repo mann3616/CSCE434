@@ -10,13 +10,19 @@ public class SymbolTable {
     int addy;
     public SymbolTable () {
         addy = 0;
-        throw new RuntimeException("Create Symbol Table and initialize predefined functions");
+        //throw new RuntimeException("Create Symbol Table and initialize predefined functions");
     }
 
     // lookup name in SymbolTable
     public Symbol lookup (String name) throws SymbolNotFoundError {
-        if(stack.peek().containsKey(name)){
-            return stack.peek().get(name);
+        //loop through stacks
+        Stack<HashMap<String, Symbol>> currentStack = (Stack<HashMap<String, Symbol>>)stack.clone();
+        while(!currentStack.peek().containsKey(name)){
+            currentStack.pop();
+            currentStack.peek().get(name);
+        }
+        if(currentStack.peek().containsKey(name)){
+            return currentStack.peek().get(name);
         }
         throw new SymbolNotFoundError(name);
     }
@@ -44,7 +50,7 @@ class SymbolNotFoundError extends Error {
     private final String name;
 
     public SymbolNotFoundError (String name) {
-        super("Symbol " + name + " not found.");
+        super("Error parsing file.\nResolveSymbolError");
         this.name = name;
     }
 
@@ -59,7 +65,7 @@ class RedeclarationError extends Error {
     private final String name;
 
     public RedeclarationError (String name) {
-        super("Symbol " + name + " being redeclared.");
+        super("Error parsing file.\nDeclareSymbolError");
         this.name = name;
     }
 

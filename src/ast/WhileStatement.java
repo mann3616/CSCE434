@@ -3,7 +3,7 @@ package ast;
 public class WhileStatement extends Node implements Statement{
     private Expression relation;
     private StatementSequence sequence;
-    protected WhileStatement(int lineNum, int charPos, Expression relation, StatementSequence sequence) {
+    public WhileStatement(int lineNum, int charPos, Expression relation, StatementSequence sequence) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.relation = relation;

@@ -101,7 +101,9 @@ public class PrettyPrinter implements NodeVisitor {
         depth++;
         node.relation().accept(this);
         node.ifSequence().accept(this);
-        node.elseSequence().accept(this);
+        if( node.elseSequence() != null){
+            node.elseSequence().accept(this);
+        }
         depth--;
     }
     @Override
