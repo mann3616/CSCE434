@@ -4,7 +4,7 @@ import pl434.*;
 public class FunctionDeclaration extends Node implements Declaration{
     private Symbol function;
     private FunctionBody body;
-    protected FunctionDeclaration(int lineNum, int charPos, Symbol function, FunctionBody body) {
+    public FunctionDeclaration(int lineNum, int charPos, Symbol function, FunctionBody body) {
         //TODO Auto-generated constructor stub
         super(lineNum, charPos);
         this.body = body;

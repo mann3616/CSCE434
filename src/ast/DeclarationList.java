@@ -26,7 +26,7 @@ public class DeclarationList extends Node implements Iterable<Declaration>{
     public boolean empty(){
         return list.isEmpty();
     }
-    public void add(VariableDeclaration decl){
+    public void add(Declaration decl){
         list.add(decl);
     }
 }

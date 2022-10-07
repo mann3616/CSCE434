@@ -16,6 +16,7 @@ public class PrettyPrinter implements NodeVisitor {
 
     @Override
     public String toString () {
+        sb.setLength(sb.length()-1);
         return sb.toString();
     }
 

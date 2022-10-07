@@ -3,7 +3,7 @@ package ast;
 public class RepeatStatement extends Node implements Statement{
     private StatementSequence sequence;
     private Expression relation;
-    protected RepeatStatement(int lineNum, int charPos, StatementSequence sequence, Expression relation) {
+    public RepeatStatement(int lineNum, int charPos, StatementSequence sequence, Expression relation) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.sequence = sequence;

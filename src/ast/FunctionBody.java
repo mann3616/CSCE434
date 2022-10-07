@@ -3,7 +3,8 @@ package ast;
 public class FunctionBody extends Node{
     private DeclarationList list;
     private StatementSequence seq;
-    protected FunctionBody(int lineNum, int charPos, DeclarationList list, StatementSequence seq) {
+    
+    public FunctionBody(int lineNum, int charPos, DeclarationList list, StatementSequence seq) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.list = list;

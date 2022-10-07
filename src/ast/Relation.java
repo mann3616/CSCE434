@@ -6,7 +6,7 @@ public class Relation extends Node implements Expression{
     private Token rel;
     private Expression left;
     private Expression right;
-    protected Relation(int lineNum, int charPos, Token rel, Expression left, Expression right) {
+    public Relation(int lineNum, int charPos, Token rel, Expression left, Expression right) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.rel = rel;

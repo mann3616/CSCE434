@@ -32,6 +32,8 @@ public abstract class Node implements Visitable {
     public static Statement newAssignment (int lineNum, int charPos, AddressOf dest, Token assignOp, Expression src) {
         switch(assignOp.kind()){
             case ASSIGN: return new Assignment(lineNum, charPos, dest, src);
+            case UNI_INC: return new Assignment(lineNum, charPos, dest, new Addition(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+            case UNI_DEC: return new Assignment(lineNum, charPos, dest, new Subtraction(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
             case ADD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Addition(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
             case SUB_ASSIGN: return new Assignment(lineNum, charPos, dest, new Subtraction(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
             case MUL_ASSIGN: return new Assignment(lineNum, charPos, dest, new Multiplication(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));

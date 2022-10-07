@@ -6,7 +6,7 @@ import java.util.List;
 
 public class TypeList extends Type implements Iterable<Type> {
 
-    private List<Type> list;
+    public List<Type> list;
 
     public TypeList () {
         list = new ArrayList<>();

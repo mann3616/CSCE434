@@ -3,7 +3,7 @@ package ast;
 public class IfStatement extends Node implements Statement{
     private Expression relation;
     private StatementSequence ifSequence, elseSequence;
-    protected IfStatement(int lineNum, int charPos, Expression relation, StatementSequence ifSequence, StatementSequence elseSequence) {
+    public IfStatement(int lineNum, int charPos, Expression relation, StatementSequence ifSequence, StatementSequence elseSequence) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.relation = relation;

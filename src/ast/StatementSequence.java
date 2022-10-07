@@ -23,6 +23,10 @@ public class StatementSequence extends Node implements Iterable<Statement>{
         return statements.iterator();
     }
 
+    public int size(){
+        return statements.size();
+    }
+
     public void add(Statement statement){
         statements.add(statement);
     }

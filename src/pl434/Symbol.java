@@ -7,7 +7,7 @@ public class Symbol {
     private String name;
     // TODO: Add other parameters like type
  
-    private Type type;
+    public Type type;
     
     int address;
     int regno;

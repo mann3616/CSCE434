@@ -5,11 +5,16 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ArgumentList extends Node implements Iterable<Expression>{
-    private List<Expression> list;
+    public List<Expression> list;
     public ArgumentList(int lineNum, int charPos) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.list = new ArrayList<Expression>();
+    }
+    public ArgumentList(ArgumentList argumentList){
+        super(argumentList.lineNumber(), argumentList.charPosition());
+        this.list = new ArrayList<Expression>();
+        this.list.addAll(argumentList.list);
     }
 
     @Override
