@@ -39,6 +39,7 @@ public abstract class Node implements Visitable {
             case MUL_ASSIGN: return new Assignment(lineNum, charPos, dest, new Multiplication(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
             case MOD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Modulo(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
             case DIV_ASSIGN: return new Assignment(lineNum, charPos, dest, new Division(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+            case POW_ASSIGN: return new Assignment(lineNum, charPos, dest, new Power(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
             default: throw new RuntimeException("Unable to make Statement with AssignOperation: " + assignOp.lexeme());
         }
     }

@@ -126,6 +126,18 @@ public class Compiler {
         return message;
     }
 
+    private String reportResolveSymbolError (String name, int lineNum, int charPos) {
+        String message = "ResolveSymbolError(" + lineNum + "," + charPos + ")[Could not find " + name + ".]";
+        errorBuffer.append(message + "\n");
+        return message;
+    }
+
+    private String reportDeclareSymbolError (String name, int lineNum, int charPos) {
+        String message = "DeclareSymbolError(" + lineNum + "," + charPos + ")[" + name + " already exists.]";
+        errorBuffer.append(message + "\n");
+        return message;
+    }
+
     public String errorReport () {
         return errorBuffer.toString();
     }
@@ -191,8 +203,9 @@ public class Compiler {
         try{
             return symbolTable.lookup(ident.lexeme());
         }catch (SymbolNotFoundError e){
-            throw new QuitParseException(e.getMessage());
+            reportResolveSymbolError(ident.lexeme(), ident.lineNumber() + 1, ident.charPosition());
         }
+        return null;
     }
 
     private Symbol tryDeclareVariable (Token ident){
@@ -200,8 +213,9 @@ public class Compiler {
         try{
             return symbolTable.insert(ident.lexeme());
         }catch(RedeclarationError e){
-            throw new QuitParseException(e.getMessage() + "(" + (ident.lineNumber() + 1) + "," + ident.charPosition() + ")[" + ident.lexeme() + " already exists.]");
+            reportDeclareSymbolError(ident.lexeme(), ident.lineNumber() + 1, ident.charPosition());
         }
+        return null;
     }
 
     public int[] compile () {
@@ -371,8 +385,20 @@ public class Compiler {
 
         String var = scope+":"+ident.lexeme();
         Result x = IDENT_MEM.get(var);
+        // if x is null what do we do... report error and return!
+        if(x == null){
+            tryResolveVariable(ident);
+            // just set it to something so it doesn't throw an error
+            for(String s : IDENT_MEM.keySet()){
+                x = IDENT_MEM.get(s);
+
+                break;
+            }
+        }
         // Peek stack here
         x.lexeme = ident.lexeme();
+        // x might return null!
+
         if(x.regno != -1){
             //System.out.println("-1: "+var + " is " + x.regno);
             lru.get(x.regno);
@@ -385,7 +411,12 @@ public class Compiler {
             loads.get(loads.size()-1).add(DLX.assemble(DLX.LDW, reg, 30, 4*x.address));
         }
         x.regno = reg;
-        x.expression = new AddressOf(lineNumber(), charPosition(), new Symbol(x.lexeme, IDENT_VARTYPE.get(scope+":"+x.lexeme)));
+        // vartype is probably null here
+        if (IDENT_VARTYPE.get(scope+":"+x.lexeme) != null){
+            x.expression = new AddressOf(lineNumber(), charPosition(), new Symbol(x.lexeme, IDENT_VARTYPE.get(scope+":"+x.lexeme)));
+        }else{
+            x.expression = new AddressOf(lineNumber(), charPosition(), new Symbol(x.lexeme, new VoidType()));
+        }
         IDENT_REG.put(reg, x);
         IDENT_MEM.put(var, x);
         return x;
@@ -560,7 +591,11 @@ public class Compiler {
             obj.regno = second.regno;
             IDENT_REG.put(obj.regno, obj);
             deallocate(obj.regno);
-            statementList.add(Node.newAssignment(tok.lineNumber(), tok.charPosition(), new AddressOf(lineNumber(), charPosition(), new Symbol(id, IDENT_VARTYPE.get(scope+":"+id))), tok, second.expression));
+            if(IDENT_VARTYPE.get(scope+":"+id) != null){
+                statementList.add(Node.newAssignment(tok.lineNumber(), tok.charPosition(), new AddressOf(lineNumber(), charPosition(), new Symbol(id, IDENT_VARTYPE.get(scope+":"+id))), tok, second.expression));
+            }else{
+                statementList.add(Node.newAssignment(tok.lineNumber(), tok.charPosition(), new AddressOf(lineNumber(), charPosition(), new Symbol(id, new VoidType())), tok, second.expression));
+            }
             return;
         }
         if(!obj.isFloat){
@@ -715,6 +750,7 @@ public class Compiler {
         if(accept(NonTerminal.FUNC_CALL)){
             // Calling a function!
             // make local arg list?
+            // when doing call should end up here
             Result xx = funcCall(scope, statementList);
             x.regno = xx.regno;
             lru.get(x.regno);
@@ -899,20 +935,21 @@ public class Compiler {
         Result result = new Result();
         FuncType funcType;
         Symbol function;
+        // in a new function so we should have a new scope at some point, dont know how to add that
 
         switch (n){
             case "printInt":
-            result = relExpr(scope, statementList);
+            result = relExpr(scope, null);
             a.regno = result.regno;
             a.isFloat = false;
             printInt(a.regno);
             returnType = new VoidType();
             paramTypeList.append(new IntType());
             // need to get argument list
-                localArgumentList.append(result.expression);
+            localArgumentList.append(result.expression);
             break;
             case "printFloat":
-            result = relExpr(scope, statementList);
+            result = relExpr(scope, null);
             a.regno = result.regno;
             a.isFloat = false;
             printFloat(a.regno);
@@ -925,7 +962,7 @@ public class Compiler {
             }
             break;
             case "printBool":
-            result = relExpr(scope, statementList);
+            result = relExpr(scope, null);
             a.regno = result.regno;
             a.isFloat = false;
             printBool(a.regno);
@@ -968,7 +1005,7 @@ public class Compiler {
             println();
             break;
             default:
-            if(have(Kind.IDENT)){
+            if(IDENT_FUNC.get(n) != null){
                 ArrayList<Result> vars = new ArrayList<>();
                 // This is the function expression thing
                 Result var = relExpr(scope, statementList);
@@ -982,7 +1019,6 @@ public class Compiler {
                 }
                 localArgumentList.append(var.expression);
                 vars.add(var);
-                System.out.println("We added " + localArgumentList.list.size() + " args to the arglist");
                 setFuncVar(vars, n);
                 instructions.add(DLX.assemble(DLX.JSR, IDENT_FUNC.get(n).jumper*4));
                 // a.regno is big mad
@@ -1009,7 +1045,7 @@ public class Compiler {
         expect(Kind.CLOSE_PAREN);
         funcType = new FuncType(paramTypeList, returnType);
         function = new Symbol(n, funcType);
-        FunctionCall functionCall = new FunctionCall(functionToken.lineNumber(), functionToken.charPosition(), function, localArgumentList);
+        FunctionCall functionCall = new FunctionCall(functionToken.lineNumber(), functionToken.charPosition(), function, new ArgumentList(localArgumentList));
         if( !(statementList == null) ){
             statementList.add(functionCall);
         }

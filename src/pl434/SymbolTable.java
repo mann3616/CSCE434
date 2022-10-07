@@ -17,9 +17,8 @@ public class SymbolTable {
     public Symbol lookup (String name) throws SymbolNotFoundError {
         //loop through stacks
         Stack<HashMap<String, Symbol>> currentStack = (Stack<HashMap<String, Symbol>>)stack.clone();
-        while(!currentStack.peek().containsKey(name)){
+        while(!currentStack.peek().containsKey(name) && currentStack.size() > 1){
             currentStack.pop();
-            currentStack.peek().get(name);
         }
         if(currentStack.peek().containsKey(name)){
             return currentStack.peek().get(name);
