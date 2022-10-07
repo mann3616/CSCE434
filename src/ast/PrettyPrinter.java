@@ -92,7 +92,9 @@ public class PrettyPrinter implements NodeVisitor {
     public void visit(ReturnStatement node){
         println(node, "");
         depth++;
-        node.relation().accept(this);
+        if(node.relation() != null){
+            node.relation().accept(this);
+        }
         depth--;
     }
     @Override

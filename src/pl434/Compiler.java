@@ -203,16 +203,17 @@ public class Compiler {
         try{
             return symbolTable.lookup(ident.lexeme());
         }catch (SymbolNotFoundError e){
+            System.out.println("Caught a lookup issue with " + ident.lexeme());
             reportResolveSymbolError(ident.lexeme(), ident.lineNumber() + 1, ident.charPosition());
         }
         return null;
     }
 
     private Symbol tryDeclareVariable (Token ident){
-        //TODO: Try declaring variable, handle RedeclarationError
         try{
             return symbolTable.insert(ident.lexeme());
         }catch(RedeclarationError e){
+            System.out.println("Caught a declaration issue with " + ident.lexeme());
             reportDeclareSymbolError(ident.lexeme(), ident.lineNumber() + 1, ident.charPosition());
         }
         return null;
@@ -424,7 +425,7 @@ public class Compiler {
 
     private void varDecl(String scope, DeclarationList vars){
         DeclarationList variableList = new DeclarationList(lineNumber(), charPosition());
-        symbolTable.addScope();
+        enterScope();
         while(have(NonTerminal.VAR_DECL)){
             Token type = expectRetrieve(NonTerminal.VAR_DECL);
             Token currentVariable = expectRetrieve(Kind.IDENT);
@@ -500,6 +501,7 @@ public class Compiler {
             goback = 0;
         }
         statementList.statements = currentStatementList.statements;
+        // o's regno should not be -1
         return o;
     }
     int goback = 0;
@@ -513,7 +515,7 @@ public class Compiler {
             case REPEAT: repeatStat(scope, statementList); break;
             case IF: ifStat(scope, statementList); break;
             case LET: letStat(scope, statementList); break;
-            case CALL: funcCall(scope, statementList); break;
+            case CALL: return funcCall(scope, statementList);
         }
         return null;
     }
@@ -545,7 +547,6 @@ public class Compiler {
         // generate relation statement, add to statement list at end
         // Some expression
         expect(Kind.CLOSE_PAREN);
-        System.out.println("Repeat statement list has size " + repeatStatementList.size());
         
         statementList.add(new RepeatStatement(start.lineNumber(), start.charPosition(), repeatStatementList, x.expression));
         return null;
@@ -600,7 +601,7 @@ public class Compiler {
         }
         if(!obj.isFloat){
             Result second = relExpr(scope, null);
-            // second expression is returning null?
+            
             switch(tok.kind()){
                 case ADD_ASSIGN:
                 instructions.add(DLX.assemble(DLX.ADD, obj.regno, obj.regno, second.regno));
@@ -661,6 +662,8 @@ public class Compiler {
             statementList.add(new ReturnStatement(lineNumber(), charPosition(), x.expression));
             return x;
         }
+        // Not returning everything so give it a null instance
+        statementList.add(new ReturnStatement(lineNumber(), charPosition(), null));
         return null;
     }
     private void ifStat(String scope, StatementSequence statementList){
@@ -922,6 +925,8 @@ public class Compiler {
     private Result funcCall(String scope, StatementSequence statementList){
         // Have something outside of this scope point to the arg list
         // Resolve, and then add to statementList
+        // In a new function so we should enter the function scope
+        enterScope();
         Token functionToken = expectRetrieve(Kind.IDENT);
         String n = functionToken.lexeme();
         expect(Kind.OPEN_PAREN);
@@ -935,8 +940,7 @@ public class Compiler {
         Result result = new Result();
         FuncType funcType;
         Symbol function;
-        // in a new function so we should have a new scope at some point, dont know how to add that
-
+        // in a new function so we should have a new scope at some point, dont know how to add that\
         switch (n){
             case "printInt":
             result = relExpr(scope, null);
@@ -945,7 +949,6 @@ public class Compiler {
             printInt(a.regno);
             returnType = new VoidType();
             paramTypeList.append(new IntType());
-            // need to get argument list
             localArgumentList.append(result.expression);
             break;
             case "printFloat":
@@ -1033,13 +1036,26 @@ public class Compiler {
                 // not giving correct arglist or function type
                 a.expression = new FunctionCall(lineNumber(), charPosition(), function, localArgumentList);
                 // arg list is an issue,, it was declared in here so it will not work because it disappears when we leave the function
-                
                 FunctionCall functionCall = new FunctionCall(functionToken.lineNumber(), functionToken.charPosition(), new Symbol(n, f.funcType), new ArgumentList(localArgumentList));
                 if( !(statementList == null) ){
                     statementList.add(functionCall);
                 }
                 expect(Kind.CLOSE_PAREN);
                 return a;
+            }else{
+                tryResolveVariable(functionToken);
+                // Parse it, we have name so accept a list of parameters
+                // Then we can release to close_paren
+                ArrayList<Result> vars = new ArrayList<>();
+                // This is the function expression thing
+                Result var = relExpr(scope, statementList);
+                // get regno of function?
+                while(!have(Kind.CLOSE_PAREN)){
+                    expect(Kind.COMMA);
+                    vars.add(var);
+                    var = relExpr(scope, statementList);
+                }
+                // We don't do anything with vars, just let this happen
             }
         }
         expect(Kind.CLOSE_PAREN);
@@ -1105,6 +1121,8 @@ public class Compiler {
             // Func declaration needs to resolve before function call
             FunctionDeclaration functionDeclaration = new FunctionDeclaration(functionIdent.lineNumber(), functionIdent.charPosition(), new Symbol(id.lexeme(), functionType), new FunctionBody(lineNumber(), charPosition(), variableList, statementList));
             functionList.add(functionDeclaration);
+            // Add function to scope
+            tryDeclareVariable(id);
         }
         funcs.list = functionList.list;
     }
@@ -1124,7 +1142,9 @@ public class Compiler {
     private void paramDecl(String scope, TypeList typeList){
         // create declaration, add to variableList.list
         Token type = expectRetrieve(NonTerminal.PARAM_DECL);
-        String id = expectRetrieve(Kind.IDENT).lexeme();
+        Token variable = expectRetrieve(Kind.IDENT);
+        tryDeclareVariable(variable);
+        String id = variable.lexeme();
         Type paramType = new VoidType();
         switch (type.kind()){
             case BOOL:
@@ -1160,11 +1180,14 @@ public class Compiler {
         // we pass in the statement sequence and it should change but it doesnt
         Result xx = statSeq(scope, statementSeq);
         IDENT_FUNC.get(scope).jumper = prior+1;
-        instructions.add(DLX.assemble(DLX.STW, xx.regno, 30, IDENT_FUNC.get(scope).result.address*4*-1));
-        instructions.add(DLX.assemble(DLX.LDW, 31, 30, IDENT_MEM.get(scope).address*4*-1));
-        instructions.add(DLX.assemble(DLX.RET, 31));
-        int after = instructions.size();
-        instructions.add(prior, DLX.assemble(DLX.BSR, after - prior + 1));
+        //if xxregno is -1 then there's an issue
+        if(xx.regno != -1){
+            instructions.add(DLX.assemble(DLX.STW, xx.regno, 30, IDENT_FUNC.get(scope).result.address*4*-1));
+            instructions.add(DLX.assemble(DLX.LDW, 31, 30, IDENT_MEM.get(scope).address*4*-1));
+            instructions.add(DLX.assemble(DLX.RET, 31));
+            int after = instructions.size();
+            instructions.add(prior, DLX.assemble(DLX.BSR, after - prior + 1));
+        }
         expect(Kind.CLOSE_BRACE);
         expect(Kind.SEMICOLON);
     }
