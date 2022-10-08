@@ -12,7 +12,10 @@ public class AST {
     public String printPreOrder(){
         // TODO: Return the pre order traversal of AST. Use "\n" as separator.
         // Use the enum ASTNonTerminal provided for naming convention.
+        if(node == null)
+            return "";
         printer.visit(node); 
+        //return "";
         return printer.toString();
     }
 }

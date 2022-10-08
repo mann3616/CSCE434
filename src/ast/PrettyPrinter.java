@@ -65,6 +65,8 @@ public class PrettyPrinter implements NodeVisitor {
     @Override
     public void visit (Computation node) {
         // Make node.main() not annoying
+        if(node == null)
+            return;
         println(node, "[" + node.main().functionString() + "]");
         depth++;
         node.variables().accept(this);

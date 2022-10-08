@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Stack;
 
 import pl434.Token.Kind;
 import ast.*;
@@ -203,20 +204,16 @@ public class Compiler {
         try{
             return symbolTable.lookup(ident.lexeme());
         }catch (SymbolNotFoundError e){
-            System.out.println("Caught a lookup issue with " + ident.lexeme());
-            reportResolveSymbolError(ident.lexeme(), ident.lineNumber() + 1, ident.charPosition());
+           throw new QuitParseException(reportResolveSymbolError(ident.lexeme(), ident.lineNumber() + 1, ident.charPosition()));
         }
-        return null;
     }
 
-    private Symbol tryDeclareVariable (Token ident){
+    private Symbol tryDeclareVariable (Token ident, Symbol sym){
         try{
-            return symbolTable.insert(ident.lexeme());
+            return symbolTable.insert(ident.lexeme(), sym);
         }catch(RedeclarationError e){
-            System.out.println("Caught a declaration issue with " + ident.lexeme());
-            reportDeclareSymbolError(ident.lexeme(), ident.lineNumber() + 1, ident.charPosition());
+            throw new QuitParseException(reportDeclareSymbolError(ident.lexeme(), ident.lineNumber() + 1, ident.charPosition()));
         }
-        return null;
     }
 
     public int[] compile () {
@@ -387,14 +384,10 @@ public class Compiler {
         String var = scope+":"+ident.lexeme();
         Result x = IDENT_MEM.get(var);
         // if x is null what do we do... report error and return!
+        Symbol simba = tryResolveVariable(ident);
         if(x == null){
-            tryResolveVariable(ident);
             // just set it to something so it doesn't throw an error
-            for(String s : IDENT_MEM.keySet()){
-                x = IDENT_MEM.get(s);
-
-                break;
-            }
+            x = IDENT_MEM.get("main:" + ident.lexeme());
         }
         // Peek stack here
         x.lexeme = ident.lexeme();
@@ -413,19 +406,15 @@ public class Compiler {
         }
         x.regno = reg;
         // vartype is probably null here
-        if (IDENT_VARTYPE.get(scope+":"+x.lexeme) != null){
-            x.expression = new AddressOf(lineNumber(), charPosition(), new Symbol(x.lexeme, IDENT_VARTYPE.get(scope+":"+x.lexeme)));
-        }else{
-            x.expression = new AddressOf(lineNumber(), charPosition(), new Symbol(x.lexeme, new VoidType()));
-        }
+        x.expression = new AddressOf(lineNumber(), charPosition(), simba);
         IDENT_REG.put(reg, x);
         IDENT_MEM.put(var, x);
         return x;
     }
 
-    private void varDecl(String scope, DeclarationList vars){
+    private HashMap<String, Symbol> varDecl(String scope, DeclarationList vars){
         DeclarationList variableList = new DeclarationList(lineNumber(), charPosition());
-        enterScope();
+        HashMap<String, Symbol> global = new HashMap<>();
         while(have(NonTerminal.VAR_DECL)){
             Token type = expectRetrieve(NonTerminal.VAR_DECL);
             Token currentVariable = expectRetrieve(Kind.IDENT);
@@ -446,9 +435,10 @@ public class Compiler {
                     variableType = new BoolType();
                     break;
             }
-            VariableDeclaration generatedVariable = new VariableDeclaration(lineNumber(), charPosition(), new Symbol(id, variableType));
+            global.put(id, new Symbol(id, variableType));
+            VariableDeclaration generatedVariable = new VariableDeclaration(lineNumber(), charPosition(), global.get(id));
             variableList.add(generatedVariable);
-            tryDeclareVariable(currentVariable);
+            tryDeclareVariable(currentVariable, global.get(id));
             // store the variable name and its type
             IDENT_VARTYPE.put(scope+":"+currentVariable.lexeme(), variableType);
             //System.out.println(id + " " + x.address*4);
@@ -461,11 +451,13 @@ public class Compiler {
             while(accept(Kind.COMMA)){
                 currentVariable = expectRetrieve(Kind.IDENT);
                 id = currentVariable.lexeme();
+                global.put(id, new Symbol(id, variableType));
                 x = new Result();
                 x.kind = Result.VAR;
+                tryDeclareVariable(currentVariable, global.get(id));
                 x.address = ++maxed * -1;
                 //System.out.println(id + " " + x.address*4);
-                generatedVariable = new VariableDeclaration(lineNumber(), charPosition(), new Symbol(id, variableType));
+                generatedVariable = new VariableDeclaration(lineNumber(), charPosition(), global.get(id));
                 variableList.add(generatedVariable);
                 IDENT_VARTYPE.put(scope+":"+currentVariable.lexeme(), variableType);
                 if(type.kind() == Kind.FLOAT){
@@ -478,6 +470,7 @@ public class Compiler {
             expect(Kind.SEMICOLON);
         }
         vars.list = variableList.list;
+        return global;
     }
     private Result statSeq(String scope, StatementSequence statementList){
         // Add all actions to statementList
@@ -522,7 +515,7 @@ public class Compiler {
     private Result whileStat(String scope, StatementSequence statementList){
         Token start = currentToken;
         int before = instructions.size();
-        Result rel = relation(scope, statementList);
+        Result rel = relation(scope);
         expect(Kind.DO);
         StatementSequence whileStatementSequence = new StatementSequence(lineNumber(), charPosition());
         statSeq(scope, whileStatementSequence);
@@ -543,7 +536,7 @@ public class Compiler {
         expect(Kind.OPEN_PAREN);
         // Relation is here
         // Manipulate x.expression
-        Result x = relExpr(scope, repeatStatementList);
+        Result x = relExpr(scope);
         // generate relation statement, add to statement list at end
         // Some expression
         expect(Kind.CLOSE_PAREN);
@@ -588,7 +581,7 @@ public class Compiler {
             // Expression requires 
             IDENT_REG.remove(obj.regno);
             // StatementList is null since we don't want to add the resolve to the parent node but to this one
-            Result second = relExpr(scope, null);
+            Result second = relExpr(scope);
             obj.regno = second.regno;
             IDENT_REG.put(obj.regno, obj);
             deallocate(obj.regno);
@@ -600,7 +593,7 @@ public class Compiler {
             return;
         }
         if(!obj.isFloat){
-            Result second = relExpr(scope, null);
+            Result second = relExpr(scope);
             
             switch(tok.kind()){
                 case ADD_ASSIGN:
@@ -629,7 +622,7 @@ public class Compiler {
                 break;
             }
         }else{
-            Result second = relExpr(scope, statementList);
+            Result second = relExpr(scope);
             switch(tok.kind()){
                 case ADD_ASSIGN:
                 instructions.add(DLX.assemble(DLX.fADD, obj.regno, obj.regno, second.regno));
@@ -658,7 +651,7 @@ public class Compiler {
     private Result returnStat(String scope, StatementSequence statementList){
         Result x = new Result();
         if(!have(Kind.SEMICOLON)){
-            x = relExpr(scope, null);
+            x = relExpr(scope);
             statementList.add(new ReturnStatement(lineNumber(), charPosition(), x.expression));
             return x;
         }
@@ -668,7 +661,7 @@ public class Compiler {
     }
     private void ifStat(String scope, StatementSequence statementList){
         loads.add(new ArrayList<Integer>());
-        Result b = relation(scope, statementList);
+        Result b = relation(scope);
         expect(Kind.THEN);
         int getem = instructions.size();
         lru.get(b.regno);
@@ -692,11 +685,11 @@ public class Compiler {
             statementList.add(new IfStatement(lineNumber(), charPosition(), b.expression, ifStatementList, null));
         }
     }
-    private Result groupExpr(String scope, StatementSequence statementList){
+    private Result groupExpr(String scope){
         Result x = new Result();
         x.kind = Result.CONST;
         if(accept(Kind.NOT)){
-            Result xx = relExpr(scope, statementList);
+            Result xx = relExpr(scope);
             x.regno = xx.regno;
             instructions.add(DLX.assemble(DLX.XORI, x.regno, xx.regno, 1));
             x.isFloat = false;
@@ -743,7 +736,7 @@ public class Compiler {
             return x;
         }
         if(have(NonTerminal.RELATION)){
-            Result xx = relation(scope, statementList);
+            Result xx = relation(scope);
             x.expression = xx.expression;
             x.regno = xx.regno;
             lru.get(x.regno);
@@ -754,7 +747,7 @@ public class Compiler {
             // Calling a function!
             // make local arg list?
             // when doing call should end up here
-            Result xx = funcCall(scope, statementList);
+            Result xx = funcCall(scope, null);
             x.regno = xx.regno;
             lru.get(x.regno);
             x.isFloat = xx.isFloat;
@@ -764,85 +757,90 @@ public class Compiler {
         String errorMessage = reportSyntaxError(NonTerminal.GROUP_EXPRESSION);
         throw new QuitParseException(errorMessage);
     }
-    private Result powExpr(String scope, StatementSequence statementList){
-        Result obj = groupExpr(scope, statementList);
+    private Result powExpr(String scope){
+        Result obj = groupExpr(scope);
         Token tok = currentToken;
-        if(accept(NonTerminal.POW_OP)){
-            Result obj2 = powExpr(scope, statementList);
+        Stack<Result> res = new Stack<>();
+        Stack<Token> toks = new Stack<>();
+        res.push(obj);
+        while(accept(NonTerminal.POW_OP)){
+            Result obj2 = groupExpr(scope);
+            toks.push(tok);
+            res.push(obj2);
             instructions.add(DLX.assemble(DLX.POW, obj.regno, obj.regno, obj2.regno));
-            obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
             lru.get(obj.regno);
         }
+        obj.expression = makeExpression(res, toks);
         return obj;
     }
-    private Result multExpr(String scope, StatementSequence statementList){
-        Result obj = powExpr(scope, statementList);
-        if(have(NonTerminal.MULT_OP)){
+    private Result multExpr(String scope){
+        Result obj = powExpr(scope);
+        Stack<Result> res = new Stack<>();
+        Stack<Token> toks = new Stack<>();
+        res.push(obj);
+        while(have(NonTerminal.MULT_OP)){
             Token tok = expectRetrieve(NonTerminal.MULT_OP);
-            Result obj2 = multExpr(scope, statementList);
+            Result obj2 = powExpr(scope);
             obj.isFloat = obj.isFloat || obj2.isFloat;
+            toks.push(tok);
+            res.push(obj2);
             if(obj.isFloat){
                 switch(tok.kind()){
                     case MUL: 
                     instructions.add(DLX.assemble(DLX.fMUL, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case DIV:
                     instructions.add(DLX.assemble(DLX.fDIV, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case MOD: 
                     instructions.add(DLX.assemble(DLX.fMOD, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case AND: 
                     instructions.add(DLX.assemble(DLX.AND, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                 }
             }else {
                 switch(tok.kind()){
                     case MUL: 
                     instructions.add(DLX.assemble(DLX.MUL, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case DIV:
                     instructions.add(DLX.assemble(DLX.DIV, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case MOD: 
                     instructions.add(DLX.assemble(DLX.MOD, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case AND: 
                     instructions.add(DLX.assemble(DLX.AND, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                 }
             }
             lru.get(obj.regno);
         }
+        obj.expression = makeExpression(res, toks);
         return obj;
     }
-    private Result addExpr(String scope, StatementSequence statementList){
-        Result obj = multExpr(scope, statementList);
-        if(have(NonTerminal.ADD_OP)){
+    private Result addExpr(String scope){
+        Result obj = multExpr(scope);
+        Stack<Result> res = new Stack<>();
+        Stack<Token> toks = new Stack<>();
+        res.push(obj);
+        while(have(NonTerminal.ADD_OP)){
             Token tok = expectRetrieve(NonTerminal.ADD_OP);
-            Result obj2 = addExpr(scope, statementList);
+            Result obj2 = multExpr(scope);
             obj.isFloat = obj.isFloat || obj2.isFloat;
+            toks.push(tok);
+            res.push(obj2);
             if(obj.isFloat){
                 switch(tok.kind()){
                     case ADD: 
                     instructions.add(DLX.assemble(DLX.fADD, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case SUB:
                     instructions.add(DLX.assemble(DLX.fSUB, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case OR: 
                     instructions.add(DLX.assemble(DLX.OR, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                 }
             }else {
@@ -850,27 +848,25 @@ public class Compiler {
                     case ADD: 
                     //System.out.println("Is this illegal addExpr");
                     instructions.add(DLX.assemble(DLX.ADD, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case SUB:
                     instructions.add(DLX.assemble(DLX.SUB, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                     case OR: 
                     instructions.add(DLX.assemble(DLX.OR, obj.regno, obj.regno, obj2.regno));
-                    obj.expression = Node.newExpression(obj.expression, tok, obj2.expression);
                     break;
                 }
             }
             lru.get(obj.regno);
         }
+        obj.expression = makeExpression(res, toks);
         return obj;
     }
-    private Result relExpr(String scope, StatementSequence statementList){
-        Result obj = addExpr(scope, statementList);
+    private Result relExpr(String scope){
+        Result obj = addExpr(scope);
         if(have(NonTerminal.REL_OP)){
             Token tok = expectRetrieve(NonTerminal.REL_OP);
-            Result obj2 = relExpr(scope, statementList);
+            Result obj2 = relExpr(scope);
             instructions.add(DLX.assemble(DLX.SUB, obj.regno, obj.regno, obj2.regno));
             switch(tok.kind()){
                 case EQUAL_TO:
@@ -905,12 +901,20 @@ public class Compiler {
         }
         return obj;
     }
-    private Result relation(String scope, StatementSequence statementList){
+    private Result relation(String scope){
         expect(Kind.OPEN_PAREN);
         // resolves
-        Result o = relExpr(scope, statementList);
+        Result o = relExpr(scope);
         expect(Kind.CLOSE_PAREN);
         return o;
+    }
+    private Expression makeExpression(Stack<Result> res, Stack<Token> toks){
+        if(toks.empty()){
+            return res.pop().expression;
+        }
+        Result ress = res.pop();
+        Token tok = toks.pop();
+        return Node.newExpression(makeExpression(res, toks), tok, ress.expression);
     }
     private Result allocate(){
         int reg = lru.last();
@@ -926,7 +930,6 @@ public class Compiler {
         // Have something outside of this scope point to the arg list
         // Resolve, and then add to statementList
         // In a new function so we should enter the function scope
-        enterScope();
         Token functionToken = expectRetrieve(Kind.IDENT);
         String n = functionToken.lexeme();
         expect(Kind.OPEN_PAREN);
@@ -943,7 +946,7 @@ public class Compiler {
         // in a new function so we should have a new scope at some point, dont know how to add that\
         switch (n){
             case "printInt":
-            result = relExpr(scope, null);
+            result = relExpr(scope);
             a.regno = result.regno;
             a.isFloat = false;
             printInt(a.regno);
@@ -952,7 +955,7 @@ public class Compiler {
             localArgumentList.append(result.expression);
             break;
             case "printFloat":
-            result = relExpr(scope, null);
+            result = relExpr(scope);
             a.regno = result.regno;
             a.isFloat = false;
             printFloat(a.regno);
@@ -965,7 +968,7 @@ public class Compiler {
             }
             break;
             case "printBool":
-            result = relExpr(scope, null);
+            result = relExpr(scope);
             a.regno = result.regno;
             a.isFloat = false;
             printBool(a.regno);
@@ -1011,17 +1014,14 @@ public class Compiler {
             if(IDENT_FUNC.get(n) != null){
                 ArrayList<Result> vars = new ArrayList<>();
                 // This is the function expression thing
-                Result var = relExpr(scope, statementList);
                 // get regno of function?
                 a.regno = allocate().regno;
                 while(!have(Kind.CLOSE_PAREN)){
-                    expect(Kind.COMMA);
+                    Result var = relExpr(scope);
                     localArgumentList.append(var.expression);
                     vars.add(var);
-                    var = relExpr(scope, statementList);
+                    accept(Kind.COMMA);
                 }
-                localArgumentList.append(var.expression);
-                vars.add(var);
                 setFuncVar(vars, n);
                 instructions.add(DLX.assemble(DLX.JSR, IDENT_FUNC.get(n).jumper*4));
                 // a.regno is big mad
@@ -1048,12 +1048,12 @@ public class Compiler {
                 // Then we can release to close_paren
                 ArrayList<Result> vars = new ArrayList<>();
                 // This is the function expression thing
-                Result var = relExpr(scope, statementList);
+                Result var = relExpr(scope);
                 // get regno of function?
                 while(!have(Kind.CLOSE_PAREN)){
                     expect(Kind.COMMA);
                     vars.add(var);
-                    var = relExpr(scope, statementList);
+                    var = relExpr(scope);
                 }
                 // We don't do anything with vars, just let this happen
             }
@@ -1083,6 +1083,7 @@ public class Compiler {
         DeclarationList functionList = new DeclarationList(lineNumber(), charPosition());
         // Functions have their own statement sequence
         while(accept(NonTerminal.FUNC_DECL)){
+            enterScope();
             Token id = expectRetrieve(Kind.IDENT);
             func function = new func(id.lexeme());
             IDENT_FUNC.put(id.lexeme(), function);
@@ -1122,7 +1123,8 @@ public class Compiler {
             FunctionDeclaration functionDeclaration = new FunctionDeclaration(functionIdent.lineNumber(), functionIdent.charPosition(), new Symbol(id.lexeme(), functionType), new FunctionBody(lineNumber(), charPosition(), variableList, statementList));
             functionList.add(functionDeclaration);
             // Add function to scope
-            tryDeclareVariable(id);
+            tryDeclareVariable(id, new Symbol(id.lexeme(), functionType));
+            exitScope();
         }
         funcs.list = functionList.list;
     }
@@ -1143,7 +1145,6 @@ public class Compiler {
         // create declaration, add to variableList.list
         Token type = expectRetrieve(NonTerminal.PARAM_DECL);
         Token variable = expectRetrieve(Kind.IDENT);
-        tryDeclareVariable(variable);
         String id = variable.lexeme();
         Type paramType = new VoidType();
         switch (type.kind()){
@@ -1158,6 +1159,7 @@ public class Compiler {
                 break; 
         }
 
+        tryDeclareVariable(variable, new Symbol(variable.lexeme(), paramType));
         Result x = new Result();
         x.kind = Result.VAR;
         x.address = ++maxed * -1;
@@ -1276,8 +1278,43 @@ public class Compiler {
 
     private void computation () {
         initSymbolTable();
+        enterScope();
         Token mainToken = currentToken;
         expect(Kind.MAIN);
+        Symbol pi = new Symbol("printInt", 0);
+        HashMap<String, Symbol> hm = new HashMap<>();
+
+        TypeList list = new TypeList();
+        list.append(new IntType());
+        FuncType type = new FuncType(list, new VoidType());
+        hm.put("printInt", new Symbol("printInt", type));
+
+        list = new TypeList();
+        list.append(new FloatType());
+        type = new FuncType(list, new VoidType());
+        hm.put("printFloat", new Symbol("printFloat", type));
+
+        list = new TypeList();
+        list.append(new BoolType());
+        type = new FuncType(list, new VoidType());
+        hm.put("printBool", new Symbol("printBool", type));
+
+        list = new TypeList();
+        type = new FuncType(list, new VoidType());
+        hm.put("println", new Symbol("println", type));
+
+        list = new TypeList();
+        type = new FuncType(list, new IntType());
+        hm.put("readInt", new Symbol("readInt", type));
+
+        list = new TypeList();
+        type = new FuncType(list, new FloatType());
+        hm.put("readFloat", new Symbol("readFloat", type));
+
+        list = new TypeList();
+        type = new FuncType(list, new BoolType());
+        hm.put("readBool", new Symbol("readBool", type));
+
         IDENT_FUNC.put("printInt", new func(""));
         IDENT_FUNC.put("printFloat", new func(""));
         IDENT_FUNC.put("printBool", new func(""));
@@ -1287,7 +1324,7 @@ public class Compiler {
         IDENT_FUNC.put("println", new func(""));
 
         vars = new DeclarationList(lineNumber(), charPosition());
-        varDecl("main", vars);
+        hm.putAll(varDecl("main", vars));
 
         // Funcs isn't doing anything ...
         funcs = new DeclarationList(lineNumber(), charPosition());
@@ -1306,7 +1343,11 @@ public class Compiler {
         this.node = new Computation(mainToken.lineNumber(), mainToken.charPosition(), new Symbol(mainToken.lexeme(), mainType), vars, funcs, mainSeq);
     }
     public ast.AST genAST(){
-        computation();
+        try {
+            computation();
+        }
+        catch (QuitParseException q) {
+        }
         return new ast.AST(node);
     }
 }

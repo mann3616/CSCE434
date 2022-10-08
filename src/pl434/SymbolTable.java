@@ -27,11 +27,11 @@ public class SymbolTable {
     }
 
     // insert name in SymbolTable
-    public Symbol insert (String name) throws RedeclarationError {
+    public Symbol insert (String name, Symbol sym) throws RedeclarationError {
         if(stack.peek().containsKey(name)){
             throw new RedeclarationError(name);
         }
-        stack.peek().put(name, new Symbol(name, -4 * ++addy));
+        stack.peek().put(name, sym);
         return stack.peek().get(name);
     }
     public void addScope(){

@@ -84,11 +84,11 @@ public class CompilerTester {
                 System.exit(-7);
             }
         }
-
         if (c.hasError()) {
             System.out.println("Error parsing file.");
             System.out.println(c.errorReport());
             System.exit(-8);
         }
+
     }
 }

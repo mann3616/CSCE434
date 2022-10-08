@@ -1,0 +1,29 @@
+// Rushil Udani
+// Number guessing game
+main
+	int goal;
+
+function getRandomNumber() : int {
+	return 38; // chosen by fair dice roll
+	           // guaranteed to be random
+};
+
+function getGuess() : int {
+	return call readInt();
+};
+
+function isCorrect(int guess) : bool {
+	call printBool(guess < goal);
+	return guess == goal;
+};
+
+{
+	let goal = call getRandomNumber();
+	repeat
+		// statSeq cannot be empty, but we want to do nothing
+		if (false) then
+			call printInt(-1);
+		fi;
+	until (call isCorrect(call getGuess()));
+	// congratulations! you won!
+}.

@@ -1,0 +1,15 @@
+main
+int x,y,z;
+
+function f1 (int n) : int
+{
+    int a;
+    let a = n;
+    return a;
+};
+
+{
+	let y = 2;
+	call f1(y);
+	call printInt(a);
+}.
