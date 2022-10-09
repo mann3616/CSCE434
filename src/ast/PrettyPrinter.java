@@ -143,11 +143,6 @@ public class PrettyPrinter implements NodeVisitor {
         // TODO Auto-generated method stub
         println(node, "[" + node.literal() + "]");
     }
-    // @Override
-    // public void visit(ArrayIndex node) {
-    //     // TODO Auto-generated method stub
-        
-    // }
     @Override
     public void visit(LogicalNot node) {
         // TODO Auto-generated method stub
@@ -261,6 +256,15 @@ public class PrettyPrinter implements NodeVisitor {
         println(node, "[" + node.function() + "]");
         depth++;
         node.list().accept(this);
+        depth--;
+    }
+    @Override
+    public void visit(ArrayIndex node) {
+        // TODO Auto-generated method stub
+        println(node, "");
+        depth++;
+        node.left.accept(this);
+        node.right.accept(this);
         depth--;
     }
 }

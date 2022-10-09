@@ -53,6 +53,16 @@ public class Symbol {
             param += "int";
         } else if(tt.getClass().equals(VoidType.class)){
             param += "void";
+        }else {
+            ArrayType t = (ArrayType) tt;
+            param+= typeToString(t.type());
+            for(int i = 0;i<t.dims(); i++ ){
+                if(t.dimVals().isEmpty()){
+                    param+= "[]";
+                }else{
+                    param += "[" + t.dimVals().get(i) + "]";
+                }
+            }
         }
         return param;
     }

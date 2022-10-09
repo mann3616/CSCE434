@@ -2,7 +2,7 @@ package pl434;
 
 import java.util.HashMap;
 import java.util.Stack;
-
+import types.*;
 public class SymbolTable {
 
     // TODO: Create Symbol Table structure
@@ -29,6 +29,21 @@ public class SymbolTable {
     // insert name in SymbolTable
     public Symbol insert (String name, Symbol sym) throws RedeclarationError {
         if(stack.peek().containsKey(name)){
+            Symbol simba = stack.peek().get(name);
+            if(sym.type.getClass().equals(FuncType.class) && simba.type.getClass().equals(FuncType.class)){
+                FuncType symt = (FuncType) sym.type;
+                FuncType simt = (FuncType) simba.type;
+                if(symt.params().list.size() != simt.params().list.size()){
+                    return sym;
+                }
+                for(int i = 0; i< simt.params().list.size(); i++){
+                    if(!simt.params().list.get(i).getClass().equals(symt.params().list.get(i).getClass())){
+                        return sym;
+                    }
+                }
+            } //else if(sym.type.getClass().equals(FuncType.class) ^ simba.type.getClass().equals(FuncType.class)){
+                //return sym;
+            //}
             throw new RedeclarationError(name);
         }
         stack.peek().put(name, sym);

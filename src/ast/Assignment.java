@@ -1,9 +1,9 @@
 package ast;
 
 public class Assignment extends Node implements Statement{
-    private AddressOf addressOf;
+    private Expression addressOf;
     private Expression right;
-    protected Assignment(int lineNum, int charPos, AddressOf addressOf, Expression right) {
+    protected Assignment(int lineNum, int charPos, Expression addressOf, Expression right) {
         super(lineNum, charPos);
         //TODO Auto-generated constructor stub
         this.addressOf = addressOf;
@@ -15,7 +15,7 @@ public class Assignment extends Node implements Statement{
         // TODO Auto-generated method stub
         visitor.visit(this);
     }
-    public AddressOf addressOf(){
+    public Expression addressOf(){
         return this.addressOf;
     }
     public Expression right(){

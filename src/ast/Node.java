@@ -29,17 +29,17 @@ public abstract class Node implements Visitable {
         return this.getClass().getSimpleName();
     }
     // Some factory method
-    public static Statement newAssignment (int lineNum, int charPos, AddressOf dest, Token assignOp, Expression src) {
+    public static Statement newAssignment (int lineNum, int charPos, Expression dest, Token assignOp, Expression src) {
         switch(assignOp.kind()){
             case ASSIGN: return new Assignment(lineNum, charPos, dest, src);
-            case UNI_INC: return new Assignment(lineNum, charPos, dest, new Addition(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
-            case UNI_DEC: return new Assignment(lineNum, charPos, dest, new Subtraction(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
-            case ADD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Addition(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
-            case SUB_ASSIGN: return new Assignment(lineNum, charPos, dest, new Subtraction(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
-            case MUL_ASSIGN: return new Assignment(lineNum, charPos, dest, new Multiplication(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
-            case MOD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Modulo(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
-            case DIV_ASSIGN: return new Assignment(lineNum, charPos, dest, new Division(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
-            case POW_ASSIGN: return new Assignment(lineNum, charPos, dest, new Power(lineNum, charPos, new Dereference(lineNum, charPos, dest.symbol()), src));
+            case UNI_INC: return new Assignment(lineNum, charPos, dest, new Addition(lineNum, charPos, dest, src));
+            case UNI_DEC: return new Assignment(lineNum, charPos, dest, new Subtraction(lineNum, charPos, dest, src));
+            case ADD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Addition(lineNum, charPos, dest, src));
+            case SUB_ASSIGN: return new Assignment(lineNum, charPos, dest, new Subtraction(lineNum, charPos, dest, src));
+            case MUL_ASSIGN: return new Assignment(lineNum, charPos, dest, new Multiplication(lineNum, charPos, dest, src));
+            case MOD_ASSIGN: return new Assignment(lineNum, charPos, dest, new Modulo(lineNum, charPos, dest, src));
+            case DIV_ASSIGN: return new Assignment(lineNum, charPos, dest, new Division(lineNum, charPos, dest, src));
+            case POW_ASSIGN: return new Assignment(lineNum, charPos, dest, new Power(lineNum, charPos, dest, src));
             default: throw new RuntimeException("Unable to make Statement with AssignOperation: " + assignOp.lexeme());
         }
     }
