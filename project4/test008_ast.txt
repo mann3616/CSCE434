@@ -1,0 +1,22 @@
+Computation[main:()->void]
+  DeclarationList
+    VariableDeclaration[f:int[1]]
+  DeclarationList
+    FunctionDeclaration[funcc:(int[])->float]
+      FunctionBody
+        StatementSequence
+          ReturnStatement
+            ArrayIndex
+              a:int[]
+              IntegerLiteral[0]
+  StatementSequence
+    Assignment
+      ArrayIndex
+        f:int[1]
+        IntegerLiteral[0]
+      IntegerLiteral[1]
+    FunctionCall[printFloat:(float)->void]
+      ArgumentList
+        FunctionCall[funcc:(int[])->float]
+          ArgumentList
+            f:int[1]

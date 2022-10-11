@@ -9,7 +9,7 @@
             "name": "Launch CompilerTester",
             "request": "launch",
             "mainClass": "pl434.CompilerTester",
-            "args": "-s project3/test016.txt -i project3/test016.in --asm",
+            "args": "-s project4/test008.txt -i project4/test008.in -a",
             "projectName": "CSCE434_9bbb598c"
         }
     ]

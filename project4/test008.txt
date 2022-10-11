@@ -1,15 +1,10 @@
 main
-int x,y,z;
-
-function f1 (int n) : int
+int[1] f;
+function funcc(int[] a): float
 {
-    int a;
-    let a = n;
-    return a;
+    return a[0];
 };
-
 {
-	let y = 2;
-	call f1(y);
-	call printInt(a);
+    let f[0] = 1;
+    call printFloat(call funcc(f));
 }.
