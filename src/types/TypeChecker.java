@@ -8,7 +8,7 @@ import java.util.Map;
 import ast.*;
 import pl434.Symbol;
 //Is abstract just to end error, must take off abstract for Project 5
-public abstract class TypeChecker implements NodeVisitor {
+public class TypeChecker implements NodeVisitor {
 
     
     private StringBuilder errorBuffer;
@@ -53,6 +53,178 @@ public abstract class TypeChecker implements NodeVisitor {
 
     @Override
     public void visit (Computation node) {
-        throw new RuntimeException("implement visit (Computation)");
+        node.variables().accept(this);
+        node.functions().accept(this);
+        node.mainStatementSequence().accept(this);
+    }
+
+    @Override
+    public void visit(BoolLiteral node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(IntegerLiteral node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(FloatLiteral node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(AddressOf node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(ArrayIndex node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Dereference node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(LogicalNot node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Power node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Multiplication node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Division node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Modulo node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(LogicalAnd node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Addition node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Subtraction node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(LogicalOr node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Relation node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(Assignment node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(ArgumentList node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(FunctionCall node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(IfStatement node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(WhileStatement node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(RepeatStatement node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(ReturnStatement node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(StatementSequence node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(VariableDeclaration node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(FunctionBody node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(FunctionDeclaration node) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void visit(DeclarationList node) {
+        // TODO Auto-generated method stub
+        for(Declaration d : node){
+            d.accept(this);
+        }
     }
 }
