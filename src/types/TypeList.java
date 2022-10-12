@@ -6,25 +6,24 @@ import java.util.List;
 
 public class TypeList extends Type implements Iterable<Type> {
 
-    public List<Type> list;
+  public List<Type> list;
 
-    public TypeList () {
-        list = new ArrayList<>();
-    }
+  public TypeList() {
+    list = new ArrayList<>();
+  }
 
-    public void append (Type type) {
-        list.add(type);
-    }
+  public void append(Type type) {
+    list.add(type);
+  }
 
-    public List<Type> getList () {
-        return list;
-    }
+  public List<Type> getList() {
+    return list;
+  }
 
-    @Override
-    public Iterator<Type> iterator () {
-        return list.iterator();
-    }
+  @Override
+  public Iterator<Type> iterator() {
+    return list.iterator();
+  }
+  //TODO more helper here
 
-    //TODO more helper here
-    
 }

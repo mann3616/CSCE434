@@ -5,6 +5,12 @@
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
         "d:\\forks\\engr-cse-csce434-f22-testcases\\lib\\commons-cli-1.5.0-javadoc.jar",
-        "d:\\forks\\engr-cse-csce434-f22-testcases\\lib\\commons-cli-1.5.0.jar"
-    ]
+        "d:\\forks\\engr-cse-csce434-f22-testcases\\lib\\commons-cli-1.5.0.jar",
+        "c:\\Users\\lance\\OneDrive\\Documents\\CSCE434Dependencies\\commons-cli-1.5.0\\commons-cli-1.5.0.jar",
+        "c:\\Users\\lance\\OneDrive\\Documents\\CSCE434Dependencies\\commons-cli-1.5.0\\commons-cli-1.5.0-javadoc.jar",
+        "c:\\Users\\lance\\OneDrive\\Documents\\CSCE434Dependencies\\commons-cli-1.5.0\\commons-cli-1.5.0-sources.jar",
+        "c:\\Users\\lance\\OneDrive\\Documents\\CSCE434Dependencies\\commons-cli-1.5.0\\commons-cli-1.5.0-tests.jar",
+        "c:\\Users\\lance\\OneDrive\\Documents\\CSCE434Dependencies\\commons-cli-1.5.0\\commons-cli-1.5.0-test-sources.jar"
+    ],
+    "java.format.settings.url": "eclipse-formatter.xml"
 }

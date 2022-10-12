@@ -1,5 +1,3 @@
 package ast;
 
-public interface Expression extends Visitable {
-
-}
+public interface Expression extends Visitable {}

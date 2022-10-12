@@ -1,26 +1,27 @@
 package ast;
 
-public class Power extends Node implements Expression{
+public class Power extends Node implements Expression {
 
-    private Expression left, right;
-    protected Power(int lineNum, int charPos, Expression left, Expression right) {
-        super(lineNum, charPos);
-        //TODO Auto-generated constructor stub
-        this.left = left;
-        this.right = right;
-    }
+  private Expression left, right;
 
-    @Override
-    public void accept(NodeVisitor visitor) {
-        // TODO Auto-generated method stub
-        visitor.visit(this);
-    }
+  protected Power(int lineNum, int charPos, Expression left, Expression right) {
+    super(lineNum, charPos);
+    //TODO Auto-generated constructor stub
+    this.left = left;
+    this.right = right;
+  }
 
-    public Expression left(){
-        return this.left;
-    }
+  @Override
+  public void accept(NodeVisitor visitor) {
+    // TODO Auto-generated method stub
+    visitor.visit(this);
+  }
 
-    public Expression right(){
-        return this.right;
-    }
+  public Expression left() {
+    return this.left;
+  }
+
+  public Expression right() {
+    return this.right;
+  }
 }

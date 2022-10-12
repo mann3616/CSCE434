@@ -1,6 +1,5 @@
 package ast;
 
 public interface Visitable {
-
-    public void accept (NodeVisitor visitor);
+  public void accept(NodeVisitor visitor);
 }

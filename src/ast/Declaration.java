@@ -1,6 +1,3 @@
 package ast;
 
-public interface Declaration extends Visitable{
-
-    
-}
+public interface Declaration extends Visitable {}

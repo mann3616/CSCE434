@@ -1,5 +1,3 @@
 package ast;
 
-public interface Statement extends Visitable {
-
-}
+public interface Statement extends Visitable {}

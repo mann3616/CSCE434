@@ -1,21 +1,22 @@
 package ast;
 
-public class LogicalNot extends Node implements Expression{
+public class LogicalNot extends Node implements Expression {
 
-    private Expression right;
-    protected LogicalNot(int lineNum, int charPos, Expression right) {
-        super(lineNum, charPos);
-        //TODO Auto-generated constructor stub
-        this.right = right;
-    }
+  private Expression right;
 
-    @Override
-    public void accept(NodeVisitor visitor) {
-        // TODO Auto-generated method stub
-        visitor.visit(this);
-    }
+  protected LogicalNot(int lineNum, int charPos, Expression right) {
+    super(lineNum, charPos);
+    //TODO Auto-generated constructor stub
+    this.right = right;
+  }
 
-    public Expression right(){
-        return this.right;
-    }
+  @Override
+  public void accept(NodeVisitor visitor) {
+    // TODO Auto-generated method stub
+    visitor.visit(this);
+  }
+
+  public Expression right() {
+    return this.right;
+  }
 }
