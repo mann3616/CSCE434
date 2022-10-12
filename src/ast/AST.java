@@ -19,4 +19,8 @@ public class AST {
     //return "";
     return printer.toString();
   }
+
+  public Computation getNode() {
+    return this.node;
+  }
 }

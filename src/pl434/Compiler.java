@@ -1379,7 +1379,6 @@ public class Compiler {
           }
           setFuncVar(vars, n);
           instructions.add(DLX.assemble(DLX.JSR, IDENT_FUNC.get(n).jumper * 4));
-          // a.regno is big mad
           if (IDENT_FUNC.get(n).result != null) {
             lru.get(a.regno);
             instructions.add(

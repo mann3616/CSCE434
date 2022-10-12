@@ -2,8 +2,8 @@ package ast;
 
 public class ArrayIndex extends Node implements Expression {
 
-  Expression left;
-  Expression right;
+  public Expression left;
+  public Expression right;
 
   public ArrayIndex(
     int lineNum,

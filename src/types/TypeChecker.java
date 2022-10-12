@@ -48,179 +48,168 @@ public class TypeChecker implements NodeVisitor {
   }
 
   @Override
+  public void visit(StatementSequence node) {
+    for (Statement s : node) {
+      s.accept(this);
+    }
+  }
+
+  @Override
+  public void visit(FunctionBody node) {
+    node.declaration().accept(this);
+    node.sequence().accept(this);
+  }
+
+  @Override
+  public void visit(VariableDeclaration node) {}
+
+  @Override
+  public void visit(FunctionDeclaration node) {
+    node.body().accept(this);
+  }
+
+  @Override
+  public void visit(DeclarationList node) {
+    if (node.empty()) return;
+    for (Declaration d : node) {
+      d.accept(this);
+    }
+  }
+
+  @Override
   public void visit(Computation node) {
+    // Make node.main() not annoying
+    if (node == null) return;
     node.variables().accept(this);
     node.functions().accept(this);
     node.mainStatementSequence().accept(this);
   }
 
   @Override
-  public void visit(BoolLiteral node) {
-    // TODO Auto-generated method stub
-
+  public void visit(RepeatStatement node) {
+    node.sequence().accept(this);
+    node.relation().accept(this);
   }
 
   @Override
-  public void visit(IntegerLiteral node) {
-    // TODO Auto-generated method stub
-
+  public void visit(WhileStatement node) {
+    node.relation().accept(this);
+    node.sequence().accept(this);
   }
 
   @Override
-  public void visit(FloatLiteral node) {
-    // TODO Auto-generated method stub
-
+  public void visit(ReturnStatement node) {
+    if (node.relation() != null) {
+      node.relation().accept(this);
+    }
   }
 
   @Override
-  public void visit(AddressOf node) {
-    // TODO Auto-generated method stub
-
+  public void visit(IfStatement node) {
+    node.relation().accept(this);
+    node.ifSequence().accept(this);
+    if (node.elseSequence() != null) {
+      node.elseSequence().accept(this);
+    }
   }
 
   @Override
-  public void visit(ArrayIndex node) {
-    // TODO Auto-generated method stub
-
+  public void visit(Assignment node) {
+    node.addressOf().accept(this);
+    node.right().accept(this);
   }
 
   @Override
-  public void visit(Dereference node) {
-    // TODO Auto-generated method stub
+  public void visit(AddressOf node) {}
 
-  }
+  @Override
+  public void visit(Dereference node) {}
+
+  @Override
+  public void visit(BoolLiteral node) {}
+
+  @Override
+  public void visit(IntegerLiteral node) {}
+
+  @Override
+  public void visit(FloatLiteral node) {}
 
   @Override
   public void visit(LogicalNot node) {
-    // TODO Auto-generated method stub
-
+    node.right().accept(this);
   }
 
   @Override
   public void visit(Power node) {
     // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(Multiplication node) {
     // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(Division node) {
-    // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(Modulo node) {
-    // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(LogicalAnd node) {
-    // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(Addition node) {
-    // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(Subtraction node) {
-    // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(LogicalOr node) {
-    // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(Relation node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(Assignment node) {
-    // TODO Auto-generated method stub
-
+    node.left().accept(this);
+    node.right().accept(this);
   }
 
   @Override
   public void visit(ArgumentList node) {
-    // TODO Auto-generated method stub
-
+    for (Expression expr : node) {
+      expr.accept(this);
+    }
   }
 
   @Override
   public void visit(FunctionCall node) {
-    // TODO Auto-generated method stub
-
+    node.list().accept(this);
   }
 
   @Override
-  public void visit(IfStatement node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(WhileStatement node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(RepeatStatement node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(ReturnStatement node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(StatementSequence node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(VariableDeclaration node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(FunctionBody node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(FunctionDeclaration node) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void visit(DeclarationList node) {
-    // TODO Auto-generated method stub
-    for (Declaration d : node) {
-      d.accept(this);
-    }
+  public void visit(ArrayIndex node) {
+    node.left.accept(this);
+    node.right.accept(this);
   }
 }

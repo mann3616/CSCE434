@@ -2,7 +2,6 @@ package ast;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import pl434.*;
 
 public class DeclarationList extends Node implements Iterable<Declaration> {
 
