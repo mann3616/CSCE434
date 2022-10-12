@@ -136,7 +136,7 @@ public class TypeChecker implements NodeVisitor {
       reportError(
         node.lineNumber(),
         node.charPosition(),
-        leftType.assign(rightType).toString()
+        "Cannot assign " + rightType + " to AddressOf(" + leftType + ")."
       );
     }
   }

@@ -1276,7 +1276,7 @@ public class Compiler {
     // Resolve, and then add to statementList
     // In a new function so we should enter the function scope
     Token funcCallToken = currentToken;
-    expect(Kind.FUNC);
+    expect(Kind.CALL);
     Token functionToken = expectRetrieve(Kind.IDENT);
     tryResolveVariable(functionToken);
     String n = functionToken.lexeme();
