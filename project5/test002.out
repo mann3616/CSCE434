@@ -1,0 +1,5 @@
+Error type-checking file.
+TypeError(7,5)[WhileStat requires bool condition not int.]
+TypeError(11,13)[Call with args TypeList(int) matches no function signature.]
+TypeError(13,17)[Cannot compare int with bool.]
+TypeError(10,9)[RepeatStat requires bool condition not ErrorType(Cannot compare int with bool.).]
