@@ -1,11 +1,7 @@
 main
-int a, b, c;
-float x, y, z;
+int y,z;
+float x;
 {
-	let a = 1;
-	let b = true;
-	let c = 1.2;
-
-	let x = 1.4;
-	printInt(x);
+	let x = 2;
+	let y = 2;
 }.

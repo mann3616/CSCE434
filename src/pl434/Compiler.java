@@ -870,6 +870,7 @@ public class Compiler {
         )
       );
     }
+    System.out.println(letToken);
     deallocate(obj.regno);
   }
 
@@ -1410,8 +1411,8 @@ public class Compiler {
             );
           // arg list is an issue,, it was declared in here so it will not work because it disappears when we leave the function
           FunctionCall functionCall = new FunctionCall(
-            functionToken.lineNumber(),
-            functionToken.charPosition(),
+            funcCallToken.lineNumber(),
+            funcCallToken.charPosition(),
             new Symbol(n, f.funcType),
             new ArgumentList(localArgumentList)
           );
@@ -1439,8 +1440,8 @@ public class Compiler {
     funcType = new FuncType(paramTypeList, returnType);
     function = new Symbol(n, funcType);
     FunctionCall functionCall = new FunctionCall(
-      functionToken.lineNumber(),
-      functionToken.charPosition(),
+      funcCallToken.lineNumber(),
+      funcCallToken.charPosition(),
       function,
       new ArgumentList(localArgumentList)
     );

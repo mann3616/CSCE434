@@ -1,0 +1,4 @@
+Error type-checking file.
+TypeError(6,2)[Cannot assign bool to AddressOf(int).]
+TypeError(7,2)[Cannot assign float to AddressOf(int).]
+TypeError(10,2)[Call with args TypeList(float) matches no function signature.]
