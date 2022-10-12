@@ -1,0 +1,8 @@
+Error type-checking file.
+TypeError(8,16)[Array arr3 has invalid size -5.]
+TypeError(9,12)[Array arr4 has invalid size 0.]
+TypeError(22,21)[Array Index Out of Bounds : -4 for array arr1]
+TypeError(22,5)[Cannot assign int to ErrorType(Array Index Out of Bounds : -4 for array arr1).]
+TypeError(25,18)[Array Index Out of Bounds : 10 for array arr2]
+TypeError(25,5)[Cannot assign int to ErrorType(Array Index Out of Bounds : 10 for array arr2).]
+

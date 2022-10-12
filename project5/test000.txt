@@ -1,0 +1,4 @@
+// 2 type errors expected
+main {
+    call printInt(1 + false);
+}.

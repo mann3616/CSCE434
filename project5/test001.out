@@ -1,0 +1,2 @@
+Error type-checking file.
+TypeError(5,2)[Cannot assign int to AddressOf(float).]
