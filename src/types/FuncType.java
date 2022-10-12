@@ -2,7 +2,7 @@ package types;
 
 public class FuncType extends Type {
 
-  private TypeList params;
+  TypeList params;
   private Type returnType;
 
   public FuncType(TypeList params, Type returnType) {

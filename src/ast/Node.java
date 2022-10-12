@@ -110,35 +110,111 @@ public abstract class Node implements Visitable {
   ) {
     switch (op.kind()) {
       case NOT:
-        return new LogicalNot(0, 0, rightSide);
+        return new LogicalNot(op.lineNumber(), op.charPosition(), rightSide);
       case ADD:
-        return new Addition(0, 0, leftSide, rightSide);
+        return new Addition(
+          op.lineNumber(),
+          op.charPosition(),
+          leftSide,
+          rightSide
+        );
       case SUB:
-        return new Subtraction(0, 0, leftSide, rightSide);
+        return new Subtraction(
+          op.lineNumber(),
+          op.charPosition(),
+          leftSide,
+          rightSide
+        );
       case DIV:
-        return new Division(0, 0, leftSide, rightSide);
+        return new Division(
+          op.lineNumber(),
+          op.charPosition(),
+          leftSide,
+          rightSide
+        );
       case MUL:
-        return new Multiplication(0, 0, leftSide, rightSide);
+        return new Multiplication(
+          op.lineNumber(),
+          op.charPosition(),
+          leftSide,
+          rightSide
+        );
       case MOD:
-        return new Modulo(0, 0, leftSide, rightSide);
+        return new Modulo(
+          op.lineNumber(),
+          op.charPosition(),
+          leftSide,
+          rightSide
+        );
       case OR:
-        return new LogicalOr(0, 0, leftSide, rightSide);
+        return new LogicalOr(
+          op.lineNumber(),
+          op.charPosition(),
+          leftSide,
+          rightSide
+        );
       case AND:
-        return new LogicalAnd(0, 0, leftSide, rightSide);
+        return new LogicalAnd(
+          op.lineNumber(),
+          op.charPosition(),
+          leftSide,
+          rightSide
+        );
       case POW:
-        return new Power(0, 0, leftSide, rightSide);
+        return new Power(
+          op.lineNumber(),
+          op.charPosition(),
+          leftSide,
+          rightSide
+        );
       case LESS_EQUAL:
-        return new Relation(0, 0, op, leftSide, rightSide);
+        return new Relation(
+          op.lineNumber(),
+          op.charPosition(),
+          op,
+          leftSide,
+          rightSide
+        );
       case EQUAL_TO:
-        return new Relation(0, 0, op, leftSide, rightSide);
+        return new Relation(
+          op.lineNumber(),
+          op.charPosition(),
+          op,
+          leftSide,
+          rightSide
+        );
       case NOT_EQUAL:
-        return new Relation(0, 0, op, leftSide, rightSide);
+        return new Relation(
+          op.lineNumber(),
+          op.charPosition(),
+          op,
+          leftSide,
+          rightSide
+        );
       case LESS_THAN:
-        return new Relation(0, 0, op, leftSide, rightSide);
+        return new Relation(
+          op.lineNumber(),
+          op.charPosition(),
+          op,
+          leftSide,
+          rightSide
+        );
       case GREATER_EQUAL:
-        return new Relation(0, 0, op, leftSide, rightSide);
+        return new Relation(
+          op.lineNumber(),
+          op.charPosition(),
+          op,
+          leftSide,
+          rightSide
+        );
       case GREATER_THAN:
-        return new Relation(0, 0, op, leftSide, rightSide);
+        return new Relation(
+          op.lineNumber(),
+          op.charPosition(),
+          op,
+          leftSide,
+          rightSide
+        );
       default:
         throw new RuntimeException(
           "Unable to make Expression with Operation: " + op.lexeme()

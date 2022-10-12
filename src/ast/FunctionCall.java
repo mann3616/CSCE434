@@ -4,8 +4,8 @@ import pl434.Symbol;
 
 public class FunctionCall extends Node implements Expression, Statement {
 
-  private Symbol function;
-  private ArgumentList list;
+  public Symbol function;
+  public ArgumentList list;
 
   public FunctionCall(
     int lineNum,
@@ -14,14 +14,12 @@ public class FunctionCall extends Node implements Expression, Statement {
     ArgumentList list
   ) {
     super(lineNum, charPos);
-    //TODO Auto-generated constructor stub
     this.function = function;
     this.list = list;
   }
 
   @Override
   public void accept(NodeVisitor visitor) {
-    // TODO Auto-generated method stub
     visitor.visit(this);
   }
 

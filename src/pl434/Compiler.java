@@ -620,31 +620,34 @@ public class Compiler {
   int goback = 0;
 
   private Result statement(String scope, StatementSequence statementList) {
-    Token tok = expectRetrieve(NonTerminal.STATEMENT);
-    switch (tok.kind()) {
-      case WHILE:
-        whileStat(scope, statementList);
-        break;
-      case RETURN:
-        Result o = returnStat(scope, statementList);
-        goback = instructions.size();
-        return o;
-      case REPEAT:
-        repeatStat(scope, statementList);
-        break;
-      case IF:
-        ifStat(scope, statementList);
-        break;
-      case LET:
-        letStat(scope, statementList);
-        break;
-      case CALL:
-        return funcCall(scope, statementList);
+    if (have(NonTerminal.STATEMENT)) {
+      switch (currentToken.kind()) {
+        case WHILE:
+          whileStat(scope, statementList);
+          break;
+        case RETURN:
+          Result o = returnStat(scope, statementList);
+          goback = instructions.size();
+          return o;
+        case REPEAT:
+          repeatStat(scope, statementList);
+          break;
+        case IF:
+          ifStat(scope, statementList);
+          break;
+        case LET:
+          letStat(scope, statementList);
+          break;
+        case CALL:
+          return funcCall(scope, statementList);
+      }
     }
     return null;
   }
 
   private Result whileStat(String scope, StatementSequence statementList) {
+    Token whileToken = currentToken;
+    expect(Kind.WHILE);
     Token start = currentToken;
     int before = instructions.size();
     Result rel = relation(scope);
@@ -676,6 +679,8 @@ public class Compiler {
   private Result repeatStat(String scope, StatementSequence statementList) {
     // create repeat statement
     // use new stat list
+    Token repeatToken = currentToken;
+    expect(Kind.REPEAT);
     Token start = currentToken;
     StatementSequence repeatStatementList = new StatementSequence(
       lineNumber(),
@@ -705,6 +710,8 @@ public class Compiler {
 
   private void letStat(String scope, StatementSequence statementList) {
     // Create assignment, add assignment to statement sequence
+    Token letToken = currentToken;
+    expect(Kind.LET);
     String id = currentToken.lexeme();
     Result obj = designator(scope);
     if (have(NonTerminal.UNARY_OP)) {
@@ -720,8 +727,8 @@ public class Compiler {
           }
           statementList.add(
             Node.newAssignment(
-              lineNumber(),
-              charPosition(),
+              letToken.lineNumber(),
+              letToken.charPosition(),
               obj.expression,
               tok,
               new IntegerLiteral(lineNumber(), charPosition(), "1")
@@ -738,8 +745,8 @@ public class Compiler {
           }
           statementList.add(
             Node.newAssignment(
-              lineNumber(),
-              charPosition(),
+              letToken.lineNumber(),
+              letToken.charPosition(),
               obj.expression,
               tok,
               new IntegerLiteral(lineNumber(), charPosition(), "1")
@@ -752,14 +759,7 @@ public class Compiler {
     }
     Token tok = expectRetrieve(NonTerminal.ASSIGN_OP);
     if (tok.kind() == Kind.ASSIGN) {
-      // AddressOf Int linenum symbol
-      // Expression No idea
-      // How to get current variable type?
-      // Retain ident maps
-      // What is expression?
-      // Expression requires
       IDENT_REG.remove(obj.regno);
-      // StatementList is null since we don't want to add the resolve to the parent node but to this one
       Result second = relExpr(scope);
       obj.regno = second.regno;
       IDENT_REG.put(obj.regno, obj);
@@ -767,8 +767,8 @@ public class Compiler {
       if (IDENT_VARTYPE.get(scope + ":" + id) != null) {
         statementList.add(
           Node.newAssignment(
-            tok.lineNumber(),
-            tok.charPosition(),
+            letToken.lineNumber(),
+            letToken.charPosition(),
             obj.expression,
             tok,
             second.expression
@@ -777,8 +777,8 @@ public class Compiler {
       } else {
         statementList.add(
           Node.newAssignment(
-            tok.lineNumber(),
-            tok.charPosition(),
+            letToken.lineNumber(),
+            letToken.charPosition(),
             obj.expression,
             tok,
             second.expression
@@ -824,8 +824,8 @@ public class Compiler {
       }
       statementList.add(
         Node.newAssignment(
-          tok.lineNumber(),
-          tok.charPosition(),
+          letToken.lineNumber(),
+          letToken.charPosition(),
           obj.expression,
           tok,
           second.expression
@@ -862,8 +862,8 @@ public class Compiler {
       }
       statementList.add(
         Node.newAssignment(
-          tok.lineNumber(),
-          tok.charPosition(),
+          letToken.lineNumber(),
+          letToken.charPosition(),
           obj.expression,
           tok,
           second.expression
@@ -874,6 +874,8 @@ public class Compiler {
   }
 
   private Result returnStat(String scope, StatementSequence statementList) {
+    Token returnToken = currentToken;
+    expect(Kind.RETURN);
     Result x = new Result();
     if (!have(Kind.SEMICOLON)) {
       x = relExpr(scope);
@@ -888,6 +890,8 @@ public class Compiler {
   }
 
   private void ifStat(String scope, StatementSequence statementList) {
+    Token ifToken = currentToken;
+    expect(Kind.IF);
     loads.add(new ArrayList<Integer>());
     Result b = relation(scope);
     expect(Kind.THEN);
@@ -1271,6 +1275,8 @@ public class Compiler {
     // Have something outside of this scope point to the arg list
     // Resolve, and then add to statementList
     // In a new function so we should enter the function scope
+    Token funcCallToken = currentToken;
+    expect(Kind.FUNC);
     Token functionToken = expectRetrieve(Kind.IDENT);
     tryResolveVariable(functionToken);
     String n = functionToken.lexeme();

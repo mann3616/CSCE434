@@ -7,4 +7,8 @@ public class ErrorType extends Type {
   public ErrorType(String message) {
     this.message = message;
   }
+
+  public String toString() {
+    return message;
+  }
 }

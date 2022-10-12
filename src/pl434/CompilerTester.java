@@ -86,7 +86,7 @@ public class CompilerTester {
     AST ast = c.genAST();
     TypeChecker tc = new TypeChecker();
 
-    if (!tc.check(ast)) {
+    if (tc.check(ast)) {
       System.out.println("Error type-checking file.");
       System.out.println(tc.errorReport());
       System.exit(-4);
