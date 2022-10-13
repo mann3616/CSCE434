@@ -98,13 +98,16 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(RepeatStatement node) {
+    // "RepeatStat requires relation condition not " + cond.getClass() + "."
     node.sequence().accept(this);
     node.relation().accept(this);
   }
 
   @Override
   public void visit(WhileStatement node) {
+    // "WhileStat requires relation condition not " + cond.getClass() + "."
     node.relation().accept(this);
+    // Current function should own relation now
     node.sequence().accept(this);
   }
 
@@ -117,6 +120,7 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(IfStatement node) {
+    // "IfStat requires relation condition not " + cond.getClass() + "."
     node.relation().accept(this);
     node.ifSequence().accept(this);
     if (node.elseSequence() != null) {
@@ -301,6 +305,8 @@ public class TypeChecker implements NodeVisitor {
   @Override
   public void visit(Relation node) {
     // TODO: add checks to see if types are bool
+    // if tok is NOT "==" or "!=" or "!"
+    // then left and right must both be numbers
     node.left().accept(this);
     Type leftType = currentFunction.type;
     node.right().accept(this);
@@ -348,6 +354,8 @@ public class TypeChecker implements NodeVisitor {
     // "Call with args " + argTypes + " matches no function signature."
     // "Call with args " + argTypes + " matches multiple function signatures."
     // if provided parameters are not equal to wanted parameters
+    System.out.println("We have args " + argList);
+    System.out.println("Function " + node.function());
     if (!argList.equals(funcType.params())) {
       reportError(
         node.lineNumber(),

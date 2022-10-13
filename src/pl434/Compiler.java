@@ -1011,7 +1011,7 @@ public class Compiler {
       x.isFloat = xx.isFloat;
       return x;
     }
-    if (accept(NonTerminal.FUNC_CALL)) {
+    if (have(NonTerminal.FUNC_CALL)) {
       // Calling a function!
       // make local arg list?
       // when doing call should end up here
