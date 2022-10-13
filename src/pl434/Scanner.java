@@ -112,6 +112,7 @@ public class Scanner implements Iterator<Token> {
     if (token.kind() == Kind.ERROR) {
       Error("Error on Lexeme: " + token.lexeme(), new Exception());
     }
+    skipToWord();
     return token;
   }
 

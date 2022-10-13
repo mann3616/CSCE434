@@ -1,6 +1,8 @@
 package pl434;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Stack;
 import types.*;
 
@@ -8,6 +10,7 @@ public class SymbolTable {
 
   // TODO: Create Symbol Table structure
   Stack<HashMap<String, Symbol>> stack = new Stack<>();
+  HashMap<String, ArrayList<Symbol>> st = new HashMap<>();
   int addy;
 
   public SymbolTable() {
@@ -27,34 +30,51 @@ public class SymbolTable {
     }
     throw new SymbolNotFoundError(name);
   }
+  public ArrayList<Symbol> lookupFunc(String name) throws SymbolNotFoundError {
+    if(st.containsKey(name)){
+      return st.get(name);
+    }
+    throw new SymbolNotFoundError(name);
+  }
 
   // insert name in SymbolTable
   public Symbol insert(String name, Symbol sym) throws RedeclarationError {
-    if (stack.peek().containsKey(name)) {
-      Symbol simba = stack.peek().get(name);
-      if (
-        sym.type.getClass().equals(FuncType.class) &&
-        simba.type.getClass().equals(FuncType.class)
-      ) {
+    if(sym.type.getClass().equals(FuncType.class)){
+      if(st.containsKey(name)){
+        Iterator<Symbol> it = st.get(name).iterator();
         FuncType symt = (FuncType) sym.type;
-        FuncType simt = (FuncType) simba.type;
-        if (symt.params().list.size() != simt.params().list.size()) {
-          return sym;
-        }
-        for (int i = 0; i < simt.params().list.size(); i++) {
-          if (
-            !simt
-              .params()
-              .list.get(i)
-              .getClass()
-              .equals(symt.params().list.get(i).getClass())
-          ) {
+        while(it.hasNext()){
+          Symbol simba = it.next();
+          FuncType simt = (FuncType) simba.type;
+          if (symt.params().list.size() != simt.params().list.size()) {
             return sym;
           }
+          boolean b = false;
+          for (int i = 0; i < simt.params().list.size(); i++) {
+            if (
+              !simt
+                .params()
+                .list.get(i)
+                .getClass()
+                .equals(symt.params().list.get(i).getClass())
+            ) {
+              b = true;
+              break;
+            }
+          }
+          if(b){
+            continue;
+          }
+          throw new RedeclarationError(name);
         }
-      } //else if(sym.type.getClass().equals(FuncType.class) ^ simba.type.getClass().equals(FuncType.class)){
-      //return sym;
-      //}
+        st.get(name).add(sym);
+      }else{
+        st.put(name, new ArrayList<>());
+        st.get(name).add(sym);
+      }
+      return sym;
+    }
+    if (stack.peek().containsKey(name)) {
       throw new RedeclarationError(name);
     }
     stack.peek().put(name, sym);

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import pl434.Symbol;
+import pl434.SymbolTable;
 
 //Is abstract just to end error, must take off abstract for Project 5
 public class TypeChecker implements NodeVisitor {
@@ -14,7 +15,7 @@ public class TypeChecker implements NodeVisitor {
   private Symbol currentFunction;
   private TypeList argList;
   private int numNestedFunctions;
-
+  private SymbolTable table;
   /*
    * Useful error strings:
    *
@@ -41,8 +42,11 @@ public class TypeChecker implements NodeVisitor {
     argList = new TypeList();
     errorBuffer = new StringBuilder();
     numNestedFunctions = 0;
+    if(ast.getNode()!=null){
+      table = ast.table;
+    }
     visit(ast.getNode());
-    return hasError();
+    return !hasError();
   }
 
   private void reportError(int lineNum, int charPos, String message) {
@@ -73,11 +77,31 @@ public class TypeChecker implements NodeVisitor {
   }
 
   @Override
-  public void visit(VariableDeclaration node) {}
+  public void visit(VariableDeclaration node) {
+    Type t = node.symbol.type;
+    if(t.getClass().equals(ArrayType.class)){
+      ArrayType at = (ArrayType) t;
+      for(int i : at.dimVals){
+        if(i<=0){
+          reportError(node.charPosition(), node.lineNumber(), "Array "+ node.symbol.name() + " has invalid size " + i);
+        }
+      }
+    }
+  }
 
   @Override
   public void visit(FunctionDeclaration node) {
+    List<Symbol> t = table.lookupFunc(node.function.name());
+    Type ret = ((FuncType) node.function.type).returnType();
+    for(Symbol sim : t){
+      FuncType tt = (FuncType) sim.type;
+      if(!tt.returnType().getClass().equals(ret.getClass())){
+        reportError(node.lineNumber(), node.charPosition(), "Function " + node.function.name() + " returns " + ret + " instead of " + tt.returnType() + ".");
+        break;
+      }
+    }
     node.body().accept(this);
+    currentFunction.type = ret;
   }
 
   @Override
@@ -101,12 +125,18 @@ public class TypeChecker implements NodeVisitor {
     // "RepeatStat requires relation condition not " + cond.getClass() + "."
     node.sequence().accept(this);
     node.relation().accept(this);
+    if(!currentFunction.type.getClass().equals(BoolType.class)){
+      reportError(node.lineNumber(), node.charPosition(), "RepeatStat requires bool condition not " + currentFunction.getTypeAsString()+".");
+    }
   }
 
   @Override
   public void visit(WhileStatement node) {
     // "WhileStat requires relation condition not " + cond.getClass() + "."
     node.relation().accept(this);
+    if(!currentFunction.type.getClass().equals(BoolType.class)){
+      reportError(node.lineNumber(), node.charPosition(), "WhileStat requires bool condition not " + currentFunction.getTypeAsString()+".");
+    }
     // Current function should own relation now
     node.sequence().accept(this);
   }
@@ -176,8 +206,12 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(LogicalNot node) {
-    // TODO: check if "right()" is of BoolType
+    //Not yet tested
     node.right().accept(this);
+    currentFunction.type = currentFunction.type.not();
+    if(!currentFunction.type.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), currentFunction.type.toString());
+    }
   }
 
   @Override
@@ -201,13 +235,11 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        leftType.add(rightType).toString()
-      );
+    Type t = leftType.mul(rightType);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
+    currentFunction.type = t;
   }
 
   @Override
@@ -216,13 +248,11 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        leftType.add(rightType).toString()
-      );
+    Type t = leftType.div(rightType);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
+    currentFunction.type = t;
   }
 
   @Override
@@ -231,13 +261,11 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        leftType.add(rightType).toString()
-      );
+    Type t = leftType.mod(rightType);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
+    currentFunction.type = t;
   }
 
   @Override
@@ -246,13 +274,11 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        leftType.add(rightType).toString()
-      );
+    Type t = leftType.add(rightType);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
+    currentFunction.type = t;
   }
 
   @Override
@@ -261,13 +287,11 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        leftType.add(rightType).toString()
-      );
+    Type t = leftType.sub(rightType);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
+    currentFunction.type = t;
   }
 
   @Override
@@ -277,13 +301,11 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        leftType.add(rightType).toString()
-      );
+    Type t = leftType.and(rightType);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
+    currentFunction.type = t;
   }
 
   @Override
@@ -293,13 +315,11 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        leftType.add(rightType).toString()
-      );
+    Type t = leftType.or(rightType);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
+    currentFunction.type = t;
   }
 
   @Override
@@ -311,13 +331,11 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        leftType.add(rightType).toString()
-      );
+    Type t = leftType.compare(rightType);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
+    currentFunction.type = t;
   }
 
   @Override
@@ -332,7 +350,6 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(FunctionCall node) {
-    numNestedFunctions++;
     // FunctionCall members:
     // public Symbol function;
     // public ArgumentList list;
@@ -340,36 +357,48 @@ public class TypeChecker implements NodeVisitor {
     // FuncType members:
     // private TypeList params;
     // private Type returnType;
-
+    //TODO: Remove .equals and fix symbol table allocation of new functions with different size parameters
+    //TODO: In statementSequence after each statement check if it was a function call and make sure it returned void
     FuncType funcType = (FuncType) node.function.type;
     Type nodeReturnType = ((FuncType) node.function.type).returnType();
+    List<Symbol> sym = table.lookupFunc(node.function.name());
     TypeList savedArgList = new TypeList();
     // If we have nested
-    if (numNestedFunctions > 1) {
-      savedArgList = argList;
-    }
+    savedArgList = argList;
     argList = new TypeList();
     node.list().accept(this);
-
+    Type t = null;
+    for(Symbol sim : sym){
+      t = sim.type.call(argList);
+      if(!t.getClass().equals(ErrorType.class)){
+        nodeReturnType = ((FuncType) sim.type).returnType();
+        break;
+      }
+    }
     // "Call with args " + argTypes + " matches no function signature."
     // "Call with args " + argTypes + " matches multiple function signatures."
     // if provided parameters are not equal to wanted parameters
-    System.out.println("We have args " + argList);
-    System.out.println("Function " + node.function());
-    if (!argList.equals(funcType.params())) {
+    //System.out.println("We have args " + argList);
+    //System.out.println("Function " + node.function());
+    if(t == null){
       reportError(
         node.lineNumber(),
         node.charPosition(),
-        "Call with args " + argList + " matches no function signature."
+        "Call with args " + argList.toString() + " matches no function signature."
       );
-    } else {
-      // If this FunctionCall doesn't return an error
-      currentFunction = new Symbol(node.function.name(), nodeReturnType);
     }
+    else if (t.getClass().equals(ErrorType.class)) {
+      reportError(
+        node.lineNumber(),
+        node.charPosition(),
+        "Call with args " + t.toString() + " matches no function signature."
+      );
+    }
+      // If this FunctionCall doesn't return an error
+    currentFunction = new Symbol(node.function.name(), nodeReturnType);
 
     // Perhaps append current function return type to argList?
     argList = savedArgList;
-    numNestedFunctions--;
   }
 
   @Override

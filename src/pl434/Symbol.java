@@ -58,7 +58,9 @@ public class Symbol {
       param += "int";
     } else if (tt.getClass().equals(VoidType.class)) {
       param += "void";
-    } else {
+    } else if(tt.getClass().equals(ErrorType.class)){
+      param+= "ErrorType("+ tt.toString() + ")";
+    }else{
       ArrayType t = (ArrayType) tt;
       param += typeToString(t.type());
       for (int i = 0; i < t.dims(); i++) {

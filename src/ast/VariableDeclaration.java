@@ -4,7 +4,7 @@ import pl434.*;
 
 public class VariableDeclaration extends Node implements Declaration {
 
-  private Symbol symbol;
+  public Symbol symbol;
 
   public VariableDeclaration(int lineNum, int charPos, Symbol symbol) {
     //TODO Auto-generated constructor stub

@@ -289,6 +289,19 @@ public class Compiler {
       return null;
     }
   }
+  private ArrayList<Symbol> tryResolveFunction(Token ident) {
+    //TODO: Try resolving variable, handle SymbolNotFoundError
+    try {
+      return symbolTable.lookupFunc(ident.lexeme());
+    } catch (SymbolNotFoundError e) {
+      reportResolveSymbolError(
+        ident.lexeme(),
+        ident.lineNumber() + 1,
+        ident.charPosition()
+      );
+      return null;
+    }
+  }
 
   private Symbol tryDeclareVariable(Token ident, Symbol sym) {
     try {
@@ -647,6 +660,7 @@ public class Compiler {
 
   private Result whileStat(String scope, StatementSequence statementList) {
     Token whileToken = currentToken;
+    int c = charPosition();
     expect(Kind.WHILE);
     Token start = currentToken;
     int before = instructions.size();
@@ -668,7 +682,7 @@ public class Compiler {
     statementList.add(
       new WhileStatement(
         start.lineNumber(),
-        start.charPosition(),
+        c,
         rel.expression,
         whileStatementSequence
       )
@@ -680,6 +694,8 @@ public class Compiler {
     // create repeat statement
     // use new stat list
     Token repeatToken = currentToken;
+    int c = charPosition();
+    int l = lineNumber();
     expect(Kind.REPEAT);
     Token start = currentToken;
     StatementSequence repeatStatementList = new StatementSequence(
@@ -699,8 +715,8 @@ public class Compiler {
 
     statementList.add(
       new RepeatStatement(
-        start.lineNumber(),
-        start.charPosition(),
+        l,
+        c,
         repeatStatementList,
         x.expression
       )
@@ -886,7 +902,7 @@ public class Compiler {
       return x;
     }
     // Not returning everything so give it a null instance
-    statementList.add(new ReturnStatement(lineNumber(), charPosition(), null));
+    statementList.add(new ReturnStatement(returnToken.lineNumber(), returnToken.charPosition(), null));
     return null;
   }
 
@@ -899,14 +915,14 @@ public class Compiler {
     int getem = instructions.size();
     lru.get(b.regno);
     StatementSequence ifStatementList = new StatementSequence(
-      lineNumber(),
-      charPosition()
+      ifToken.lineNumber(),
+      ifToken.charPosition()
     );
+    statSeq(scope, ifStatementList);
     StatementSequence elseStatementList = new StatementSequence(
       lineNumber(),
       charPosition()
     );
-    statSeq(scope, ifStatementList);
     instructions.add(
       getem,
       DLX.assemble(DLX.BEQ, b.regno, instructions.size() - getem + 2)
@@ -1022,8 +1038,10 @@ public class Compiler {
       x.expression = xx.expression;
       return x;
     }
-    String errorMessage = reportSyntaxError(NonTerminal.GROUP_EXPRESSION);
-    throw new QuitParseException(errorMessage);
+    x.regno = 0;
+    x.expression = null;
+    x.lexeme = "";
+    return x;
   }
 
   private Result powExpr(String scope) {
@@ -1165,6 +1183,8 @@ public class Compiler {
   private Result relExpr(String scope) {
     Result obj = addExpr(scope);
     if (have(NonTerminal.REL_OP)) {
+      int c = charPosition();
+      int l = lineNumber();
       Token tok = expectRetrieve(NonTerminal.REL_OP);
       Result obj2 = relExpr(scope);
       instructions.add(DLX.assemble(DLX.SUB, obj.regno, obj.regno, obj2.regno));
@@ -1173,8 +1193,8 @@ public class Compiler {
           instructions.add(DLX.assemble(DLX.BEQ, obj.regno, 3));
           obj.expression =
             new Relation(
-              lineNumber(),
-              charPosition(),
+              l,
+              c,
               tok,
               obj.expression,
               obj2.expression
@@ -1184,8 +1204,8 @@ public class Compiler {
           instructions.add(DLX.assemble(DLX.BNE, obj.regno, 3));
           obj.expression =
             new Relation(
-              lineNumber(),
-              charPosition(),
+              l,
+              c,
               tok,
               obj.expression,
               obj2.expression
@@ -1195,8 +1215,8 @@ public class Compiler {
           instructions.add(DLX.assemble(DLX.BLE, obj.regno, 3));
           obj.expression =
             new Relation(
-              lineNumber(),
-              charPosition(),
+              l,
+              c,
               tok,
               obj.expression,
               obj2.expression
@@ -1206,8 +1226,8 @@ public class Compiler {
           instructions.add(DLX.assemble(DLX.BLT, obj.regno, 3));
           obj.expression =
             new Relation(
-              lineNumber(),
-              charPosition(),
+              l,
+              c,
               tok,
               obj.expression,
               obj2.expression
@@ -1217,8 +1237,8 @@ public class Compiler {
           instructions.add(DLX.assemble(DLX.BGE, obj.regno, 3));
           obj.expression =
             new Relation(
-              lineNumber(),
-              charPosition(),
+              l,
+              c,
               tok,
               obj.expression,
               obj2.expression
@@ -1228,8 +1248,8 @@ public class Compiler {
           instructions.add(DLX.assemble(DLX.BGT, obj.regno, 3));
           obj.expression =
             new Relation(
-              lineNumber(),
-              charPosition(),
+              l,
+              c,
               tok,
               obj.expression,
               obj2.expression
@@ -1279,7 +1299,8 @@ public class Compiler {
     Token funcCallToken = currentToken;
     expect(Kind.CALL);
     Token functionToken = expectRetrieve(Kind.IDENT);
-    tryResolveVariable(functionToken);
+    //tryResolveVariable(functionToken);
+    ArrayList<Symbol> li = tryResolveFunction(functionToken);
     String n = functionToken.lexeme();
     expect(Kind.OPEN_PAREN);
     ArgumentList localArgumentList = new ArgumentList(
@@ -1303,71 +1324,45 @@ public class Compiler {
         a.isFloat = false;
         printInt(a.regno);
         returnType = new VoidType();
-        paramTypeList.append(new IntType());
-        localArgumentList.append(result.expression);
         break;
       case "printFloat":
         result = relExpr(scope);
         a.regno = result.regno;
         a.isFloat = false;
-        printFloat(a.regno);
+        //printFloat(a.regno);
         returnType = new VoidType();
-        paramTypeList.append(new FloatType());
-        localArgumentList.append(result.expression);
         break;
       case "printBool":
         result = relExpr(scope);
         a.regno = result.regno;
         a.isFloat = false;
-        printBool(a.regno);
+        //printBool(a.regno);
         returnType = new VoidType();
         paramTypeList.append(new BoolType());
-        localArgumentList.append(result.expression);
         break;
       case "readInt":
         a.regno = allocate().regno;
-        readInt(a.regno);
+        //readInt(a.regno);
         a.isFloat = false;
         returnType = new IntType();
         funcType = new FuncType(paramTypeList, returnType);
         function = new Symbol(n, funcType);
-        a.expression =
-          new FunctionCall(
-            lineNumber(),
-            charPosition(),
-            function,
-            localArgumentList
-          );
         break;
       case "readFloat":
         a.regno = allocate().regno;
-        readFloat(a.regno);
+        //readFloat(a.regno);
         a.isFloat = true;
         returnType = new FloatType();
         funcType = new FuncType(paramTypeList, returnType);
         function = new Symbol(n, funcType);
-        a.expression =
-          new FunctionCall(
-            lineNumber(),
-            charPosition(),
-            function,
-            localArgumentList
-          );
         break;
       case "readBool":
         a.regno = allocate().regno;
-        readBool(a.regno);
+        //readBool(a.regno);
         a.isFloat = false;
         returnType = new BoolType();
         funcType = new FuncType(paramTypeList, returnType);
         function = new Symbol(n, funcType);
-        a.expression =
-          new FunctionCall(
-            lineNumber(),
-            charPosition(),
-            function,
-            localArgumentList
-          );
         break;
       case "println":
         println();
@@ -1378,7 +1373,7 @@ public class Compiler {
           // This is the function expression thing
           // get regno of function?
           a.regno = allocate().regno;
-          while (!have(Kind.CLOSE_PAREN)) {
+          while (!accept(Kind.CLOSE_PAREN)) {
             Result var = relExpr(scope);
             localArgumentList.append(var.expression);
             vars.add(var);
@@ -1414,28 +1409,31 @@ public class Compiler {
             funcCallToken.lineNumber(),
             funcCallToken.charPosition(),
             new Symbol(n, f.funcType),
-            new ArgumentList(localArgumentList)
+            localArgumentList
           );
           if (!(statementList == null)) {
             statementList.add(functionCall);
           }
-          expect(Kind.CLOSE_PAREN);
           return a;
-        } else {
-          // Parse it, we have name so accept a list of parameters
-          // Then we can release to close_paren
-          ArrayList<Result> vars = new ArrayList<>();
-          // This is the function expression thing
-          Result var = relExpr(scope);
-          // get regno of function?
-          while (!have(Kind.CLOSE_PAREN)) {
-            expect(Kind.COMMA);
-            vars.add(var);
-            var = relExpr(scope);
-          }
-          // We don't do anything with vars, just let this happen
         }
     }
+    // Parse it, we have name so accept a list of parameters
+    // Then we can release to close_paren
+    ArrayList<Result> vars = new ArrayList<>();
+    if(result.expression !=null){
+      vars.add(result);
+      localArgumentList.append(result.expression);
+    }
+    // This is the function expression thing
+    // get regno of function?
+    while (!have(Kind.CLOSE_PAREN)) {
+      Result var = relExpr(scope);
+      vars.add(var);
+      var = relExpr(scope);
+      localArgumentList.append(var.expression);
+      accept(Kind.COMMA);
+    }
+          // We don't do anything with vars, just let this happen
     expect(Kind.CLOSE_PAREN);
     funcType = new FuncType(paramTypeList, returnType);
     function = new Symbol(n, funcType);
@@ -1443,7 +1441,7 @@ public class Compiler {
       funcCallToken.lineNumber(),
       funcCallToken.charPosition(),
       function,
-      new ArgumentList(localArgumentList)
+      localArgumentList
     );
     if (!(statementList == null)) {
       statementList.add(functionCall);
@@ -1819,9 +1817,6 @@ public class Compiler {
 
   public ast.AST genAST() {
     computation();
-    if (hasError()) {
-      return new ast.AST(null);
-    }
-    return new ast.AST(node);
+    return new ast.AST(node, symbolTable);
   }
 }
