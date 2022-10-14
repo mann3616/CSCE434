@@ -96,23 +96,44 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(FunctionDeclaration node) {
-    List<Symbol> t = table.lookupFunc(node.function.name());
     Type ret = ((FuncType) node.function.type).returnType();
-    for (Symbol sim : t) {
-      FuncType tt = (FuncType) sim.type;
-      if (!tt.returnType().getClass().equals(ret.getClass())) {
+    // returnStatementInformation() only returns null if there is no return statement in the statseq
+    // What if there's more than one return statement...
+    // Maybe make a returnStatementList into a list of returnStatementInformation
+    currentFunction = node.function;
+    if (node.returnStatementInformation() == null) {
+      // It's ok if a function returns nothing?
+      // ints, floats, bool can return nothing or themselves
+      // if (!ret.getClass().equals(VoidType.class)) {
+      //   // the return type isn't void so we have an issue
+      //   reportError(
+      //     node.lineNumber(),
+      //     node.charPosition(),
+      //     "Function " +
+      //     currentFunction.name() +
+      //     " returns " +
+      //     (new VoidType()) +
+      //     " instead of " +
+      //     ret +
+      //     "."
+      //   );
+      // }
+    } else {
+      Type returnedType = node.returnStatementInformation().returnType;
+      boolean diffReturnTypes = !returnedType.getClass().equals(ret.getClass());
+      // ints, floats, bool can return nothing or themselves
+      if (diffReturnTypes) {
         reportError(
-          node.lineNumber(),
-          node.charPosition(),
+          node.returnStatementInformation().lineNum,
+          node.returnStatementInformation().charPos,
           "Function " +
-          node.function.name() +
+          currentFunction.name() +
           " returns " +
-          ret +
+          node.returnStatementInformation().returnType +
           " instead of " +
-          tt.returnType() +
+          ret +
           "."
         );
-        break;
       }
     }
     node.body().accept(this);
@@ -357,9 +378,6 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(Relation node) {
-    // TODO: add checks to see if types are bool
-    // if tok is NOT "==" or "!=" or "!"
-    // then left and right must both be numbers
     node.left().accept(this);
     Type leftType = currentFunction.type;
     // Right may be null
@@ -372,14 +390,6 @@ public class TypeChecker implements NodeVisitor {
       reportError(node.lineNumber(), node.charPosition(), t.toString());
       currentFunction.type = t;
     } else {
-      // They are the same type, now we can validate operands
-      // NOT("not"),
-      // EQUAL_TO("=="),
-      // NOT_EQUAL("!="),
-      // LESS_THAN("<"),
-      // LESS_EQUAL("<="),
-      // GREATER_EQUAL(">="),
-      // GREATER_THAN(">"),
       if (
         leftType.getClass().equals(IntType.class) ||
         leftType.getClass().equals(FloatType.class)
@@ -448,9 +458,6 @@ public class TypeChecker implements NodeVisitor {
     }
     // "Call with args " + argTypes + " matches no function signature."
     // "Call with args " + argTypes + " matches multiple function signatures."
-    // if provided parameters are not equal to wanted parameters
-    //System.out.println("We have args " + argList);
-    //System.out.println("Function " + node.function());
     if (t == null) {
       reportError(
         node.lineNumber(),

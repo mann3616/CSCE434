@@ -11,11 +11,29 @@ import types.*;
 
 public class Compiler {
 
+  public class ReturnStatementInformation {
+
+    public int lineNum;
+    public int charPos;
+    public Type returnType;
+
+    public ReturnStatementInformation(
+      int lineNum,
+      int charPos,
+      Type returnType
+    ) {
+      this.lineNum = lineNum;
+      this.charPos = charPos;
+      this.returnType = returnType;
+    }
+  }
+
   class Result {
 
     int kind;
     int value;
     int address;
+    Type type;
     String lexeme;
     Expression expression;
     int regno = -1;
@@ -526,7 +544,6 @@ public class Compiler {
     }
     x.expression = new AddressOf(lineNumber(), charPosition(), simba);
     //System.out.println(var + " is " + reg);
-    // vartype is probably null here
     Stack<Expression> st = new Stack<>();
     while (accept(Kind.OPEN_BRACKET)) {
       Result intVal = relExpr(scope);
@@ -538,6 +555,7 @@ public class Compiler {
     }
     IDENT_REG.put(x.regno, x);
     IDENT_MEM.put(var, x);
+    x.type = IDENT_VARTYPE.get(var);
     return x;
   }
 
@@ -897,7 +915,7 @@ public class Compiler {
     if (!have(Kind.SEMICOLON)) {
       x = relExpr(scope);
       statementList.add(
-        new ReturnStatement(lineNumber(), charPosition(), x.expression)
+        new ReturnStatement(lineNumber(), charPosition(), x.expression, x.type)
       );
       return x;
     }
@@ -906,6 +924,7 @@ public class Compiler {
       new ReturnStatement(
         returnToken.lineNumber(),
         returnToken.charPosition(),
+        null,
         null
       )
     );
@@ -992,6 +1011,7 @@ public class Compiler {
           x.expression =
             new IntegerLiteral(lineNumber(), charPosition(), tok.lexeme());
           x.isFloat = false;
+          x.type = new IntType();
           return x;
         case FLOAT_VAL:
           float fval = Float.parseFloat(tok.lexeme());
@@ -999,18 +1019,21 @@ public class Compiler {
           x.expression =
             new FloatLiteral(lineNumber(), charPosition(), tok.lexeme());
           x.isFloat = true;
+          x.type = new FloatType();
           return x;
         case TRUE:
           instructions.add(DLX.assemble(DLX.ADDI, x.regno, 0, 1));
           x.isFloat = false;
           x.expression =
             new BoolLiteral(lineNumber(), charPosition(), tok.lexeme());
+          x.type = new BoolType();
           return x;
         case FALSE:
           instructions.add(DLX.assemble(DLX.ADDI, x.regno, 0, 0));
+          x.isFloat = false;
           x.expression =
             new BoolLiteral(lineNumber(), charPosition(), tok.lexeme());
-          x.isFloat = false;
+          x.type = new BoolType();
           return x;
       }
     }
@@ -1021,6 +1044,7 @@ public class Compiler {
       x.isFloat = xx.isFloat;
       x.lexeme = xx.lexeme;
       x.expression = xx.expression;
+      x.type = xx.type;
       // address of
       // Result should be dereference?
       return x;
@@ -1471,12 +1495,13 @@ public class Compiler {
           break;
       }
       // List of param decl
+
+      // Functions with different parameter types!
+      // It's getting overwritten here
       FuncType functionType = new FuncType(typeList, returnType);
       function.funcType = functionType;
       IDENT_FUNC.remove(id.lexeme());
       IDENT_FUNC.put(id.lexeme(), function);
-      // This is just the return type, I think it needs to be better
-      // New problem! function body statseq is EMPTY!
       IDENT_FUNC.get(id.lexeme()).funcType = functionType;
       StatementSequence statementList = new StatementSequence(
         lineNumber(),
@@ -1486,25 +1511,74 @@ public class Compiler {
       tryDeclareVariable(id, new Symbol(id.lexeme(), functionType));
       // funcbody calls funccall
       // we should give the param definition first before anything
+
+      // We have the return statement in statementlist
+      // which means we have returnstatements expression
+
       funcBody(id.lexeme(), variableList, statementList);
-      // Func declaration needs to resolve before function call
-      FunctionDeclaration functionDeclaration = new FunctionDeclaration(
-        functionIdent.lineNumber(),
-        functionIdent.charPosition(),
-        new Symbol(id.lexeme(), functionType),
-        new FunctionBody(
-          lineNumber(),
-          charPosition(),
-          variableList,
-          statementList
-        )
+      ReturnStatementInformation returnInfo = getReturnStatementInformation(
+        statementList
       );
+      // ReturnStatement already has linenum and charpos
+      // Let's make a returnStatement class
+      // holds linenum, charpos, returntype
+
+      // Func declaration needs to resolve before function call
+      FunctionDeclaration functionDeclaration;
+      if (returnInfo != null) {
+        functionDeclaration =
+          new FunctionDeclaration(
+            functionIdent.lineNumber(),
+            functionIdent.charPosition(),
+            new Symbol(id.lexeme(), functionType),
+            new FunctionBody(
+              lineNumber(),
+              charPosition(),
+              variableList,
+              statementList
+            ),
+            new ReturnStatementInformation(
+              returnInfo.lineNum,
+              returnInfo.charPos,
+              returnInfo.returnType
+            )
+          );
+      } else {
+        functionDeclaration =
+          new FunctionDeclaration(
+            functionIdent.lineNumber(),
+            functionIdent.charPosition(),
+            new Symbol(id.lexeme(), functionType),
+            new FunctionBody(
+              lineNumber(),
+              charPosition(),
+              variableList,
+              statementList
+            ),
+            null
+          );
+      }
       functionList.add(functionDeclaration);
       // Add function to scope
       exitScope();
       tryDeclareVariable(id, new Symbol(id.lexeme(), functionType));
     }
     funcs.list = functionList.list;
+  }
+
+  private ReturnStatementInformation getReturnStatementInformation(
+    StatementSequence statementList
+  ) {
+    for (Statement s : statementList) {
+      if (s.getClass().equals(ReturnStatement.class)) {
+        return new ReturnStatementInformation(
+          ((Node) s).lineNumber(),
+          ((Node) s).charPosition(),
+          ((ReturnStatement) s).returnType()
+        );
+      }
+    }
+    return null;
   }
 
   private void formalParam(String scope, TypeList typeList) {
