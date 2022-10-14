@@ -44,7 +44,17 @@ public abstract class Type {
       this.getClass().equals(BoolType.class) ||
       that.getClass().equals(BoolType.class)
     ) {
-      return new ErrorType("Cannot add " + this + " to " + that + ".");
+      String thisString = this.toString();
+      String thatString = that.toString();
+      if (this.getClass().equals(ErrorType.class)) {
+        thisString = "ErrorType(" + thisString + ")";
+      }
+      if (that.getClass().equals(ErrorType.class)) {
+        thatString = "ErrorType(" + thatString + ")";
+      }
+      return new ErrorType(
+        "Cannot add " + thisString + " to " + thatString + "."
+      );
     }
     return that;
   }
@@ -55,7 +65,17 @@ public abstract class Type {
       this.getClass().equals(BoolType.class) ||
       that.getClass().equals(BoolType.class)
     ) {
-      return new ErrorType("Cannot subtract " + this + " from " + that + ".");
+      String thisString = this.toString();
+      String thatString = that.toString();
+      if (this.getClass().equals(ErrorType.class)) {
+        thisString = "ErrorType(" + thisString + ")";
+      }
+      if (that.getClass().equals(ErrorType.class)) {
+        thatString = "ErrorType(" + thatString + ")";
+      }
+      return new ErrorType(
+        "Cannot subtract " + thisString + " from " + thatString + "."
+      );
     }
     return that;
   }

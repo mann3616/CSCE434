@@ -718,13 +718,11 @@ public class Compiler {
     // create repeat statement
     // use new stat list
     Token repeatToken = currentToken;
-    int c = charPosition();
-    int l = lineNumber();
     expect(Kind.REPEAT);
     Token start = currentToken;
     StatementSequence repeatStatementList = new StatementSequence(
-      lineNumber(),
-      charPosition()
+      start.lineNumber(),
+      start.charPosition()
     );
     statSeq(scope, repeatStatementList);
     // Don't need to compule
@@ -738,7 +736,12 @@ public class Compiler {
     expect(Kind.CLOSE_PAREN);
 
     statementList.add(
-      new RepeatStatement(l, c, repeatStatementList, x.expression)
+      new RepeatStatement(
+        repeatToken.lineNumber(),
+        repeatToken.charPosition(),
+        repeatStatementList,
+        x.expression
+      )
     );
     return null;
   }

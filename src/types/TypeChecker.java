@@ -87,7 +87,7 @@ public class TypeChecker implements NodeVisitor {
           reportError(
             node.lineNumber(),
             node.charPosition(),
-            "Array " + node.symbol.name() + " has invalid size " + i
+            "Array " + node.symbol.name() + " has invalid size " + i + "."
           );
         }
       }
@@ -161,9 +161,10 @@ public class TypeChecker implements NodeVisitor {
     // "RepeatStat requires relation condition not " + cond.getClass() + "."
     node.sequence().accept(this);
     node.relation().accept(this);
+    // Repeat statement is off
     if (!currentFunction.type.getClass().equals(BoolType.class)) {
       reportError(
-        node.lineNumber(),
+        node.lineNumber() - 1,
         node.charPosition(),
         "RepeatStat requires bool condition not " +
         currentFunction.getTypeAsString() +
@@ -203,6 +204,7 @@ public class TypeChecker implements NodeVisitor {
     // "IfStat requires relation condition not " + cond.getClass() + "."
     node.relation().accept(this);
     // currentfunction holds relation type
+    // What if a function is called?
     if (!currentFunction.type.getClass().equals(BoolType.class)) {
       if (currentFunction.type.getClass().equals(ErrorType.class)) {
         reportError(
@@ -216,7 +218,7 @@ public class TypeChecker implements NodeVisitor {
         reportError(
           node.lineNumber(),
           node.charPosition(),
-          "IfStat requires bool condition not " + currentFunction.name + "."
+          "IfStat requires bool condition not " + currentFunction.type + "."
         );
       }
     }
@@ -289,7 +291,9 @@ public class TypeChecker implements NodeVisitor {
     //Not yet tested
     node.right().accept(this);
     currentFunction.type = currentFunction.type.not();
-    if (!currentFunction.type.getClass().equals(ErrorType.class)) {
+    // if right isnt a bool then we're going to have an issue
+    if (currentFunction.type.getClass().equals(ErrorType.class)) {
+      // If right isn't a bool, we have an issue
       reportError(
         node.lineNumber(),
         node.charPosition(),
@@ -304,6 +308,8 @@ public class TypeChecker implements NodeVisitor {
     // if right is negative throw error
     node.left().accept(this);
     Type leftType = currentFunction.type;
+    // Number leftNumber = (Number) new Object();
+
     node.right().accept(this);
     Type rightType = currentFunction.type;
     if (!leftType.getClass().equals(rightType.getClass())) {
@@ -388,10 +394,8 @@ public class TypeChecker implements NodeVisitor {
     // TODO: add checks to see if types are bool
     node.left().accept(this);
     Type leftType = currentFunction.type;
-    System.out.println("left type: " + leftType);
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    System.out.println("right type: " + rightType);
     Type t = leftType.and(rightType);
     if (t.getClass().equals(ErrorType.class)) {
       reportError(node.lineNumber(), node.charPosition(), t.toString());
