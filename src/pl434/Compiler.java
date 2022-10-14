@@ -968,8 +968,8 @@ public class Compiler {
     if (elseStatementList.statements.size() != 0) {
       statementList.add(
         new IfStatement(
-          lineNumber(),
-          charPosition(),
+          ifToken.lineNumber(),
+          ifToken.charPosition(),
           b.expression,
           ifStatementList,
           elseStatementList
@@ -978,8 +978,8 @@ public class Compiler {
     } else {
       statementList.add(
         new IfStatement(
-          lineNumber(),
-          charPosition(),
+          ifToken.lineNumber(),
+          ifToken.charPosition(),
           b.expression,
           ifStatementList,
           null
