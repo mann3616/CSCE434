@@ -66,7 +66,17 @@ public abstract class Type {
       !this.getClass().equals(BoolType.class) ||
       !that.getClass().equals(BoolType.class)
     ) {
-      return new ErrorType("Cannot compute " + this + " and " + that + ".");
+      String thisString = this.toString();
+      String thatString = that.toString();
+      if (this.getClass().equals(ErrorType.class)) {
+        thisString = "ErrorType(" + thisString + ")";
+      }
+      if (that.getClass().equals(ErrorType.class)) {
+        thatString = "ErrorType(" + thatString + ")";
+      }
+      return new ErrorType(
+        "Cannot compute " + thisString + " and " + thatString + "."
+      );
     }
     return that;
   }
@@ -76,13 +86,26 @@ public abstract class Type {
       !this.getClass().equals(BoolType.class) ||
       !that.getClass().equals(BoolType.class)
     ) {
-      return new ErrorType("Cannot compute " + this + " or " + that + ".");
+      String thisString = this.toString();
+      String thatString = that.toString();
+      if (this.getClass().equals(ErrorType.class)) {
+        thisString = "ErrorType(" + thisString + ")";
+      }
+      if (that.getClass().equals(ErrorType.class)) {
+        thatString = "ErrorType(" + thisString + ")";
+      }
+      return new ErrorType(
+        "Cannot compute " + thisString + " or " + thatString + "."
+      );
     }
     return that;
   }
 
   public Type not() {
     if (!this.getClass().equals(BoolType.class)) {
+      if (this.getClass().equals(ErrorType.class)) {
+        return new ErrorType("Cannot negate ErrorType(" + this + ").");
+      }
       return new ErrorType("Cannot negate " + this + ".");
     }
     return this;

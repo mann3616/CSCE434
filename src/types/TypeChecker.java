@@ -204,11 +204,21 @@ public class TypeChecker implements NodeVisitor {
     node.relation().accept(this);
     // currentfunction holds relation type
     if (!currentFunction.type.getClass().equals(BoolType.class)) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        "IfStat requires bool condition not " + +"."
-      );
+      if (currentFunction.type.getClass().equals(ErrorType.class)) {
+        reportError(
+          node.lineNumber(),
+          node.charPosition(),
+          "IfStat requires bool condition not ErrorType(" +
+          currentFunction.name +
+          ")."
+        );
+      } else {
+        reportError(
+          node.lineNumber(),
+          node.charPosition(),
+          "IfStat requires bool condition not " + currentFunction.name + "."
+        );
+      }
     }
     node.ifSequence().accept(this);
     if (node.elseSequence() != null) {
@@ -300,7 +310,7 @@ public class TypeChecker implements NodeVisitor {
       reportError(
         node.lineNumber(),
         node.charPosition(),
-        "Cannot raise " + leftType + " to " + rightType
+        "Cannot raise " + leftType + " to " + rightType + "."
       );
     } else {
       // So they're the same, but is it a number?
@@ -378,8 +388,10 @@ public class TypeChecker implements NodeVisitor {
     // TODO: add checks to see if types are bool
     node.left().accept(this);
     Type leftType = currentFunction.type;
+    System.out.println("left type: " + leftType);
     node.right().accept(this);
     Type rightType = currentFunction.type;
+    System.out.println("right type: " + rightType);
     Type t = leftType.and(rightType);
     if (t.getClass().equals(ErrorType.class)) {
       reportError(node.lineNumber(), node.charPosition(), t.toString());
