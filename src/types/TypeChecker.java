@@ -85,8 +85,8 @@ public class TypeChecker implements NodeVisitor {
       for (int i : at.dimVals) {
         if (i <= 0) {
           reportError(
-            node.charPosition(),
             node.lineNumber(),
+            node.charPosition(),
             "Array " + node.symbol.name() + " has invalid size " + i
           );
         }
@@ -202,6 +202,14 @@ public class TypeChecker implements NodeVisitor {
   public void visit(IfStatement node) {
     // "IfStat requires relation condition not " + cond.getClass() + "."
     node.relation().accept(this);
+    // currentfunction holds relation type
+    if (!currentFunction.type.getClass().equals(BoolType.class)) {
+      reportError(
+        node.lineNumber(),
+        node.charPosition(),
+        "IfStat requires bool condition not " + +"."
+      );
+    }
     node.ifSequence().accept(this);
     if (node.elseSequence() != null) {
       node.elseSequence().accept(this);
@@ -217,11 +225,23 @@ public class TypeChecker implements NodeVisitor {
     node.right().accept(this);
     Type rightType = currentFunction.type;
     if (!leftType.getClass().equals(rightType.getClass())) {
-      reportError(
-        node.lineNumber(),
-        node.charPosition(),
-        "Cannot assign " + rightType + " to AddressOf(" + leftType + ")."
-      );
+      if (rightType.getClass().equals(ErrorType.class)) {
+        reportError(
+          node.lineNumber(),
+          node.charPosition(),
+          "Cannot assign ErrorType(" +
+          rightType +
+          ") to AddressOf(" +
+          leftType +
+          ")."
+        );
+      } else {
+        reportError(
+          node.lineNumber(),
+          node.charPosition(),
+          "Cannot assign " + rightType + " to AddressOf(" + leftType + ")."
+        );
+      }
     }
   }
 
@@ -270,6 +290,8 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(Power node) {
+    // if left is negative throw error
+    // if right is negative throw error
     node.left().accept(this);
     Type leftType = currentFunction.type;
     node.right().accept(this);
@@ -278,8 +300,10 @@ public class TypeChecker implements NodeVisitor {
       reportError(
         node.lineNumber(),
         node.charPosition(),
-        leftType.add(rightType).toString()
+        "Cannot raise " + leftType + " to " + rightType
       );
+    } else {
+      // So they're the same, but is it a number?
     }
   }
 
@@ -298,6 +322,7 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(Division node) {
+    // Check if right is 0
     node.left().accept(this);
     Type leftType = currentFunction.type;
     node.right().accept(this);
@@ -341,7 +366,7 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    Type t = leftType.sub(rightType);
+    Type t = rightType.sub(leftType);
     if (t.getClass().equals(ErrorType.class)) {
       reportError(node.lineNumber(), node.charPosition(), t.toString());
     }
@@ -388,6 +413,7 @@ public class TypeChecker implements NodeVisitor {
     //If left and right are not of the same type, throw an error
     if (t.getClass().equals(ErrorType.class)) {
       reportError(node.lineNumber(), node.charPosition(), t.toString());
+      currentFunction.name = "ErrorType(" + t.toString() + ")";
       currentFunction.type = t;
     } else {
       if (
@@ -403,17 +429,7 @@ public class TypeChecker implements NodeVisitor {
           currentFunction.type = new BoolType();
         }
       } else {
-        // it's a boolean
-        // only not, equal_to, and not_equal are valid
-        //   if (node.rel() == "not" || node.rel() == "==" || node.rel() == "!=") {
-        //     // these are the only safe operators
-        //     currentFunction.type = new BoolType();
-        //   } else {
-        //     // Don't know what to do if it's not... Like what error string to put
-        //     // bool > bool returns what?
-
-        //   }
-        // }
+        // it's a boolean so it's automatically valid
         currentFunction.type = new BoolType();
       }
     }

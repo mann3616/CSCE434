@@ -4,7 +4,7 @@ import types.*;
 
 public class Symbol {
 
-  private String name;
+  public String name;
   // TODO: Add other parameters like type
 
   public Type type;
@@ -58,9 +58,9 @@ public class Symbol {
       param += "int";
     } else if (tt.getClass().equals(VoidType.class)) {
       param += "void";
-    } else if(tt.getClass().equals(ErrorType.class)){
-      param+= "ErrorType("+ tt.toString() + ")";
-    }else{
+    } else if (tt.getClass().equals(ErrorType.class)) {
+      param += "ErrorType(" + tt.toString() + ")";
+    } else {
       ArrayType t = (ArrayType) tt;
       param += typeToString(t.type());
       for (int i = 0; i < t.dims(); i++) {

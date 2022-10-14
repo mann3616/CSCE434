@@ -597,8 +597,8 @@ public class Compiler {
         x.address = ++maxed * -1;
         global.put(id, new Symbol(id, variableType));
         VariableDeclaration generatedVariable = new VariableDeclaration(
-          lineNumber(),
-          charPosition(),
+          type.lineNumber(),
+          type.charPosition(),
           global.get(id)
         );
         variableList.add(generatedVariable);

@@ -1,4 +1,11 @@
 // 2 type errors expected
-main {
-    call printInt(1 + false);
+
+
+main 
+int x, y;
+float z;
+
+{
+    let x = -10;
+    let y = -10 ^ 1;
 }.
