@@ -289,6 +289,7 @@ public class Compiler {
       return null;
     }
   }
+
   private ArrayList<Symbol> tryResolveFunction(Token ident) {
     //TODO: Try resolving variable, handle SymbolNotFoundError
     try {
@@ -664,6 +665,11 @@ public class Compiler {
     expect(Kind.WHILE);
     Token start = currentToken;
     int before = instructions.size();
+    // What happens with a one variable relation?
+    // Should declare one here
+
+    // If it's just one variable there is no relation
+    // Ie while(a)
     Result rel = relation(scope);
     expect(Kind.DO);
     StatementSequence whileStatementSequence = new StatementSequence(
@@ -714,12 +720,7 @@ public class Compiler {
     expect(Kind.CLOSE_PAREN);
 
     statementList.add(
-      new RepeatStatement(
-        l,
-        c,
-        repeatStatementList,
-        x.expression
-      )
+      new RepeatStatement(l, c, repeatStatementList, x.expression)
     );
     return null;
   }
@@ -886,7 +887,6 @@ public class Compiler {
         )
       );
     }
-    System.out.println(letToken);
     deallocate(obj.regno);
   }
 
@@ -902,7 +902,13 @@ public class Compiler {
       return x;
     }
     // Not returning everything so give it a null instance
-    statementList.add(new ReturnStatement(returnToken.lineNumber(), returnToken.charPosition(), null));
+    statementList.add(
+      new ReturnStatement(
+        returnToken.lineNumber(),
+        returnToken.charPosition(),
+        null
+      )
+    );
     return null;
   }
 
@@ -1192,68 +1198,32 @@ public class Compiler {
         case EQUAL_TO:
           instructions.add(DLX.assemble(DLX.BEQ, obj.regno, 3));
           obj.expression =
-            new Relation(
-              l,
-              c,
-              tok,
-              obj.expression,
-              obj2.expression
-            );
+            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case NOT_EQUAL:
           instructions.add(DLX.assemble(DLX.BNE, obj.regno, 3));
           obj.expression =
-            new Relation(
-              l,
-              c,
-              tok,
-              obj.expression,
-              obj2.expression
-            );
+            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case LESS_EQUAL:
           instructions.add(DLX.assemble(DLX.BLE, obj.regno, 3));
           obj.expression =
-            new Relation(
-              l,
-              c,
-              tok,
-              obj.expression,
-              obj2.expression
-            );
+            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case LESS_THAN:
           instructions.add(DLX.assemble(DLX.BLT, obj.regno, 3));
           obj.expression =
-            new Relation(
-              l,
-              c,
-              tok,
-              obj.expression,
-              obj2.expression
-            );
+            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case GREATER_EQUAL:
           instructions.add(DLX.assemble(DLX.BGE, obj.regno, 3));
           obj.expression =
-            new Relation(
-              l,
-              c,
-              tok,
-              obj.expression,
-              obj2.expression
-            );
+            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case GREATER_THAN:
           instructions.add(DLX.assemble(DLX.BGT, obj.regno, 3));
           obj.expression =
-            new Relation(
-              l,
-              c,
-              tok,
-              obj.expression,
-              obj2.expression
-            );
+            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
       }
       instructions.add(DLX.assemble(DLX.ADDI, obj.regno, 0, 0));
@@ -1420,7 +1390,7 @@ public class Compiler {
     // Parse it, we have name so accept a list of parameters
     // Then we can release to close_paren
     ArrayList<Result> vars = new ArrayList<>();
-    if(result.expression !=null){
+    if (result.expression != null) {
       vars.add(result);
       localArgumentList.append(result.expression);
     }
@@ -1433,7 +1403,7 @@ public class Compiler {
       localArgumentList.append(var.expression);
       accept(Kind.COMMA);
     }
-          // We don't do anything with vars, just let this happen
+    // We don't do anything with vars, just let this happen
     expect(Kind.CLOSE_PAREN);
     funcType = new FuncType(paramTypeList, returnType);
     function = new Symbol(n, funcType);
