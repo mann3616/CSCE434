@@ -551,7 +551,7 @@ public class Compiler {
       expect(Kind.CLOSE_BRACKET);
     }
     while (!st.isEmpty()) {
-      x.expression = new ArrayIndex(0, 0, x.expression, st.pop());
+      x.expression = new ArrayIndex(0, 0, x.expression, st.pop(), simba);
     }
     IDENT_REG.put(x.regno, x);
     IDENT_MEM.put(var, x);
@@ -679,7 +679,6 @@ public class Compiler {
 
   private Result whileStat(String scope, StatementSequence statementList) {
     Token whileToken = currentToken;
-    int c = charPosition();
     expect(Kind.WHILE);
     Token start = currentToken;
     int before = instructions.size();
@@ -705,8 +704,8 @@ public class Compiler {
     expect(Kind.OD);
     statementList.add(
       new WhileStatement(
-        start.lineNumber(),
-        c,
+        whileToken.lineNumber(),
+        whileToken.charPosition(),
         rel.expression,
         whileStatementSequence
       )

@@ -31,11 +31,7 @@ public class TypeList extends Type implements Iterable<Type> {
   public String toString() {
     String message = "TypeList(";
     for (Type t : list) {
-      if (t instanceof ErrorType) {
-        message += "ErrorType(" + t + ")";
-      } else {
-        message += t;
-      }
+      message += t;
     }
     message += ")";
     return message;

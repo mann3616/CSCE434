@@ -14,8 +14,8 @@ public class TypeChecker implements NodeVisitor {
   private StringBuilder errorBuffer;
   private Symbol currentFunction;
   private TypeList argList;
-  private int numNestedFunctions;
   private SymbolTable table;
+  private int currIndex;
 
   /*
    * Useful error strings:
@@ -40,9 +40,9 @@ public class TypeChecker implements NodeVisitor {
 
   public boolean check(ast.AST ast) {
     // Take the node and begin parsing
+    currIndex = -1;
     argList = new TypeList();
     errorBuffer = new StringBuilder();
-    numNestedFunctions = 0;
     if (ast.getNode() != null) {
       table = ast.table;
     }
@@ -164,7 +164,7 @@ public class TypeChecker implements NodeVisitor {
     // Repeat statement is off
     if (!currentFunction.type.getClass().equals(BoolType.class)) {
       reportError(
-        node.lineNumber() - 1,
+        node.lineNumber(),
         node.charPosition(),
         "RepeatStat requires bool condition not " +
         currentFunction.getTypeAsString() +
@@ -206,21 +206,11 @@ public class TypeChecker implements NodeVisitor {
     // currentfunction holds relation type
     // What if a function is called?
     if (!currentFunction.type.getClass().equals(BoolType.class)) {
-      if (currentFunction.type.getClass().equals(ErrorType.class)) {
-        reportError(
-          node.lineNumber(),
-          node.charPosition(),
-          "IfStat requires bool condition not ErrorType(" +
-          currentFunction.name +
-          ")."
-        );
-      } else {
         reportError(
           node.lineNumber(),
           node.charPosition(),
           "IfStat requires bool condition not " + currentFunction.type + "."
         );
-      }
     }
     node.ifSequence().accept(this);
     if (node.elseSequence() != null) {
@@ -236,25 +226,10 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
-      if (rightType.getClass().equals(ErrorType.class)) {
-        reportError(
-          node.lineNumber(),
-          node.charPosition(),
-          "Cannot assign ErrorType(" +
-          rightType +
-          ") to AddressOf(" +
-          leftType +
-          ")."
-        );
-      } else {
-        reportError(
-          node.lineNumber(),
-          node.charPosition(),
-          "Cannot assign " + rightType + " to AddressOf(" + leftType + ")."
-        );
-      }
-    }
+    Type t = leftType.assign(rightType, node.addressOf() instanceof AddressOf, node.right() instanceof AddressOf);
+    if (t.getClass().equals(ErrorType.class)) {
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
+      } 
   }
 
   @Override
@@ -297,7 +272,7 @@ public class TypeChecker implements NodeVisitor {
       reportError(
         node.lineNumber(),
         node.charPosition(),
-        currentFunction.type.toString()
+        ((ErrorType) currentFunction.type).message()
       );
     }
   }
@@ -312,13 +287,13 @@ public class TypeChecker implements NodeVisitor {
 
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    if (!leftType.getClass().equals(rightType.getClass())) {
+    if (!leftType.getClass().equals(rightType.getClass()) || !leftType.getClass().equals(IntType.class)) {
       reportError(
         node.lineNumber(),
         node.charPosition(),
         "Cannot raise " + leftType + " to " + rightType + "."
       );
-    } else {
+    } else{
       // So they're the same, but is it a number?
     }
   }
@@ -331,7 +306,7 @@ public class TypeChecker implements NodeVisitor {
     Type rightType = currentFunction.type;
     Type t = leftType.mul(rightType);
     if (t.getClass().equals(ErrorType.class)) {
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
     }
     currentFunction.type = t;
   }
@@ -345,7 +320,7 @@ public class TypeChecker implements NodeVisitor {
     Type rightType = currentFunction.type;
     Type t = leftType.div(rightType);
     if (t.getClass().equals(ErrorType.class)) {
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
     }
     currentFunction.type = t;
   }
@@ -358,7 +333,7 @@ public class TypeChecker implements NodeVisitor {
     Type rightType = currentFunction.type;
     Type t = leftType.mod(rightType);
     if (t.getClass().equals(ErrorType.class)) {
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
     }
     currentFunction.type = t;
   }
@@ -371,7 +346,7 @@ public class TypeChecker implements NodeVisitor {
     Type rightType = currentFunction.type;
     Type t = leftType.add(rightType);
     if (t.getClass().equals(ErrorType.class)) {
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
     }
     currentFunction.type = t;
   }
@@ -384,7 +359,7 @@ public class TypeChecker implements NodeVisitor {
     Type rightType = currentFunction.type;
     Type t = rightType.sub(leftType);
     if (t.getClass().equals(ErrorType.class)) {
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
     }
     currentFunction.type = t;
   }
@@ -398,7 +373,7 @@ public class TypeChecker implements NodeVisitor {
     Type rightType = currentFunction.type;
     Type t = leftType.and(rightType);
     if (t.getClass().equals(ErrorType.class)) {
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
     }
     currentFunction.type = t;
   }
@@ -412,7 +387,7 @@ public class TypeChecker implements NodeVisitor {
     Type rightType = currentFunction.type;
     Type t = leftType.or(rightType);
     if (t.getClass().equals(ErrorType.class)) {
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType) t).message());
     }
     currentFunction.type = t;
   }
@@ -428,8 +403,8 @@ public class TypeChecker implements NodeVisitor {
 
     //If left and right are not of the same type, throw an error
     if (t.getClass().equals(ErrorType.class)) {
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
-      currentFunction.name = "ErrorType(" + t.toString() + ")";
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
+      currentFunction.name = ((ErrorType)t).message();
       currentFunction.type = t;
     } else {
       if (
@@ -502,7 +477,7 @@ public class TypeChecker implements NodeVisitor {
       reportError(
         node.lineNumber(),
         node.charPosition(),
-        "Call with args " + t.toString() + " matches no function signature."
+        "Call with args " + ((ErrorType)t).message() + " matches no function signature."
       );
     }
     // If this FunctionCall doesn't return an error
@@ -514,7 +489,29 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(ArrayIndex node) {
+    currIndex++;
+    int saveIndex = currIndex;
     node.left.accept(this);
+    Type lt = currentFunction.type;
+    if(node.right.getClass().equals(ArrayIndex.class)){
+      currIndex = -1;
+    }
     node.right.accept(this);
+    currIndex = saveIndex;
+    ArrayType thisArr = ((ArrayType) node.symbol.type);
+    thisArr.currDim = currIndex;
+    Type t = thisArr.index(currentFunction.type);
+    if(t.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), t.toString());
+    }else if(node.right.getClass().equals(IntegerLiteral.class)){
+      IntegerLiteral lit = (IntegerLiteral) node.right;
+      int litt = Integer.parseInt(lit.literal());
+      if(litt < 0 || (thisArr.dimVals.get(currIndex) > 0 && thisArr.dimVals.get(currIndex) <= litt)){
+        t = new ErrorType("Array Index Out Of Bounds : " + litt + " for array " + node.symbol.name);
+        reportError(node.lineNumber(), node.charPosition(), ((ErrorType) t).message());
+      }
+    }
+    currentFunction.type = t;
+    currIndex--;
   }
 }

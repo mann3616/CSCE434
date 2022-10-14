@@ -17,13 +17,14 @@ public class Scanner implements Iterator<Token> {
 
   private String scan; // current lexeme being scanned in
   private int nextChar; // contains the next char (-1 == EOF))
-
+  boolean firstTime;
   // reader will be a FileReader over the source file
   public Scanner(Reader reader) {
     input = new BufferedReader(reader);
-    charPos = -1;
+    charPos = 0;
     lineNum = 0;
     closed = false;
+    firstTime = true;
     readChar();
   }
 
@@ -49,13 +50,19 @@ public class Scanner implements Iterator<Token> {
         lineNum++;
         charPos = 0;
       } else {
-        charPos++;
+        if(firstTime){
+          firstTime = false;
+        }else{
+          charPos++;
+        }
       }
       if (nextChar == -1) {
+        closed = true;
         input.close();
       }
     } catch (IOException e) {
       nextChar = -1;
+      closed = true;
     }
     return currChar;
   }

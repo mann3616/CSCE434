@@ -2,6 +2,8 @@ package types;
 
 import java.util.Iterator;
 
+import pl434.Symbol;
+
 public abstract class Type {
 
   // arithmetic
@@ -46,12 +48,6 @@ public abstract class Type {
     ) {
       String thisString = this.toString();
       String thatString = that.toString();
-      if (this.getClass().equals(ErrorType.class)) {
-        thisString = "ErrorType(" + thisString + ")";
-      }
-      if (that.getClass().equals(ErrorType.class)) {
-        thatString = "ErrorType(" + thatString + ")";
-      }
       return new ErrorType(
         "Cannot add " + thisString + " to " + thatString + "."
       );
@@ -67,12 +63,6 @@ public abstract class Type {
     ) {
       String thisString = this.toString();
       String thatString = that.toString();
-      if (this.getClass().equals(ErrorType.class)) {
-        thisString = "ErrorType(" + thisString + ")";
-      }
-      if (that.getClass().equals(ErrorType.class)) {
-        thatString = "ErrorType(" + thatString + ")";
-      }
       return new ErrorType(
         "Cannot subtract " + thisString + " from " + thatString + "."
       );
@@ -88,12 +78,6 @@ public abstract class Type {
     ) {
       String thisString = this.toString();
       String thatString = that.toString();
-      if (this.getClass().equals(ErrorType.class)) {
-        thisString = "ErrorType(" + thisString + ")";
-      }
-      if (that.getClass().equals(ErrorType.class)) {
-        thatString = "ErrorType(" + thatString + ")";
-      }
       return new ErrorType(
         "Cannot compute " + thisString + " and " + thatString + "."
       );
@@ -108,12 +92,6 @@ public abstract class Type {
     ) {
       String thisString = this.toString();
       String thatString = that.toString();
-      if (this.getClass().equals(ErrorType.class)) {
-        thisString = "ErrorType(" + thisString + ")";
-      }
-      if (that.getClass().equals(ErrorType.class)) {
-        thatString = "ErrorType(" + thisString + ")";
-      }
       return new ErrorType(
         "Cannot compute " + thisString + " or " + thatString + "."
       );
@@ -123,9 +101,6 @@ public abstract class Type {
 
   public Type not() {
     if (!this.getClass().equals(BoolType.class)) {
-      if (this.getClass().equals(ErrorType.class)) {
-        return new ErrorType("Cannot negate ErrorType(" + this + ").");
-      }
       return new ErrorType("Cannot negate " + this + ".");
     }
     return this;
@@ -136,12 +111,6 @@ public abstract class Type {
     if (!this.getClass().equals(that.getClass())) {
       String thisString = this.toString();
       String thatString = that.toString();
-      if (this.getClass().equals(ErrorType.class)) {
-        thisString = "ErrorType(" + thisString + ")";
-      }
-      if (that.getClass().equals(ErrorType.class)) {
-        thatString = "ErrorType(" + thisString + ")";
-      }
       return new ErrorType(
         "Cannot compare " + thisString + " with " + thatString + "."
       );
@@ -158,20 +127,33 @@ public abstract class Type {
   }
 
   public Type index(Type that) {
-    if (!that.getClass().equals(IntType.class)) {
-      return new ErrorType("Cannot index " + this + " with " + that + ".");
+    if ((!that.getClass().equals(IntType.class) && (that.getClass().equals(ArrayType.class) && !((ArrayType) that).type.getClass().equals(IntType.class)))|| !this.getClass().equals(ArrayType.class)) {
+      String some = "";
+      if(this.getClass().equals(ErrorType.class)){
+        some += Symbol.typeToString(this) + " with ";
+      }else {
+        some += this + "";
+      }
+      if(that.getClass().equals(ErrorType.class)){
+        some += Symbol.typeToString(that) + " with ";
+      }else {
+        some += that + ".";
+      }
+      return new ErrorType("Cannot index " + some);
     }
     return this;
   }
 
   // statements
-  public Type assign(Type source) {
+  public Type assign(Type source, boolean la, boolean ra) {
+    Type thisT = (this instanceof ArrayType ? ((ArrayType) this).type : this);
+    Type that = (source instanceof ArrayType ? ((ArrayType) source).type : source);
     if (
-      !this.getClass().equals(source.getClass()) ||
-      this.getClass().equals(VoidType.class) ||
-      source.getClass().equals(VoidType.class)
+      !thisT.getClass().equals(that.getClass()) ||
+      thisT.getClass().equals(VoidType.class) ||
+      that.getClass().equals(VoidType.class)
     ) {
-      return new ErrorType("Cannot assign " + source + " to " + this + ".");
+      return new ErrorType("Cannot assign " +(ra ? "AddressOf("+ that + ")" : that) +" to " + (la ? "AddressOf("+ thisT+ ")" : thisT) + ".");
     }
     return this;
   }
