@@ -4,21 +4,17 @@ import pl434.Symbol;
 
 public class Dereference extends Node implements Expression {
 
-  private Symbol symbol;
+  public Expression expression;
 
-  protected Dereference(int lineNum, int charPos, Symbol symbol) {
+  public Dereference(int lineNum, int charPos, Expression expression) {
     super(lineNum, charPos);
     //TODO Auto-generated constructor stub
-    this.symbol = symbol;
+    this.expression= expression;
   }
 
   @Override
   public void accept(NodeVisitor visitor) {
     // TODO Auto-generated method stub
     visitor.visit(this);
-  }
-
-  public Symbol symbol() {
-    return this.symbol;
   }
 }

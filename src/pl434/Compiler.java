@@ -551,8 +551,9 @@ public class Compiler {
       expect(Kind.CLOSE_BRACKET);
     }
     while (!st.isEmpty()) {
-      x.expression = new ArrayIndex(0, 0, x.expression, st.pop(), simba);
+      x.expression = new ArrayIndex(lineNumber(), charPosition(), x.expression, st.pop(), simba);
     }
+    x.expression = new Dereference(lineNum, charPos, x.expression);
     IDENT_REG.put(x.regno, x);
     IDENT_MEM.put(var, x);
     x.type = IDENT_VARTYPE.get(var);
@@ -597,8 +598,8 @@ public class Compiler {
         x.address = ++maxed * -1;
         global.put(id, new Symbol(id, variableType));
         VariableDeclaration generatedVariable = new VariableDeclaration(
-          type.lineNumber(),
-          type.charPosition(),
+          lineNumber(),
+          charPosition(),
           global.get(id)
         );
         variableList.add(generatedVariable);
@@ -751,6 +752,7 @@ public class Compiler {
     expect(Kind.LET);
     String id = currentToken.lexeme();
     Result obj = designator(scope);
+    obj.expression = ((Dereference)obj.expression).expression;
     if (have(NonTerminal.UNARY_OP)) {
       Token tok = expectRetrieve(NonTerminal.UNARY_OP);
       switch (tok.kind()) {
@@ -927,7 +929,7 @@ public class Compiler {
         returnToken.lineNumber(),
         returnToken.charPosition(),
         null,
-        null
+        new VoidType()
       )
     );
     return null;
@@ -1072,6 +1074,7 @@ public class Compiler {
     }
     x.regno = 0;
     x.expression = null;
+    x.type = new VoidType();
     x.lexeme = "";
     return x;
   }
@@ -1214,42 +1217,35 @@ public class Compiler {
 
   private Result relExpr(String scope) {
     Result obj = addExpr(scope);
-    if (have(NonTerminal.REL_OP)) {
+    Stack<Result> res = new Stack<>();
+    Stack<Token> toks = new Stack<>();
+    res.push(obj);
+    while (have(NonTerminal.REL_OP)) {
       int c = charPosition();
       int l = lineNumber();
       Token tok = expectRetrieve(NonTerminal.REL_OP);
-      Result obj2 = relExpr(scope);
+      Result obj2 = addExpr(scope);
       instructions.add(DLX.assemble(DLX.SUB, obj.regno, obj.regno, obj2.regno));
+      toks.push(tok);
+      res.push(obj2);
       switch (tok.kind()) {
         case EQUAL_TO:
           instructions.add(DLX.assemble(DLX.BEQ, obj.regno, 3));
-          obj.expression =
-            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case NOT_EQUAL:
           instructions.add(DLX.assemble(DLX.BNE, obj.regno, 3));
-          obj.expression =
-            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case LESS_EQUAL:
           instructions.add(DLX.assemble(DLX.BLE, obj.regno, 3));
-          obj.expression =
-            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case LESS_THAN:
           instructions.add(DLX.assemble(DLX.BLT, obj.regno, 3));
-          obj.expression =
-            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case GREATER_EQUAL:
           instructions.add(DLX.assemble(DLX.BGE, obj.regno, 3));
-          obj.expression =
-            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
         case GREATER_THAN:
           instructions.add(DLX.assemble(DLX.BGT, obj.regno, 3));
-          obj.expression =
-            new Relation(l, c, tok, obj.expression, obj2.expression);
           break;
       }
       instructions.add(DLX.assemble(DLX.ADDI, obj.regno, 0, 0));
@@ -1257,6 +1253,7 @@ public class Compiler {
       instructions.add(DLX.assemble(DLX.ADDI, obj.regno, 0, 1));
       lru.get(obj.regno);
     }
+    obj.expression = makeExpression(res, toks);
     return obj;
   }
 
@@ -1425,7 +1422,6 @@ public class Compiler {
     while (!have(Kind.CLOSE_PAREN)) {
       Result var = relExpr(scope);
       vars.add(var);
-      var = relExpr(scope);
       localArgumentList.append(var.expression);
       accept(Kind.COMMA);
     }
@@ -1580,7 +1576,7 @@ public class Compiler {
         );
       }
     }
-    return null;
+    return new ReturnStatementInformation(-1, -1, new VoidType());
   }
 
   private void formalParam(String scope, TypeList typeList) {

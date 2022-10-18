@@ -1,5 +1,6 @@
 package ast;
 
+import pl434.NonTerminal;
 import pl434.Token;
 
 public abstract class Node implements Visitable {

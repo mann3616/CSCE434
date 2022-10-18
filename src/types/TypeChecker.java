@@ -1,6 +1,8 @@
 package types;
 
 import ast.*;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -243,7 +245,11 @@ public class TypeChecker implements NodeVisitor {
 
   @Override
   public void visit(Dereference node) {
-    currentFunction = node.symbol();
+    node.expression.accept(this);
+    currentFunction.type = currentFunction.type.deref();
+    if(currentFunction.type.getClass().equals(ErrorType.class)){
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)currentFunction.type).message());
+    }
   }
 
   @Override
@@ -357,7 +363,7 @@ public class TypeChecker implements NodeVisitor {
     Type leftType = currentFunction.type;
     node.right().accept(this);
     Type rightType = currentFunction.type;
-    Type t = rightType.sub(leftType);
+    Type t = leftType.sub(rightType);
     if (t.getClass().equals(ErrorType.class)) {
       reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
     }
@@ -473,12 +479,16 @@ public class TypeChecker implements NodeVisitor {
         argList.toString() +
         " matches no function signature."
       );
+      argList = savedArgList;
+      return;
     } else if (t.getClass().equals(ErrorType.class)) {
       reportError(
         node.lineNumber(),
         node.charPosition(),
         "Call with args " + ((ErrorType)t).message() + " matches no function signature."
       );
+      argList = savedArgList;
+      return;
     }
     // If this FunctionCall doesn't return an error
     currentFunction = new Symbol(node.function.name(), nodeReturnType);
@@ -493,25 +503,48 @@ public class TypeChecker implements NodeVisitor {
     int saveIndex = currIndex;
     node.left.accept(this);
     Type lt = currentFunction.type;
-    if(node.right.getClass().equals(ArrayIndex.class)){
+    if(node.right.getClass().equals(Dereference.class)){
       currIndex = -1;
     }
     node.right.accept(this);
     currIndex = saveIndex;
+    if(!node.symbol.type.getClass().equals(ArrayType.class)){
+      reportError(node.lineNumber(), node.charPosition(), "Cannot index AddressOf(" + node.symbol.type + ") with " + currentFunction.type + ".");
+      currIndex--;
+      return;
+    }
     ArrayType thisArr = ((ArrayType) node.symbol.type);
     thisArr.currDim = currIndex;
     Type t = thisArr.index(currentFunction.type);
     if(t.getClass().equals(ErrorType.class)){
-      reportError(node.lineNumber(), node.charPosition(), t.toString());
+      reportError(node.lineNumber(), node.charPosition(), ((ErrorType)t).message());
+      currentFunction.type = t;
+      currIndex--;
+      return;
     }else if(node.right.getClass().equals(IntegerLiteral.class)){
       IntegerLiteral lit = (IntegerLiteral) node.right;
       int litt = Integer.parseInt(lit.literal());
       if(litt < 0 || (thisArr.dimVals.get(currIndex) > 0 && thisArr.dimVals.get(currIndex) <= litt)){
-        t = new ErrorType("Array Index Out Of Bounds : " + litt + " for array " + node.symbol.name);
+        t = new ErrorType("Array Index Out of Bounds : " + litt + " for array " + node.symbol.name);
         reportError(node.lineNumber(), node.charPosition(), ((ErrorType) t).message());
+        currentFunction.type = t;
+        currIndex--;
+        return;
       }
     }
-    currentFunction.type = t;
+    if(lt.getClass().equals(IntType.class)){
+      currentFunction.type = lt;
+    }
+    else if(((ArrayType)node.symbol.type).dims == currIndex+1){
+      currentFunction.type = ((ArrayType)node.symbol.type).type;
+    }else{
+      int i = ((ArrayType)node.symbol.type).dims-1;
+      ArrayList<Integer> l = new ArrayList<>();
+      for(; i> currIndex; i--){
+        l.add(((ArrayType)node.symbol.type).dimVals.get(i));
+      }
+      currentFunction.type = new ArrayType(((ArrayType)node.symbol.type).type, l.size(), l);
+    }
     currIndex--;
   }
 }

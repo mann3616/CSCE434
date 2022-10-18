@@ -1,0 +1,15 @@
+// Logan Perry
+// Testing array indexing with function calls
+
+main
+
+int [5] x;
+
+function index() : float {
+    return 1.0;
+};
+
+{
+    let x[call index()] = 1;
+    let x[call index() == call index()] = 1;
+}.

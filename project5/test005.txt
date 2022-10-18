@@ -1,0 +1,15 @@
+// Matthew Tran
+// booleans
+main
+
+function a(bool b) : bool {
+    return b;
+};
+
+function b(bool x) : void {
+    call printInt(x);
+};
+
+{
+    call b(call a(call a(call a(call a(call a(true) == true) == true) == true) != true) != call a(18.0 < 14.0 == call a(3 > 4)));
+}.

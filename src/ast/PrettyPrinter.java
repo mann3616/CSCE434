@@ -135,10 +135,7 @@ public class PrettyPrinter implements NodeVisitor {
 
   @Override
   public void visit(Dereference node) {
-    sb.append(
-      indent() + node.symbol().name() + ":" + node.symbol().getTypeAsString()
-    );
-    sb.append("\n");
+    node.accept(this);
   }
 
   @Override

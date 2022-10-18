@@ -1,0 +1,17 @@
+// Emory Fields
+// testing the operators
+
+main 
+bool x, y; 
+float z; 
+int x;
+
+{
+    let x = x * y; 
+    let z = z + x; 
+    let z = z / 2;
+    let y = z - y; 
+    let x = x % y; 
+    let y = x and x; 
+    let z = x or z;  
+}.
