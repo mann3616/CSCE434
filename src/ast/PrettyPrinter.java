@@ -42,6 +42,7 @@ public class PrettyPrinter implements NodeVisitor {
 
   @Override
   public void visit(VariableDeclaration node) {
+    if (node.symbol == null) return;
     println(node, "[" + node.symbol() + "]");
   }
 
@@ -135,7 +136,7 @@ public class PrettyPrinter implements NodeVisitor {
 
   @Override
   public void visit(Dereference node) {
-    node.accept(this);
+    node.expression.accept(this);
   }
 
   @Override
@@ -268,7 +269,7 @@ public class PrettyPrinter implements NodeVisitor {
   @Override
   public void visit(FunctionCall node) {
     // TODO Auto-generated method stub
-    println(node, "[" + node.function() + "]");
+    println(node, "[" + node.functions.get(0).functionString() + "]");
     depth++;
     node.list().accept(this);
     depth--;

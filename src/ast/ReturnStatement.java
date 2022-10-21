@@ -7,12 +7,7 @@ public class ReturnStatement extends Node implements Statement {
   private Expression relation;
   private Type returnType;
 
-  public ReturnStatement(
-    int lineNum,
-    int charPos,
-    Expression relation,
-    Type returnType
-  ) {
+  public ReturnStatement(int lineNum, int charPos, Expression relation) {
     super(lineNum, charPos);
     //TODO Auto-generated constructor stub
     this.relation = relation;

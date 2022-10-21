@@ -226,13 +226,21 @@ public abstract class Node implements Visitable {
   public static Expression newLiteral(Token tok) {
     switch (tok.kind()) {
       case INT_VAL:
-        return new IntegerLiteral(0, 0, tok.lexeme());
+        return new IntegerLiteral(
+          tok.lineNumber(),
+          tok.charPosition(),
+          tok.lexeme()
+        );
       case FLOAT_VAL:
-        return new IntegerLiteral(0, 0, tok.lexeme());
+        return new FloatLiteral(
+          tok.lineNumber(),
+          tok.charPosition(),
+          tok.lexeme()
+        );
       case TRUE:
-        return new IntegerLiteral(0, 0, "true");
+        return new BoolLiteral(tok.lineNumber(), tok.charPosition(), "true");
       case FALSE:
-        return new IntegerLiteral(0, 0, "false");
+        return new BoolLiteral(tok.lineNumber(), tok.charPosition(), "false");
       default:
         throw new RuntimeException(
           "Unable to make Expression with Literal Type: " +

@@ -1,13 +1,4 @@
 // 2 type errors expected
-
-
-main 
-int x, y;
-float z;
-
-{
-    let x = 1;
-    let z = 1.2;
-
-    let x = 1 ^ 5;
+main {
+    call printInt(1 + false);
 }.

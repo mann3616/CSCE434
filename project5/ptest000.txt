@@ -1,0 +1,24 @@
+main 
+
+int[10][10] matrix;
+int[10] arr;
+int i, j;
+{
+    let i = 0;
+    repeat 
+        let arr[i] = i * (i+1);
+        let i++;
+    until (i == 10);
+
+    let j = 10;
+    while (j > 0) do
+        let j--;
+        let matrix[j] = arr;
+    od;
+
+    // type errors starting from here
+    let matrix = arr;
+    let arr[0][0] = 1;
+    let arr = matrix;
+
+}.

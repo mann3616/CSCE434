@@ -31,7 +31,10 @@ public class TypeList extends Type implements Iterable<Type> {
   public String toString() {
     String message = "TypeList(";
     for (Type t : list) {
-      message += t;
+      message += t + ", ";
+    }
+    if (message.length() > 9) {
+      message = message.substring(0, message.length() - 2);
     }
     message += ")";
     return message;

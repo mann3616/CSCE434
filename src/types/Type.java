@@ -1,7 +1,6 @@
 package types;
 
 import java.util.Iterator;
-
 import pl434.Symbol;
 
 public abstract class Type {
@@ -10,10 +9,14 @@ public abstract class Type {
   public Type mod(Type that) {
     if (
       !this.getClass().equals(that.getClass()) ||
-      (!this.getClass().equals(IntType.class) &&
-      !this.getClass().equals(FloatType.class)) ||
-      (!that.getClass().equals(IntType.class) &&
-      !that.getClass().equals(FloatType.class))
+      (
+        !this.getClass().equals(IntType.class) &&
+        !this.getClass().equals(FloatType.class)
+      ) ||
+      (
+        !that.getClass().equals(IntType.class) &&
+        !that.getClass().equals(FloatType.class)
+      )
     ) {
       return new ErrorType("Cannot modulo " + this + " by " + that + ".");
     }
@@ -23,10 +26,14 @@ public abstract class Type {
   public Type mul(Type that) {
     if (
       !this.getClass().equals(that.getClass()) ||
-      (!this.getClass().equals(IntType.class) &&
-      !this.getClass().equals(FloatType.class)) ||
-      (!that.getClass().equals(IntType.class) &&
-      !that.getClass().equals(FloatType.class))
+      (
+        !this.getClass().equals(IntType.class) &&
+        !this.getClass().equals(FloatType.class)
+      ) ||
+      (
+        !that.getClass().equals(IntType.class) &&
+        !that.getClass().equals(FloatType.class)
+      )
     ) {
       return new ErrorType("Cannot multiply " + this + " with " + that + ".");
     }
@@ -36,10 +43,14 @@ public abstract class Type {
   public Type div(Type that) {
     if (
       !this.getClass().equals(that.getClass()) ||
-      (!this.getClass().equals(IntType.class) &&
-      !this.getClass().equals(FloatType.class)) ||
-      (!that.getClass().equals(IntType.class) &&
-      !that.getClass().equals(FloatType.class))
+      (
+        !this.getClass().equals(IntType.class) &&
+        !this.getClass().equals(FloatType.class)
+      ) ||
+      (
+        !that.getClass().equals(IntType.class) &&
+        !that.getClass().equals(FloatType.class)
+      )
     ) {
       return new ErrorType("Cannot divide " + this + " by " + that + ".");
     }
@@ -49,10 +60,14 @@ public abstract class Type {
   public Type add(Type that) {
     if (
       !this.getClass().equals(that.getClass()) ||
-      (!this.getClass().equals(IntType.class) &&
-      !this.getClass().equals(FloatType.class)) ||
-      (!that.getClass().equals(IntType.class) &&
-      !that.getClass().equals(FloatType.class))
+      (
+        !this.getClass().equals(IntType.class) &&
+        !this.getClass().equals(FloatType.class)
+      ) ||
+      (
+        !that.getClass().equals(IntType.class) &&
+        !that.getClass().equals(FloatType.class)
+      )
     ) {
       String thisString = this.toString();
       String thatString = that.toString();
@@ -66,14 +81,16 @@ public abstract class Type {
   public Type sub(Type that) {
     if (
       !this.getClass().equals(that.getClass()) ||
-      (!this.getClass().equals(IntType.class) &&
-      !this.getClass().equals(FloatType.class)) ||
-      (!that.getClass().equals(IntType.class) &&
-      !that.getClass().equals(FloatType.class))
+      (
+        !this.getClass().equals(IntType.class) &&
+        !this.getClass().equals(FloatType.class)
+      ) ||
+      (
+        !that.getClass().equals(IntType.class) &&
+        !that.getClass().equals(FloatType.class)
+      )
     ) {
-      return new ErrorType(
-        "Cannot subtract " + that + " from " + this + "."
-      );
+      return new ErrorType("Cannot subtract " + that + " from " + this + ".");
     }
     return that;
   }
@@ -118,13 +135,17 @@ public abstract class Type {
   public Type compare(Type that) {
     if (
       !this.getClass().equals(that.getClass()) ||
-      (!this.getClass().equals(IntType.class) &&
-      !this.getClass().equals(BoolType.class) &&
-      !this.getClass().equals(FloatType.class)) ||
-      (!that.getClass().equals(IntType.class) &&
-      !that.getClass().equals(BoolType.class) &&
-      !that.getClass().equals(FloatType.class))
-      ) {
+      (
+        !this.getClass().equals(IntType.class) &&
+        !this.getClass().equals(BoolType.class) &&
+        !this.getClass().equals(FloatType.class)
+      ) ||
+      (
+        !that.getClass().equals(IntType.class) &&
+        !that.getClass().equals(BoolType.class) &&
+        !that.getClass().equals(FloatType.class)
+      )
+    ) {
       String thisString = this.toString();
       String thatString = that.toString();
       return new ErrorType(
@@ -136,14 +157,26 @@ public abstract class Type {
 
   // designator
   public Type deref() {
-    if (this.getClass().equals(FuncType.class) || this.getClass().equals(ErrorType.class)) {
+    if (
+      this.getClass().equals(FuncType.class) ||
+      this.getClass().equals(ErrorType.class)
+    ) {
       return new ErrorType("Cannot dereference " + this);
     }
     return this;
   }
 
   public Type index(Type that) {
-    if ((!that.getClass().equals(IntType.class) ^ (that.getClass().equals(ArrayType.class) && !((ArrayType) that).type.getClass().equals(IntType.class)))|| !this.getClass().equals(ArrayType.class)) {
+    if (
+      (
+        !that.getClass().equals(IntType.class) ^
+        (
+          that.getClass().equals(ArrayType.class) &&
+          !((ArrayType) that).type.getClass().equals(IntType.class)
+        )
+      ) ||
+      !this.getClass().equals(ArrayType.class)
+    ) {
       return new ErrorType("Cannot index " + this + " with " + that + ".");
     }
     return this;
@@ -151,14 +184,33 @@ public abstract class Type {
 
   // statements
   public Type assign(Type source, boolean la, boolean ra) {
+    int ldim = -1, rdim = -1;
     Type thisT = (this instanceof ArrayType ? ((ArrayType) this).type : this);
-    Type that = (source instanceof ArrayType ? ((ArrayType) source).type : source);
+    Type that =
+      (source instanceof ArrayType ? ((ArrayType) source).type : source);
+    if (this instanceof ArrayType) {
+      ldim = ((ArrayType) this).dims;
+    }
+    if (source instanceof ArrayType) {
+      rdim = ((ArrayType) source).dims;
+    }
+    if (ldim != rdim) {
+      that = source;
+      thisT = this;
+      return new ErrorType("Cannot assign " + that + " to " + thisT + ".");
+    }
     if (
       !thisT.getClass().equals(that.getClass()) ||
       thisT.getClass().equals(VoidType.class) ||
       that.getClass().equals(VoidType.class)
     ) {
-      return new ErrorType("Cannot assign " +(ra ? "AddressOf("+ that + ")" : that) +" to " + (la ? "AddressOf("+ thisT+ ")" : thisT) + ".");
+      return new ErrorType(
+        "Cannot assign " +
+        (ra ? "AddressOf(" + that + ")" : that) +
+        " to " +
+        (la ? "AddressOf(" + thisT + ")" : thisT) +
+        "."
+      );
     }
     return this;
   }
@@ -170,11 +222,14 @@ public abstract class Type {
     while (t1.hasNext() && t2.hasNext()) {
       Type first = t1.next();
       Type second = t2.next();
-      if(first.getClass().equals(ArrayType.class) && second.getClass().equals(ArrayType.class)){
-        if(!ArrayDimsEqual((ArrayType) first, (ArrayType) second)){
+      if (
+        first.getClass().equals(ArrayType.class) &&
+        second.getClass().equals(ArrayType.class)
+      ) {
+        if (!ArrayDimsEqual((ArrayType) first, (ArrayType) second)) {
           return new ErrorType(args.toString());
         }
-      }else if (!first.getClass().equals(second.getClass())) {
+      } else if (!first.getClass().equals(second.getClass())) {
         return new ErrorType(args.toString());
       }
     }
@@ -183,7 +238,8 @@ public abstract class Type {
     }
     return args;
   }
-  private boolean ArrayDimsEqual(ArrayType first, ArrayType second){
+
+  private boolean ArrayDimsEqual(ArrayType first, ArrayType second) {
     return first.dims == second.dims;
   }
 }

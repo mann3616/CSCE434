@@ -1,0 +1,39 @@
+// Expressions
+main
+
+int a, b, c;
+float x;
+bool y;
+
+{
+    let a = 5;
+
+    let a++;
+
+    let b = (a - 1) % 4;
+
+    let c = a + b;
+
+    let c %= 5;
+
+    let c--;
+
+    let c = 2;
+    let c *= (a + b) / (3 * c);
+
+    let c *= (a + b) ^ 6;
+    let x = c;
+    let y = (a + b) ^ 6;
+
+    let c = -19;
+    let b = c ^ c;
+    let a = 0 ^ 0;
+    let a = -10 ^ 0;
+    let a = 1 ^ -1;
+    let a = -1 / -1;
+    let a = c / 0;
+    let a = x + a;
+    let a = a % 2.0;
+    call printInt(2 / 3);
+
+}.

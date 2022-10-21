@@ -30,8 +30,9 @@ public class SymbolTable {
     }
     throw new SymbolNotFoundError(name);
   }
+
   public ArrayList<Symbol> lookupFunc(String name) throws SymbolNotFoundError {
-    if(st.containsKey(name)){
+    if (st.containsKey(name)) {
       return st.get(name);
     }
     throw new SymbolNotFoundError(name);
@@ -39,15 +40,15 @@ public class SymbolTable {
 
   // insert name in SymbolTable
   public Symbol insert(String name, Symbol sym) throws RedeclarationError {
-    if(sym.type.getClass().equals(FuncType.class)){
-      if(st.containsKey(name)){
+    if (sym.type.getClass().equals(FuncType.class)) {
+      if (st.containsKey(name)) {
         Iterator<Symbol> it = st.get(name).iterator();
         FuncType symt = (FuncType) sym.type;
-        while(it.hasNext()){
+        while (it.hasNext()) {
           Symbol simba = it.next();
           FuncType simt = (FuncType) simba.type;
           if (symt.params().list.size() != simt.params().list.size()) {
-            return sym;
+            continue;
           }
           boolean b = false;
           for (int i = 0; i < simt.params().list.size(); i++) {
@@ -62,13 +63,13 @@ public class SymbolTable {
               break;
             }
           }
-          if(b){
+          if (b) {
             continue;
           }
           throw new RedeclarationError(name);
         }
         st.get(name).add(sym);
-      }else{
+      } else {
         st.put(name, new ArrayList<>());
         st.get(name).add(sym);
       }
