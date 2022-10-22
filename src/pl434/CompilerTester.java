@@ -2,7 +2,6 @@ package pl434;
 
 import ast.*;
 import java.io.*;
-import java.util.*;
 import org.apache.commons.cli.*;
 import types.*;
 
@@ -31,6 +30,7 @@ public class CompilerTester {
       false,
       "If true, 'ast.dot' and 'cfg.dot' are the names for files in graphs/"
     );
+
     options.addOption(
       "allowVersions",
       "allowVersions",
@@ -153,7 +153,7 @@ public class CompilerTester {
 
     String dotgraph_text = null;
     try {
-      //dotgraph_text = c.genSSA(ast).asDotGraph();
+      dotgraph_text = c.genSSA(ast).asDotGraph();
       System.out.println(dotgraph_text);
     } catch (Exception e) {
       e.printStackTrace();

@@ -497,7 +497,7 @@ public class DLX {
   private static final int FP16_BIAS = 15;
 
   // convert half-precision floating-point to half-precision floating-point
-  private static float toFP32FromFP16(int hbits) {
+  public static float toFP32FromFP16(int hbits) {
     int sign = (hbits & 0x8000) << 16; // bitmask to collect sign for FP32
     int exp = (hbits & 0x7c00); // bitmask to collect FP16 exp w/o sign or mant
     int mant = hbits & 0x03ff; // bitmask to collect FP16 mant w/o sign or exp
@@ -523,7 +523,7 @@ public class DLX {
   }
 
   // convert single-precision floating-point to half-precision floating-point
-  private static int fromFP32ToFP16(float fval) {
+  public static int fromFP32ToFP16(float fval) {
     int bits = Float.floatToIntBits(fval); // convert FP32 to bitstring
     int sign = (bits >>> 16) & 0x8000; // bitmask to collect sign for FP16
     int val = bits & ~(sign << 16); // bitmask to collect FP32 exp and mant w/o sign

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Stack;
 import pl434.Token.Kind;
+import ssa.*;
 import types.*;
 
 public class Compiler {
@@ -741,5 +742,13 @@ public class Compiler {
   public ast.AST genAST() {
     computation();
     return new ast.AST(node, symbolTable);
+  }
+
+  SSA ssa;
+
+  public SSA genSSA(AST ast) {
+    ssa = new SSA();
+    ssa.visit(node);
+    return ssa;
   }
 }

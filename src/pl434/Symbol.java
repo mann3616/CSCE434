@@ -1,5 +1,6 @@
 package pl434;
 
+import javax.management.RuntimeErrorException;
 import types.*;
 
 public class Symbol {
@@ -8,18 +9,22 @@ public class Symbol {
   // TODO: Add other parameters like type
 
   public Type type;
-
-  int address;
-  int regno;
-
-  public Symbol(String name, int address) {
-    this.name = name;
-    this.address = address;
-  }
+  public static int static_assign = 0;
+  public int my_assign;
 
   public Symbol(String name, Type type) {
     this.name = name;
     this.type = type;
+    my_assign = -1;
+  }
+
+  public Symbol(Symbol simba) {
+    if (this.equals(simba)) {
+      throw new RuntimeErrorException(null, "Can't set Symbol to itself");
+    }
+    this.my_assign = Symbol.static_assign++;
+    this.name = simba.name;
+    this.type = simba.type;
   }
 
   public String name() {
@@ -59,7 +64,7 @@ public class Symbol {
     } else if (tt.getClass().equals(VoidType.class)) {
       param += "void";
     } else if (tt.getClass().equals(ErrorType.class)) {
-      param += "ErrorType(" + ((ErrorType)tt).message() + ")";
+      param += "ErrorType(" + ((ErrorType) tt).message() + ")";
     } else {
       ArrayType t = (ArrayType) tt;
       param += typeToString(t.type());
@@ -72,5 +77,10 @@ public class Symbol {
       }
     }
     return param;
+  }
+
+  @Override
+  public String toString() {
+    return name + my_assign;
   }
 }
