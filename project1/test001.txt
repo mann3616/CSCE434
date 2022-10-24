@@ -1,0 +1,40 @@
+// long test
+main
+
+int input, myvar;
+
+function getSumToNIter (int n) : int
+{
+    int i, j;
+    
+    let i = 0;
+    let j = 1;
+    while (j <= n) do
+        let i = i + j;
+        let j++;
+    od;
+    return i;
+};
+
+function getSumToNRecur (int n) : int
+{
+    if (n == 1) then
+        return 1;
+    fi;
+    return call getSumToNRecur(n - 1) + n;
+};
+
+{
+    let input = call readInt();
+    let myvar = call getSumToNIter(input);
+
+    call printInt(input);
+    call printInt(myvar);
+    call println();
+
+    let myvar = call getSumToNRecur(input);
+
+    call printInt(input);
+    call printInt(myvar);
+    call println();
+}.

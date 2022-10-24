@@ -1,0 +1,14 @@
+// Lance Abuan
+// Test case that checks the ability to output the correct symbolic tokens if there are no spaces and keyword detection
+
+-* -- - * - *
+
+**=/+-*^
+=!==<<=
+
+greeting = true;
+
+if( greeting ) {
+    if fi
+    // Hello! Ignore me! + = - 99032
+};

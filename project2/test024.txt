@@ -1,0 +1,11 @@
+//Colton Craft
+// token error : ||
+// undefined ident: True  
+main 
+
+bool a;
+
+{
+   let a = true and (false || (True and not false) || false); 
+   call printBool(a);
+}

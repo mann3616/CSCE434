@@ -1,0 +1,8 @@
+// Matthew Le
+// testing for a bunch of tokens involving the "-" character
+
+-=
+----    // Note: UNI_DEC UNI_DEC and not SUB SUB SUB SUB b/c of maximal munch
+-1234
+-1.
+-1.234

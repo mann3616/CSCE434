@@ -1,22 +1,34 @@
 Computation[main:()->void]
   DeclarationList
-    VariableDeclaration[f:int[1]]
-  DeclarationList
-    FunctionDeclaration[funcc:(int[])->float]
-      FunctionBody
-        StatementSequence
-          ReturnStatement
-            ArrayIndex
-              a:int[]
-              IntegerLiteral[0]
+    VariableDeclaration[a:int]
+    VariableDeclaration[b:int]
   StatementSequence
     Assignment
-      ArrayIndex
-        f:int[1]
-        IntegerLiteral[0]
-      IntegerLiteral[1]
-    FunctionCall[printFloat:(float)->void]
-      ArgumentList
-        FunctionCall[funcc:(int[])->float]
-          ArgumentList
-            f:int[1]
+      a:int
+      IntegerLiteral[0]
+    WhileStatement
+      Relation[!=]
+        a:int
+        IntegerLiteral[5]
+      StatementSequence
+        Assignment
+          a:int
+          Addition
+            a:int
+            IntegerLiteral[1]
+        Assignment
+          b:int
+          a:int
+        RepeatStatement
+          StatementSequence
+            FunctionCall[printInt:(int)->void]
+              ArgumentList
+                b:int
+            Assignment
+              b:int
+              Subtraction
+                b:int
+                IntegerLiteral[1]
+          Relation[==]
+            b:int
+            IntegerLiteral[0]

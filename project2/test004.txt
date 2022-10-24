@@ -1,0 +1,20 @@
+// Vinesh Ravuri
+// Test case for complex equations with a mix of variables and real numbers (floats and ints)
+main
+
+int a, b, c, d, e, f;
+float x, y, z;
+
+{
+    let a = call readInt();
+    let b = call readInt();
+    let c = call readInt();
+    let d = call readInt();
+    let e = call readInt();
+    let x = call readFloat();
+    let y = call readFloat();
+    let z = call readFloat();
+
+    call printInt(a * b ^ c / d - e * a * b % e * 2 + 3);
+    call printFloat(x / y + z * x - y + 5.61);
+}.

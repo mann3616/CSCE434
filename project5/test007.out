@@ -1,0 +1,14 @@
+Error type-checking file.
+TypeError(10,13)[Cannot multiply bool with bool.]
+TypeError(10,7)[Cannot assign ErrorType(Cannot multiply bool with bool.) to AddressOf(bool).]
+TypeError(11,13)[Cannot add float to bool.]
+TypeError(11,7)[Cannot assign ErrorType(Cannot add float to bool.) to AddressOf(float).]
+TypeError(12,13)[Cannot divide float by int.]
+TypeError(12,7)[Cannot assign ErrorType(Cannot divide float by int.) to AddressOf(float).]
+TypeError(13,13)[Cannot subtract bool from float.]
+TypeError(13,7)[Cannot assign ErrorType(Cannot subtract bool from float.) to AddressOf(bool).]
+TypeError(14,13)[Cannot modulo bool by bool.]
+TypeError(14,7)[Cannot assign ErrorType(Cannot modulo bool by bool.) to AddressOf(bool).]
+TypeError(16,13)[Cannot compute bool or float.]
+TypeError(16,7)[Cannot assign ErrorType(Cannot compute bool or float.) to AddressOf(float).]
+

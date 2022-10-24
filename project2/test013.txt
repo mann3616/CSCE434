@@ -1,0 +1,15 @@
+// Carlos Luna
+// incorrect operation on types
+
+main
+
+int x;
+float y;
+bool z;
+
+{
+    let x = 10;
+    let y = x + 0.10; // should fail if no type coercion
+    let z = true;
+    let x = x % z; // completely illogical operation, should also fail
+}

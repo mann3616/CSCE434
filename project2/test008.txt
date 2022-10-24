@@ -1,0 +1,20 @@
+// Emory Fields
+// combination of different AssignOps & arithmetic/function calling
+
+main
+
+int a, b, c;
+
+{
+    let a = 37; 
+    let b = 9; 
+    let c = 10; 
+
+    let a /= 1 + 4 * b;
+    let b += call readInt();
+    let c ^= 2;
+    
+    call printInt(a);
+    call printInt(b);
+    call printInt(c);
+}.

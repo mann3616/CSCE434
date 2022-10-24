@@ -1,0 +1,7 @@
+// Matthew Tran
+// minus signs
+1--1
+1 - -1
+1 - - 1
+1---1
+1--- 1

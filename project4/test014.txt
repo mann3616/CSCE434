@@ -1,0 +1,30 @@
+//Emmanuel Gonzalez
+// Testing function calls w/ multidimensional arrays
+main
+int[2][4] abba;
+
+function printArr(int[][] baab, int b, int a) : void 
+{
+  int aa;
+  while (b >= 0) do
+    let b--;
+    let aa = a;
+    while (aa >= 0) do
+      let aa--;
+      call printInt(abba[b][aa]);
+    od;
+  od;
+  
+};
+
+{
+  let abba[0][0] = 1;
+  let abba[0][1] = 2;
+  let abba[0][2] = 3;
+  let abba[0][3] = 4;
+  let abba[1][0] = 5;
+  let abba[1][1] = 6;
+  let abba[1][2] = 7;
+  let abba[1][3] = 8;
+  call printArr(abba, abba[0][1], abba[0][3]);
+}.

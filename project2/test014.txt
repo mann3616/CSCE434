@@ -1,0 +1,29 @@
+// Justin Herring
+// if statements and reading all types
+main
+
+float e, phi;
+int n, m;
+bool approxE;
+
+{
+    let approxE = call readBool();
+    let n = call readInt();
+    let m = call readInt();
+
+    if (approxE) then
+        // approximate e using a Taylor series
+        let e = 1.0 + 1.0 + 0.5 + 1.0 / 6.0 + 1.0 / 24.0 + 1.0 / 120.0;
+        call printFloat(e);
+
+    else
+        // approximate the golden ratio
+        let phi = (1.0 + 5.0^0.5) / 2.0;
+        call printFloat(phi);
+    
+    fi;
+    
+    call printBool(not approxE);
+    call printInt(n % m);
+    
+}.

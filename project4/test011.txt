@@ -1,0 +1,26 @@
+// Carlos Luna
+// use global array variable in function
+
+main
+
+int[3] X;
+
+function printX() : void
+{
+    call printInt(X[0]);
+    call println();
+    call printInt(X[1]);
+    call println();
+    call printInt(X[2]);
+    call println();
+};
+
+
+{
+    let X[0] = call readInt();
+    let X[1] = call readInt();
+    let X[2] = call readInt();
+
+    call printArr();
+}.
+

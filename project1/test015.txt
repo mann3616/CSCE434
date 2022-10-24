@@ -1,0 +1,9 @@
+// Brenda Hill
+// Testing many comments in a row and maximal munch with identifiers
+
+// ignore this
+// and this
+// and this
+
+ifelse
+mainif; // ignore this too

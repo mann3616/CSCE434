@@ -1,0 +1,12 @@
+// Raul Escobar
+// checking period separated values
+
+float d = a.b;
+
+float r = 1.s;
+
+float x = 5.3a;
+
+int t = r1.3;
+
+float p = 1.2.3.4;

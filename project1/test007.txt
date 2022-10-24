@@ -1,0 +1,21 @@
+// Colton Craft
+// dealing with irregular spacing in between code
+
+   main
+
+
+  function     GetSquareDiff  (  int i,int j  )  :int
+{
+    int         a ,b;
+
+    let a=i*    i     ;
+    let b    =   j    *j;
+
+
+    int pythag;
+       pythag = a-b;
+
+
+
+        return      pythag ;
+} ;

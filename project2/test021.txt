@@ -1,0 +1,20 @@
+// Macy Drew
+// Read and print all types
+main 
+
+int X;
+float Y;
+bool Z;
+
+{
+    let X = call readInt();
+    call printInt(X);
+    call println();
+
+    let Y = call readFloat();
+    call printFloat(Y);
+    call println();
+    
+    let Z = call readBool();
+    call printBool(Z);
+}.

@@ -38,7 +38,6 @@ Computation[main:()->void]
             StatementSequence
               ReturnStatement
                 sum:int
-            StatementSequence
           ReturnStatement
             FunctionCall[tailSumRecur:(int, int)->int]
               ArgumentList

@@ -1,0 +1,16 @@
+main
+
+int a,b;
+
+{
+    let a = call readInt();
+    while (a) do
+        let a++;
+        let b = a;
+        repeat
+            call printFloat(b);
+            let b--;
+        until (b==false);
+    od;
+
+}.

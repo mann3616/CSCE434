@@ -1,0 +1,5 @@
+Error type-checking file.
+TypeError(13,30)[Function func does not return, expected return of int]
+TypeError(23,3)[Function func returns int instead of float.]
+TypeError(41,2)[Cannot assign void to AddressOf(bool).]
+TypeError(42,2)[Cannot assign float to AddressOf(int).]

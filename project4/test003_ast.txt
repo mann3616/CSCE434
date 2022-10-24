@@ -33,7 +33,6 @@ Computation[main:()->void]
                   Assignment
                     max:int
                     curr:int
-                StatementSequence
               Assignment
                 i:int
                 Addition

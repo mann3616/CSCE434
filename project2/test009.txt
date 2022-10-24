@@ -1,0 +1,28 @@
+// Nathan Purwosumarto
+// Exhaustive test for all assign operations
+
+main
+
+int x,y,z;
+bool equiv;
+
+{
+    let x = 5;
+    call printInt(x);
+    let x++; //x=6;
+    call printInt(x);
+    let y = call readInt(); //y=20
+    let z = (x-1)*y; //z=100
+    let x += y; //x=26
+    let x -= 1; //x=25;
+    let x *= 4; //x=100
+    let equiv = x == z;
+    call printBool(equiv); //true
+    let x /= y; //x=5
+    call printInt(x);
+    let z %= x+1; //z=4
+    call printInt(z);
+    let x ^= z; //x=625
+    call printInt(x);
+
+}.

@@ -1,0 +1,7 @@
+Error type-checking file.
+TypeError(7,5)[Function foo returns int instead of void.]
+TypeError(13,23)[Cannot add int to float.]
+TypeError(13,5)[Call with args TypeList(ErrorType(Cannot add int to float.)) matches no function signature.]
+TypeError(21,5)[Cannot assign void to AddressOf(int).]
+TypeError(23,5)[Call with args TypeList() matches no function signature.]
+TypeError(27,5)[Call with args TypeList(float) matches no function signature.]

@@ -1,0 +1,18 @@
+// Max Smith
+// Relation with expression, ifStat with no else
+main
+
+int x, y, m, n;
+
+{
+    let x = call readInt();
+    let y = call readInt();
+    let m = call readInt();
+    let n = call readInt();
+
+    if (x < y and (m ^ 2) == (n + 2)) then
+        call printInt(m + n);
+    fi;
+    call println();
+    call printInt(x + y * m + n);	
+}.

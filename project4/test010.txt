@@ -1,0 +1,16 @@
+// Matthew Tran
+// Using a function before it's declared
+main
+
+function a() : void {
+    call b(1);
+};
+
+function b(int x) : void {
+    int a;
+    call printInt(x);
+};
+
+{
+    call a();
+}.

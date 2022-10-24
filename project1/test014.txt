@@ -1,0 +1,19 @@
+// Joshua Shin
+// tests correct tokenization of math expressions and relations
+main
+
+int i, j;
+
+{
+  let j = 1000;
+
+  while (i < j) do
+    let i = (i * 3 + 1) - (i * 2);
+  od;
+
+  let j = 1 == 2;
+  let j = 1 <= 2;
+}.
+
+
+

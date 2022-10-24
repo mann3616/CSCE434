@@ -1,0 +1,12 @@
+//Mackenzie Tran
+//Testing for tokens within brackets and parentheses
+
+main
+
+int i = 0;
+if(i%2==0)
+{
+	return true;
+}
+else
+{return false;}

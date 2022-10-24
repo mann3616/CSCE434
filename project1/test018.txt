@@ -1,0 +1,9 @@
+// Furkan Sahin
+// tests maximal munch, inline comment, identifier recognition
+
+main
+
+-------= // LOL
+
+let function float int 5. = ^===;
+do od dood

@@ -1,0 +1,6 @@
+//Justin Huang
+// error expected
+
+int x, y; 
+let x = 5;
+let y = x % x + 1;

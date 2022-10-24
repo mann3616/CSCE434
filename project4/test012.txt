@@ -1,0 +1,16 @@
+// Emory Fields
+// Testing all assigns
+main
+
+int i, j;
+{
+    let i += j * i; 
+    let j *= 3; 
+    let i -= j; 
+    let j /= j - 1; 
+    let i %= 8; 
+    let j ^= 6;
+
+    let j++; 
+    let i--;
+}.

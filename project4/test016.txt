@@ -1,0 +1,24 @@
+// Macy Drew
+// Test all print functions with literals and variables
+
+main
+
+int x;
+float y;
+bool z;
+
+ {
+
+    let x = 12;
+    let y = 1.2;
+    let z = true;
+
+    call printInt(12);
+    call printFloat(1.2);
+    call printBool(true);
+
+    call printInt(x);
+    call printFloat(y);
+    call printBool(z);
+
+}.

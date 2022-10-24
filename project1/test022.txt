@@ -1,0 +1,10 @@
+// Macy Drew
+// This tests a program with valid syntax and invalid logic,
+// i.e. int + float operations.  The tokens should all be correct.
+
+main
+
+float a1, a2;
+
+let a1 = 1 + 4;
+let a2 = 1 + 4.0;

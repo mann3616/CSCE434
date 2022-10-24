@@ -1,0 +1,6 @@
+// Kyle Owens
+// Testing ability to identify valid and non-valid floats
+
+-1 - 1234567890
+1 2.3 4 -5.6
+12.1.2

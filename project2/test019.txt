@@ -1,0 +1,22 @@
+//Logan Perry
+//Testing nested if with no else on inner if statement
+main
+
+int a,b,c;
+
+{
+  let a = call readInt();
+  let b = call readInt();
+  let c = 0;
+
+  if(a*b!=b*a) then
+    if(a==b) then
+      call printInt(a+b*b^a);
+    fi;
+  else
+    let c = 4;
+    call printInt(c and 2);
+  fi;
+
+  return;
+}.

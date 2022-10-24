@@ -1,0 +1,9 @@
+// Logan Perry
+// testing for valid identifiers
+
+___init___
+h_ello
+Thisisvalid
+Thisisnotva_lid$
+9ine
+t_0

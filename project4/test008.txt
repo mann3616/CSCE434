@@ -1,10 +1,19 @@
+// Nathan Purwosumarto
+// Nested repeat inside while test
+
 main
-int[1] f;
-function funcc(int[] a): float
+
+int a,b;
+
 {
-    return a[0];
-};
-{
-    let f[0] = 1;
-    call printFloat(call funcc(f));
+    let a = 0;
+    while (a != 5) do
+        let a++;
+        let b = a;
+        repeat
+            call printInt(b);
+            let b--;
+        until (b==0);
+    od;
+
 }.

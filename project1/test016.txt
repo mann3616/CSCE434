@@ -1,0 +1,10 @@
+// Justin Herring
+// testing maximal munch for types/identifiers
+
+void
+bool
+int
+float
+voidbool
+floatint
+voidintfloatbool

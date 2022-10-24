@@ -1,0 +1,14 @@
+// Josh Shin
+// Test Recursion
+main
+
+function factorial(int n) : int {
+	if (n == 1) then 
+		return 1;
+	fi;
+	return n * call factorial(n - 1);
+};
+
+{
+	call printInt(call factorial(10));
+}.

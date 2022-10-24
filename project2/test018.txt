@@ -1,0 +1,22 @@
+//Mackenzie Tran
+//testing if, fi, and assigning ints and bool
+
+main
+int x,y,z;
+bool b;
+{
+	let x = call readInt();
+	let y = call readInt();
+	if(x == y) then 
+		let b = true;
+		let z = x * y;
+	else
+		let z = x % y;
+		let b = false;
+	
+	fi;
+	
+	call printInt(z);
+	call println();
+	call printBool(b);
+}.

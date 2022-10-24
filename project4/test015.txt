@@ -1,0 +1,29 @@
+// Kyle Owens
+// Testing function overloading, return only functions, and nested function calls
+
+main
+
+int num1, num2;
+
+function testReturn () : int
+{
+    return 434;
+};
+
+function testReturn (int i) : int
+{
+    return i;
+};
+
+function printInt(int i, int j) : void
+{
+    return i + j;
+};
+
+{
+    let num1 = call testReturn();
+    let num2 = call testReturn(66);
+
+    call printInt(call testReturn(11));
+    call printInt(num1, num2);
+}.

@@ -1,0 +1,4 @@
+// Carlos Luna
+// Adds three undefined characters to the start of line 4
+let x = 1;
+￳￳￳fff;

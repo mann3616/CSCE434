@@ -1,0 +1,13 @@
+// Emmanuel Gonzalez
+// error program: Unary operator post crement and precrement ARE NOT ALLOWED in an expresssion
+// suggest throwing SyntaxError
+main
+int a, b, c;
+{
+    let a = call readInt();
+    let b = call readInt();
+    let c = call readInt();
+   call printInt(a-- + b++ + b * ++c);
+   call printInt(a);
+   call printInt(b);
+}

@@ -1,0 +1,28 @@
+main
+
+int x;
+
+function foo(int n) : void 
+{
+    return n;
+};
+
+function foo(int n, float d) : int 
+{
+    call printInt(10+n);
+    call printFloat(10+d);
+};
+
+function bar(int n) : void
+{
+    int x;
+    call printInt(n*10);
+    call println();
+    let x = call foo(n);
+    call printInt(x+0);
+    call printInt();
+};
+
+{
+    call bar(10.0);
+}.

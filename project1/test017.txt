@@ -1,0 +1,4 @@
+//Justin Huang
+//Testing differentiation of assignment, operation assign, equals, and equals to with maximal munch
+
+++++=+=++===+=+=

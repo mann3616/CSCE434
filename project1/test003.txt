@@ -1,0 +1,9 @@
+// Vinesh Ravuri
+// Test to check that numbers (floats, ints) are correctly being tokenized. Includes (+/-) cases and incorrect cases.
+main
+
+float positiveFloat = 24.323;
+int positiveInteger = 13;
+float negativeFloat = -25.65;
+int negativeInteger = -14;
+float incorrectNumber = -17.;

@@ -1,0 +1,28 @@
+// Justin Herring
+// while loop iterating over array
+
+main
+
+int i;
+float[5] arr;
+float avg;
+
+{
+    let arr[0] = 1.0;
+    let arr[1] = 3.0;
+    let arr[2] = 19.0;
+    let arr[3] = 12.0;
+    let arr[4] = 4.0;
+
+    // calculate the average value of an array
+    let avg = 0.0;
+    let i = 0;
+    while (i < 5) do
+        let avg += arr[i];
+        let i++;
+    od;
+    let avg /= 5.0;
+
+    call printFloat(avg); // should be 7.8
+
+}.

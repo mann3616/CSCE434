@@ -1,0 +1,14 @@
+// Matthew Le
+// Read an int, check if statement correctness
+
+main
+
+int x;
+
+{
+    let x = call readInt();
+    if (x < 69) then
+        call printInt(x);
+        call println();
+    fi;
+}.

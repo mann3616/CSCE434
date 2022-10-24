@@ -1,0 +1,7 @@
+// Nathan Purwosumarto
+// testing tokens next to comments, maximal munch
++=+/ /* ignore
+this
+block comment */ <=>
+mainif // ignore this too
+main if;

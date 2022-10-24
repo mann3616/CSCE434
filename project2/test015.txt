@@ -1,0 +1,15 @@
+// Lance Abuan
+// This tests the reading of the input file, simple multiplication, and checking if return statement stops output.
+
+main 
+int first, second, third;
+{
+    let first = call readInt();
+    let second = call readInt();
+    let third = first * second;
+    call printInt(first);
+    call printInt(second);
+    call printInt(third);
+    return;
+    call printInt(first);
+}.

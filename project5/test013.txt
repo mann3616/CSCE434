@@ -1,0 +1,13 @@
+// Max Smith
+// Type-checking assignments with function calls
+
+main
+
+int x;
+
+{
+    let x = call readInt();
+    let x = call readFloat();
+    let x = call readBool();
+    let x = call printInt(1);
+}.

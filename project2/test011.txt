@@ -1,0 +1,17 @@
+// Brenda Hill
+// testing arithmetic with func calls
+
+main 
+int x, y, z;
+float a, b, c;
+{
+    let x = 1;
+    let y = 2;
+    let z = call readInt() + x + y;
+    call printInt(z);
+
+    let a = 1.0;
+    let b = 2.0;
+    let c = call readFloat() * a * b;
+    call printFloat(c);
+}.

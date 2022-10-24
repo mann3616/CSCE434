@@ -1,0 +1,13 @@
+// Emmanuel Gonzalez
+// Array mismatch of dimensions into a function
+main
+int[5] abba;
+
+function notReady(int[][] baab) : void
+{
+  return;
+};
+
+{
+  call notReady(abba);
+}.

@@ -1,0 +1,34 @@
+//Nathan Purwosumarto
+//Test case for type-checking on function returns
+
+main
+
+int myNum;
+
+function fibonacci(int a) : int {
+    if (a <= 0) then
+        return 0;
+    else
+        if (a <= 2) then
+            return 1;
+        else
+            return call fibonacci(a - 1) + call fibonacci(a - 2);
+        fi;
+    fi;
+};
+
+function boolFromInt(int a) : bool {
+    if (a > 0) then
+        return true;
+    else
+        return false;
+    fi;
+};
+
+{
+    let myNum = 5;
+    call printInt(call fibonacci(myNum)); // should work
+    call printBool(call boolFromInt(call fibonacci(myNum+1))); // should also work
+    call printFloat(call boolFromInt(call fibonacci(myNum+2))); //should fail typecheck
+    call printBool(call fibonacci(myNum+3)); // should also fail typecheck
+}.

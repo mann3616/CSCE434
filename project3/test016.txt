@@ -1,24 +1,30 @@
 main
-int one, two, three, four, five;
-float six, seven, eight, nine, ten;
-bool tru, fals;
+
+float e, phi;
+int n, m;
+bool approxE;
 
 {
-    let one = call readInt();
-    let two = call readInt();
-    let three = call readInt();
-    let four = call readInt();
-    let five = call readInt();
-    let six = call readFloat();
-    let seven = call readFloat();
-    let eight = call readFloat();
-    let nine = call readFloat();
-    let ten = call readFloat();
-    let tru = call readBool();
-    let fals = call readBool();
-    call printInt( one + two + three + four + five);
-    call printFloat( six + seven + eight + nine + ten);
-    call printBool( tru);
-    call printBool( fals);
+    let approxE = call readBool();
+    let n = call readInt();
+    let m = call readInt();
 
+    if (approxE) then
+        // approximate e using a Taylor series
+        let e = 1.0 + 1.0 + 0.5 + 1.0 / 6.0 + 1.0 / 24.0 + 1.0 / 120.0;
+        call printFloat(e);
+        call printInt(n);
+
+    else
+        // approximate the golden ratio
+        let phi = (1.0 + 2.2) / 2.0;
+        call printFloat(phi);
+    
+    fi;
+    
+    call printBool(not approxE);
+    call printInt(n % m);  
 }.
+
+// Justin Herring
+// if statements and reading all types

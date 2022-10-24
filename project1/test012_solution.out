@@ -1,0 +1,8 @@
+ERROR
+IDENT	h_ello
+IDENT	Thisisvalid
+ERROR
+INT_VAL	9
+IDENT	ine
+IDENT	t_0
+EOF

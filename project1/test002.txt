@@ -1,0 +1,11 @@
+// This test is for 434H students: handling of block comment
+
+/* abcd */ // this is fine
+
+/* 
+*
+a
+*/ // so is this
+
+
+/* abcd // this is problematic because missing the end of block comment

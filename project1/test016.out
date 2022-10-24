@@ -1,0 +1,8 @@
+VOID
+BOOL
+INT
+FLOAT
+IDENT	voidbool
+IDENT	floatint
+IDENT	voidintfloatbool
+EOF
