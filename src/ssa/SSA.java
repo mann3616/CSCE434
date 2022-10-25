@@ -67,22 +67,43 @@ public class SSA implements NodeVisitor {
 
   @Override
   public void visit(RepeatStatement node) {
+    Block oldBlock = currBlock;
+    addCurr();
+    //TODO: Connect relation to sequence (just incase there are split blocks during sequence part)
+    Block begin = currBlock;
+    oldBlock.addEdge(begin);
     node.sequence().accept(this);
     node.relation().accept(this);
+    Block ending = currBlock;
+    if (node.relation().getClass().equals(Relation.class)) {
+      addRelInstJump(
+        ending,
+        ((Relation) node.relation()).rel(),
+        currRes,
+        begin
+      );
+    } else {
+      addRelInstJump(ending, "==", currRes, begin);
+    }
+    addCurr();
+    currBlock.label = "else";
+    ending.addEdge(currBlock);
   }
 
   @Override
   public void visit(WhileStatement node) {
     //Save prev block to add relBlock as an edge
     Block oldBlock = currBlock;
-    addCurr();
 
     // Do relation and it will be added to the currBlock
     // This will have the PHI ops as well TODO: Implement PHI
+    if (!oldBlock.instructions.isEmpty()) {
+      addCurr();
+      oldBlock.edges.add(currBlock);
+    }
     node.relation().accept(this);
     Result relRes = currRes;
     //Added relationBlock as an edge
-    oldBlock.edges.add(currBlock);
 
     // Now focus on connecting relationBlock to everything
     oldBlock = currBlock;
@@ -114,6 +135,7 @@ public class SSA implements NodeVisitor {
   public void visit(ReturnStatement node) {
     if (node.relation() != null) {
       node.relation().accept(this);
+      addInstruction(new Instruction(op.RET, null, currRes));
     }
   }
 
@@ -311,7 +333,7 @@ public class SSA implements NodeVisitor {
   public void visit(FunctionCall node) {
     //Save argument List just in case FunctionCall is has nested CALL's
     ArrayList<Result> savedArgList = params;
-    params.clear();
+    params = new ArrayList<>();
     node.list().accept(this);
     // If it's a built in function then I use special commands WRITE, WRITENL, and READ
     if (node.function.builtinFunc) {

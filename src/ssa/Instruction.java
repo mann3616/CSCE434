@@ -79,6 +79,7 @@ public class Instruction {
       for (Result i : func_params) {
         call += i + " ";
       }
+      return call.substring(0, call.length() - 1);
     } else if (right == null && left == null) {
       return my_num + ": " + inst.name();
     } else if (left == null) {
