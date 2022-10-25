@@ -1,0 +1,14 @@
+# While loop code generation test
+# Also ensures code gen can handle constants in the condition
+main
+int i, j;
+{
+	let i = 0;
+	let j = 0;
+	while (i < 1000) do
+		let j = j + 1;
+		let i = i + 2;
+	od;
+	call printInt(j);
+	call printInt(i); 
+}.

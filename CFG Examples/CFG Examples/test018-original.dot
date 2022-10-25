@@ -1,0 +1,17 @@
+digraph G {
+BB7[shape=record, label="<b>main\nBB7|{<call>33 : CALL foo }"];
+BB1[shape=record, label="<b>foo\nBB1|{0 : MOVE 1 c_0 |1 : MOVE c_0 d_1 |2 : MUL d_1 d_1 |3 : MOVE (2) e_3 |4 : ADD a_-2 c_0 |5 : MOVE (4) f_5 |6 : MOVE e_3 g_6 |7 : ADD g_6 d_1 |8 : MOVE (7) a_8 |9 : CMP a_8 c_0 |10 : BGE (9) [4] }"];
+BB1:s -> BB3:n [label="then"];
+BB1:s -> BB4:n [label="else"];
+BB3[shape=record, label="<b>BB3|{11 : ADD g_6 1 |12 : MOVE (11) h_12 |14 : BRA [2] }"];
+BB3:s -> BB2:n [label=""];
+BB4[shape=record, label="<b>BB4|{15 : ADD d_1 g_6 |16 : MOVE (15) f_16 |18 : CMP f_16 a_8 |19 : BLE (18) [5] }"];
+BB4:s -> BB6:n [label="then"];
+BB4:s -> BB5:n [label="else"];
+BB2[shape=record, label="<b>BB2|{13 : PHI (-2) h_13 := h_12 h_-2 |17 : PHI (5) f_17 := f_5 f_16 |22 : PHI (0) c_22 := c_0 c_21 |23 : MUL g_6 a_8 |24 : MOVE (23) b_24 |25 : WRITE a_8 |26 : WRITE b_24 |27 : WRITE c_22 |28 : WRITE d_1 |29 : WRITE e_3 |30 : WRITE f_17 |31 : WRITE g_6 |32 : WRITE h_13 }"];
+BB6[shape=record, label="<b>BB6|{20 : MOVE 2 c_20 }"];
+BB6:s -> BB5:n [label=""];
+BB5[shape=record, label="<b>BB5|{21 : PHI (0) c_21 := c_20 c_0 }"];
+BB5:s -> BB2:n [label=""];
+BB7 -> BB1 [color=red,label="call"];
+}

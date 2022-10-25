@@ -1,0 +1,4 @@
+digraph G {
+BB3[shape=record, label="<b>main\nBB3|{1 : MOVE 1 b_1 |2 : MOVE 19 c_2 |3 : MUL 4 10 |4 : ADD (3) 9 |5 : CALL foo |6 : ADD 1 (5) |7 : MUL (4) 15 |8 : ADD (7) (6) |9 : MUL (8) 4 |10 : ADD GDB a |11 : ADDA (10) (9) |12 : STORE 45 (11) |13 : MUL 4 10 |14 : ADD (13) 9 |15 : CALL foo |16 : ADD (15) 1 |17 : MUL (14) 15 |18 : ADD (17) (16) |19 : MUL (18) 4 |20 : ADD GDB a |21 : ADDA (20) (19) |22 : LOAD (21) |23 : ADD (22) 2 |24 : MOVE (23) d_24 |25 : MUL 4 10 |26 : ADD (25) 9 |27 : CALL foo |28 : ADD 1 (27) |29 : MUL (26) 15 |30 : ADD (29) (28) |31 : MUL (30) 4 |32 : ADD GDB a |33 : ADDA (32) (31) |34 : LOAD (33) |35 : WRITE (34) }"];
+BB1[shape=record, label="<b>foo\nBB1|{0 : RET 10 }"];
+}

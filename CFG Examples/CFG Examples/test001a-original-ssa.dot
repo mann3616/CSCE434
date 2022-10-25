@@ -1,0 +1,3 @@
+digraph G {
+BB1[shape=record, label="<b>main\nBB1|{0 : MOVE 51 x_0 |1 : MUL 2 x_0 |2 : MOVE (1) y_2 |3 : MUL y_2 y_2 |4 : ADD x_0 (3) |5 : MOVE (4) x_5 |6 : WRITE y_2 }"];
+}
