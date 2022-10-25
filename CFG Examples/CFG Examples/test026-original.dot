@@ -1,0 +1,10 @@
+digraph G {
+BB1[shape=record, label="<b>main\nBB1|{0 : MOVE 1 i |1 : MUL 1 4 |2 : ADD GDB a |3 : ADDA (2) (1) |4 : STORE 5 (3) |5 : MUL i 4 |6 : ADD GDB a |7 : ADDA (6) (5) |8 : LOAD (7) |9 : MOVE (8) x |10 : MUL i 4 |11 : ADD GDB a |12 : ADDA (11) (10) |13 : LOAD (12) |14 : MOVE (13) k |15 : MOVE 2 j |16 : MUL j 4 |17 : ADD GDB b |18 : ADDA (17) (16) |19 : STORE 19 (18) }"];
+BB1:s -> BB2:n [label=""];
+BB2[shape=record, label="<b>BB2|{40 : PHI (14) k_40 := k k |52 : PHI (-1) z_52 := z z |46 : DUMMY_STORE |54 : DUMMY_CALL |20 : MUL i 4 |21 : ADD GDB a |22 : ADDA (21) (20) |23 : LOAD (22) |24 : MUL j 4 |25 : ADD GDB b |26 : ADDA (25) (24) |27 : LOAD (26) |28 : CMP (23) (27) |29 : BGE (28) [4] }"];
+BB2:s -> BB3:n [label="then"];
+BB2:s -> BB4:n [label="else"];
+BB3[shape=record, label="<b>BB3|{30 : MUL i 4 |31 : ADD GDB a |32 : ADDA (31) (30) |33 : LOAD (32) |34 : MUL i 4 |35 : ADD GDB a |36 : ADDA (35) (34) |37 : LOAD (36) |38 : ADD (33) (37) |39 : MOVE (38) k |41 : MUL i 4 |42 : ADD GDB a |43 : ADDA (42) (41) |44 : ADD k 1 |45 : STORE (44) (43) |47 : MUL i 4 |48 : ADD GDB a |49 : ADDA (48) (47) |50 : LOAD (49) |51 : MOVE (50) z |53 : WRITE z |55 : BRA [2] }"];
+BB3:s -> BB2:n [label=""];
+BB4[shape=record, label="<b>BB4|{56 : MUL i 4 |57 : ADD GDB a |58 : ADDA (57) (56) |59 : LOAD (58) |60 : MOVE (59) w |61 : WRITE w }"];
+}

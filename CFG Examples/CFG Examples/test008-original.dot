@@ -1,0 +1,10 @@
+digraph G {
+BB1[shape=record, label="<b>main\nBB1|{0 : MOVE 0 i_0 |1 : MOVE 0 j_1 }"];
+BB1:s -> BB2:n [label=""];
+BB2[shape=record, label="<b>BB2|{6 : PHI (1) j_6 := j_1 j_5 |9 : PHI (0) i_9 := i_0 i_8 |2 : CMP i_9 1000 |3 : BGE (2) [4] }"];
+BB2:s -> BB3:n [label="then"];
+BB2:s -> BB4:n [label="else"];
+BB3[shape=record, label="<b>BB3|{4 : ADD j_6 1 |5 : MOVE (4) j_5 |7 : ADD i_9 2 |8 : MOVE (7) i_8 |10 : BRA [2] }"];
+BB3:b:w -> BB2:b:n [label=""];
+BB4[shape=record, label="<b>BB4|{11 : WRITE j_6 |12 : WRITE i_9 }"];
+}

@@ -1,0 +1,19 @@
+# Array testing
+main
+int [ 5 ][ 10 ][ 15 ] a;
+int b, c, d;
+
+function foo( ) : int
+{
+	return 10;
+};
+
+{
+	let b = 1;
+	let c = 19;
+	let a[ 4 ][ 9 ][ 1 + call foo( ) ] = 45;
+	let d = a[ 4 ][ 9 ][ call foo( ) + 1 ] + 2;
+	
+	call printInt(a[ 4 ][ 9 ][ 1 + call foo( ) ])
+}
+.

@@ -1,0 +1,18 @@
+digraph G {
+BB3[shape=record, label="<b>baz\nBB3|{15 : MOVE 1 c_15 |16 : WRITE a_-3 |17 : WRITE b_-3 |18 : WRITE x_2 |19 : WRITE y_10 }"];
+BB4[shape=record, label="<b>boo\nBB4|{20 : MOVE 0 i_20 }"];
+BB4:s -> BB5:n [label=""];
+BB5[shape=record, label="<b>BB5|{25 : PHI (2) x_25 := x_2 x_24 |28 : PHI (20) i_28 := i_20 i_27 |21 : CMP i_28 5 |22 : BGE (21) [7] }"];
+BB5:s -> BB6:n [label="then"];
+BB5:s -> BB7:n [label="else"];
+BB6[shape=record, label="<b>BB6|{23 : MUL x_25 x_25 |24 : MOVE (23) x_24 |26 : ADD i_28 1 |27 : MOVE (26) i_27 |29 : BRA [5] }"];
+BB6:sw -> BB5:b [label=""];
+BB7[shape=record, label="<b>BB7|{30 : ADD x_25 4 |31 : RET (30) }"];
+BB9[shape=record, label="<b>main\nBB9|{<cf>32 : CALL foo |<cbar>33 : CALL 1 bar |34 : ADD 3 7 |35 : SUB (34) 2 |36 : MOVE (35) x_36 |37 : MUL 895 2 |38 : MUL (37) 2 |39 : DIV (38) 2 |40 : MOVE (39) y_40 |<cbz1>41 : CALL x_36 y_40 baz |<cbo1>42 : CALL 2 4 boo |43 : ADD y_40 (42) |44 : MOVE (43) y_44 |45 : WRITE x_36 |46 : WRITE y_44 }"];
+BB2[shape=record, label="<b>bar\nBB2|{8 : MOVE 1 b_8 |9 : MOVE 1 c_9 |10 : MOVE b_8 y_10 |11 : WRITE a_-3 |12 : WRITE b_8 |13 : WRITE c_9 |14 : WRITE y_10 }"];
+BB1[shape=record, label="<b>foo\nBB1|{0 : MOVE 1 a_0 |1 : MOVE 2 b_1 |2 : MOVE a_0 x_2 |3 : MOVE b_1 y_3 |4 : WRITE a_0 |5 : WRITE b_1 |6 : WRITE x_2 |7 : WRITE y_3 }"];
+BB9:cf -> BB1:b [color=red];
+BB9:cbar -> BB2:b [color=red]; 
+BB9:cbz1 -> BB3:b [color=red]; 
+BB9:cbo1 -> BB4:b [color=red]; 
+}
