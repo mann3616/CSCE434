@@ -2,6 +2,7 @@ package ast;
 
 import java.util.ArrayList;
 import pl434.Symbol;
+import ssa.Result;
 
 public class FunctionCall extends Node implements Expression, Statement {
 
@@ -9,6 +10,7 @@ public class FunctionCall extends Node implements Expression, Statement {
   public Symbol function;
   public ArrayList<Symbol> functions;
   public ArgumentList list;
+  public ArrayList<Result> params;
 
   public FunctionCall(
     int lineNum,

@@ -1,4 +1,6 @@
 *.zip
+*launch.json
+*settings.json
 project1/p*.txt
 project2/p*.txt
 project3/p*.txt

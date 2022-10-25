@@ -543,6 +543,34 @@ public class TypeChecker implements NodeVisitor {
       t = sim.type.call(argList);
       if (!t.getClass().equals(ErrorType.class)) {
         found = sim;
+        Type checker = null;
+        switch (found.name) {
+          case "printInt":
+            checker = (checker == null ? new IntType() : checker);
+          case "printFloat":
+            checker = (checker == null ? new IntType() : checker);
+          case "printBool":
+            checker = (checker == null ? new IntType() : checker);
+            if (
+              argList.list.size() == 1 &&
+              argList.list.get(0).getClass().equals(checker.getClass())
+            ) {
+              found.builtinFunc = true;
+            }
+            break;
+          case "printLn":
+            if (argList.list.size() == 0) {
+              found.builtinFunc = true;
+            }
+            break;
+          case "readInt":
+          case "readFloat":
+          case "readBool":
+            if (argList.list.size() == 0) {
+              found.builtinFunc = true;
+            }
+        }
+        node.function = found;
         break;
       }
     }

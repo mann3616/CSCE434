@@ -3,6 +3,7 @@ package ssa;
 import pl434.DLX;
 import pl434.Symbol;
 import types.FloatType;
+import types.FuncType;
 import types.Type;
 
 public class Result {
@@ -35,7 +36,14 @@ public class Result {
       case PROC:
         return "[" + value + "]";
       case VAR:
-        return var.name + "_" + var.my_assign;
+        return (
+          var.name +
+          (
+            var.type.getClass().equals(FuncType.class)
+              ? ""
+              : "_" + var.my_assign
+          )
+        );
     }
     return "Error(Could not format Result to any given type)";
   }
