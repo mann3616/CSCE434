@@ -9,6 +9,9 @@ import pl434.Symbol;
 import ssa.Instruction.op;
 import types.*;
 
+// TODO: Make Two Pass throughs in the CFG
+// The first re organizes elements of the CFG (empty blocks that are meant to be connected etc.)
+// The second will find merging points of a CFG and use PHI to merge same vars (see lecture slide 08-SSA.pdf)
 public class SSA implements NodeVisitor {
 
   Block currBlock;
