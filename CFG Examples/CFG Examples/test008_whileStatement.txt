@@ -1,5 +1,5 @@
-# While loop code generation test
-# Also ensures code gen can handle constants in the condition
+// While loop code generation test
+// Also ensures code gen can handle constants in the condition
 main
 int i, j;
 {
