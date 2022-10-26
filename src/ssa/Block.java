@@ -10,11 +10,15 @@ public class Block {
   public static int block_num = 1;
   public int my_num;
   public List<Block> edges;
+  boolean hasBreak;
+  public List<String> edgeLabels;
 
   public Block() {
     instructions = new ArrayList<>();
     edges = new ArrayList<>();
+    edgeLabels = new ArrayList<>();
     my_num = Block.block_num++;
+    hasBreak = false;
     label = "";
   }
 
@@ -22,12 +26,9 @@ public class Block {
     instructions.add(inst);
   }
 
-  public void addEdge(Block block) {
+  public void addEdge(Block block, String edgeLabel) {
     edges.add(block);
-  }
-
-  public String printShortLabel() {
-    return "BB" + my_num + " " + "[label=\"" + label + "\"" + "];";
+    edgeLabels.add(edgeLabel);
   }
 
   @Override
@@ -37,7 +38,7 @@ public class Block {
       "BB" +
       my_num +
       "[shape=record, label=\"<b>" +
-      (label.equals("then") || label.equals("else") ? "" : label) +
+      label +
       "\\nBB" +
       my_num +
       "|{"
@@ -47,10 +48,23 @@ public class Block {
     }
     asString.delete(asString.length() - 2, asString.length());
     asString.append("}\"];");
+    int i = 0;
     for (Block b : edges) {
       if (!b.instructions.isEmpty()) {
-        asString.append("\nBB" + my_num + " -> " + b.printShortLabel());
+        asString.append(
+          "\nBB" +
+          my_num +
+          " -> " +
+          "BB" +
+          b.my_num +
+          " " +
+          "[label=\"" +
+          (hasBreak ? edgeLabels.get(i) : "") +
+          "\"" +
+          "];"
+        );
       }
+      i++;
     }
     return asString.toString();
   }

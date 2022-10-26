@@ -2,8 +2,8 @@ package ssa;
 
 import ast.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Stack;
 import pl434.DLX;
 import pl434.Symbol;
 import ssa.Instruction.op;
@@ -13,13 +13,13 @@ public class SSA implements NodeVisitor {
 
   Block currBlock;
   Result currRes;
+  HashMap<Integer, Block> hmblocks = new HashMap<>();
   List<Block> blocks;
   ArrayList<Result> params;
   boolean assign;
-  Stack<Block> joins;
 
   public SSA() {
-    joins = new Stack<>();
+    currBlock = new Block();
     this.assign = false;
     params = new ArrayList<>();
     blocks = new ArrayList<>();
@@ -29,7 +29,18 @@ public class SSA implements NodeVisitor {
     for (Statement s : node) {
       s.accept(this);
     }
+    //if (!currBlock.instructions.isEmpty()) {
     addCurr();
+    // } else {
+    //   for (Block b : blocks) {
+    //     for (int i = b.edges.size() - 1; i >= 0; i--) {
+    //       if (b.edges.get(i).my_num == currBlock.my_num) {
+    //         b.edges.remove(i);
+    //         b.edgeLabels.remove(i);
+    //       }
+    //     }
+    //   }
+    // }
   }
 
   @Override
@@ -43,7 +54,6 @@ public class SSA implements NodeVisitor {
 
   @Override
   public void visit(FunctionDeclaration node) {
-    currBlock = new Block();
     currBlock.label = node.function.name;
     node.body().accept(this);
   }
@@ -60,7 +70,6 @@ public class SSA implements NodeVisitor {
     // Make node.main() not annoying
     node.variables().accept(this);
     node.functions().accept(this);
-    currBlock = new Block();
     currBlock.label = "main";
     node.mainStatementSequence().accept(this);
   }
@@ -68,26 +77,32 @@ public class SSA implements NodeVisitor {
   @Override
   public void visit(RepeatStatement node) {
     Block oldBlock = currBlock;
-    addCurr();
     //TODO: Connect relation to sequence (just incase there are split blocks during sequence part)
     Block begin = currBlock;
-    oldBlock.addEdge(begin);
+    if (!currBlock.instructions.isEmpty()) {
+      addCurr();
+      oldBlock.addEdge(begin, "");
+    }
     node.sequence().accept(this);
+    Block endSeq = blocks.get(blocks.size() - 1);
+    Block save = currBlock;
+    currBlock = endSeq;
     node.relation().accept(this);
-    Block ending = currBlock;
+    Block relBlock = currBlock;
+    currBlock = save;
+    addCurr();
+    relBlock.addEdge(begin, "then");
     if (node.relation().getClass().equals(Relation.class)) {
       addRelInstJump(
-        ending,
+        relBlock,
         ((Relation) node.relation()).rel(),
         currRes,
-        begin
+        currBlock,
+        "else"
       );
     } else {
-      addRelInstJump(ending, "==", currRes, begin);
+      addRelInstJump(relBlock, "==", currRes, currBlock, "else");
     }
-    addCurr();
-    currBlock.label = "else";
-    ending.addEdge(currBlock);
   }
 
   @Override
@@ -99,7 +114,7 @@ public class SSA implements NodeVisitor {
     // This will have the PHI ops as well TODO: Implement PHI
     if (!oldBlock.instructions.isEmpty()) {
       addCurr();
-      oldBlock.edges.add(currBlock);
+      oldBlock.addEdge(currBlock, "");
     }
     node.relation().accept(this);
     Result relRes = currRes;
@@ -110,7 +125,6 @@ public class SSA implements NodeVisitor {
 
     //Save relationBlock reference to the list and start on next Block (while sequence)
     addCurr();
-    currBlock.label = "then";
 
     // Adding Instruction jump to the relation block
     if (node.relation().getClass().equals(Relation.class)) {
@@ -118,17 +132,17 @@ public class SSA implements NodeVisitor {
         oldBlock,
         ((Relation) node.relation()).rel(),
         relRes,
-        currBlock
+        currBlock,
+        "then"
       );
     } else {
-      addRelInstJump(oldBlock, "==", relRes, currBlock);
+      addRelInstJump(oldBlock, "==", relRes, currBlock, "then");
     }
 
     node.sequence().accept(this);
     // After doing the sequence now we can add BRA instruction to the end of the last block added by this sequence
-    addRelInstJump(blocks.get(blocks.size() - 1), "", null, oldBlock);
-    currBlock.label = "else";
-    oldBlock.edges.add(currBlock);
+    addRelInstJump(blocks.get(blocks.size() - 1), "", null, oldBlock, "");
+    oldBlock.addEdge(currBlock, "else");
   }
 
   @Override
@@ -146,13 +160,9 @@ public class SSA implements NodeVisitor {
     Block oldBlock = currBlock;
     // Save old block to relate this Block to the ifStat "then" block
     addCurr();
-    currBlock.label = "then";
 
-    oldBlock.addEdge(currBlock);
+    oldBlock.addEdge(currBlock, "then");
     node.ifSequence().accept(this);
-
-    // Adding oldBlock reference to next block (may it be else or not)
-    currBlock.label = "else";
 
     //Adding else block (even if it is not an else) to jump statement for relation() and adds edge
     if (node.relation().getClass().equals(Relation.class)) {
@@ -160,18 +170,19 @@ public class SSA implements NodeVisitor {
         oldBlock,
         ((Relation) node.relation()).rel(),
         relRes,
-        currBlock
+        currBlock,
+        "else"
       );
     } else {
-      addRelInstJump(oldBlock, "==", relRes, currBlock);
+      addRelInstJump(oldBlock, "==", relRes, currBlock, "else");
     }
     if (node.elseSequence() != null) {
       node.elseSequence().accept(this);
-      oldBlock.edges.get(1).addEdge(currBlock);
+      oldBlock.edges.get(1).addEdge(currBlock, "");
       //Add reference to the currBlock so that these blocks can be related to after the if/else statement
     }
     //Add reference to the currBlock for the "then" sequence
-    oldBlock.edges.get(0).addEdge(currBlock);
+    oldBlock.edges.get(0).addEdge(currBlock, "else");
   }
 
   @Override
@@ -382,7 +393,10 @@ public class SSA implements NodeVisitor {
   }
 
   public void addCurr() {
-    blocks.add(currBlock);
+    if (!hmblocks.containsKey(currBlock.my_num)) {
+      blocks.add(currBlock);
+      hmblocks.put(currBlock.my_num, currBlock);
+    }
     currRes = new Result();
     currRes.kind = Result.PROC;
     currRes.value = currBlock.my_num;
@@ -405,12 +419,14 @@ public class SSA implements NodeVisitor {
     Block block,
     String tok,
     Result left,
-    Block oblock
+    Block oblock,
+    String edgeL
   ) {
     Result right = new Result();
     right.kind = Result.PROC;
     right.value = oblock.my_num;
-    block.edges.add(oblock);
+    block.addEdge(oblock, edgeL);
+    block.hasBreak = true;
     switch (tok) {
       case "==":
         block.addInstruction(new Instruction(op.BNE, left, right));
