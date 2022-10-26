@@ -32,17 +32,6 @@ public class SSA implements NodeVisitor {
     for (Statement s : node) {
       s.accept(this);
     }
-    //if (!currBlock.instructions.isEmpty()) {
-    // } else {
-    //   for (Block b : blocks) {
-    //     for (int i = b.edges.size() - 1; i >= 0; i--) {
-    //       if (b.edges.get(i).my_num == currBlock.my_num) {
-    //         b.edges.remove(i);
-    //         b.edgeLabels.remove(i);
-    //       }
-    //     }
-    //   }
-    // }
   }
 
   @Override
@@ -427,6 +416,7 @@ public class SSA implements NodeVisitor {
   }
 
   public String asDotGraph() {
+    removeEmpties();
     StringBuffer graph = new StringBuffer();
     graph.append("digraph G {\n");
     for (Block b : blocks) {
@@ -436,6 +426,23 @@ public class SSA implements NodeVisitor {
     }
     graph.append("}");
     return graph.toString();
+  }
+
+  public void removeEmpties() {
+    for (Block b : blocks) {
+      if (!b.instructions.isEmpty()) {
+        int stop = b.edges.size();
+        for (int i = 0; i < stop; i++) {
+          if (b.edges.get(i).instructions.isEmpty()) {
+            for (Block bb : b.edges.get(i).edges) {
+              b.addEdge(bb, b.edgeLabels.get(i));
+            }
+            b.edges.remove(i--);
+            stop--;
+          }
+        }
+      }
+    }
   }
 
   public void addRelInstJump(

@@ -50,37 +50,18 @@ public class Block {
     asString.append("}\"];");
     int i = 0;
     for (Block b : edges) {
-      if (!b.instructions.isEmpty()) {
-        asString.append(
-          "\nBB" +
-          my_num +
-          " -> " +
-          "BB" +
-          b.my_num +
-          " " +
-          "[label=\"" +
-          (hasBreak ? edgeLabels.get(i) : "") +
-          "\"" +
-          "];"
-        );
-      } else {
-        int j = 0;
-        for (Block bb : b.edges) {
-          asString.append(
-            "\nBB" +
-            my_num +
-            " -> " +
-            "BB" +
-            bb.my_num +
-            " " +
-            "[label=\"" +
-            (hasBreak ? edgeLabels.get(i) : "") +
-            "\"" +
-            "];"
-          );
-          j++;
-        }
-      }
+      asString.append(
+        "\nBB" +
+        my_num +
+        " -> " +
+        "BB" +
+        b.my_num +
+        " " +
+        "[label=\"" +
+        (hasBreak ? edgeLabels.get(i) : "") +
+        "\"" +
+        "];"
+      );
       i++;
     }
     return asString.toString();
