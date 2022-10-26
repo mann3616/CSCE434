@@ -4,6 +4,7 @@ import ast.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 import pl434.DLX;
 import pl434.Symbol;
 import ssa.Instruction.op;
@@ -18,14 +19,20 @@ public class SSA implements NodeVisitor {
   Result currRes;
   HashMap<Integer, Block> hmblocks = new HashMap<>();
   List<Block> blocks;
+  List<Block> roots;
   ArrayList<Result> params;
+  Stack<Result> indices;
   boolean assign;
+  int currDim;
 
   public SSA() {
     currBlock = new Block();
+    currDim = -1;
     this.assign = false;
     params = new ArrayList<>();
     blocks = new ArrayList<>();
+    roots = new ArrayList<>();
+    indices = new Stack<>();
   }
 
   public void visit(StatementSequence node) {
@@ -46,6 +53,7 @@ public class SSA implements NodeVisitor {
   @Override
   public void visit(FunctionDeclaration node) {
     currBlock.label = node.function.name;
+    roots.add(currBlock);
     node.body().accept(this);
     addCurr();
   }
@@ -63,6 +71,7 @@ public class SSA implements NodeVisitor {
     node.variables().accept(this);
     node.functions().accept(this);
     currBlock.label = "main";
+    roots.add(currBlock);
     node.mainStatementSequence().accept(this);
     Result end = new Result();
     end.kind = Result.CONST;
@@ -204,8 +213,11 @@ public class SSA implements NodeVisitor {
     this.assign = true;
     node.addressOf().accept(this);
     this.assign = false;
-    Result addressOf = currRes;
-    addInstruction(new Instruction(op.MOVE, right, addressOf));
+    if (node.addressOf().getClass().equals(ArrayIndex.class)) {
+      addInstruction(new Instruction(op.STORE, right, currRes));
+    } else {
+      addInstruction(new Instruction(op.MOVE, right, currRes));
+    }
   }
 
   @Override
@@ -219,6 +231,9 @@ public class SSA implements NodeVisitor {
   public void visit(Dereference node) {
     this.assign = false;
     node.expression.accept(this);
+    if (node.expression.getClass().equals(ArrayIndex.class)) {
+      addInstruction(new Instruction(op.LOAD, currRes));
+    }
   }
 
   @Override
@@ -255,12 +270,7 @@ public class SSA implements NodeVisitor {
   @Override
   public void visit(LogicalNot node) {
     node.right().accept(this);
-    Result right = currRes;
-    Result one = new Result();
-    one.kind = Result.CONST;
-    one.type = new IntType();
-    one.value = 1;
-    addInstruction(new Instruction(op.XOR, one, right));
+    addInstruction(new Instruction(op.NEG, currRes));
   }
 
   @Override
@@ -268,8 +278,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.POW, left, right));
+    addInstruction(new Instruction(op.POW, left, currRes));
   }
 
   @Override
@@ -277,8 +286,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.MUL, left, right));
+    addInstruction(new Instruction(op.MUL, left, currRes));
   }
 
   @Override
@@ -286,8 +294,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.DIV, left, right));
+    addInstruction(new Instruction(op.DIV, left, currRes));
   }
 
   @Override
@@ -295,8 +302,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.MOD, left, right));
+    addInstruction(new Instruction(op.MOD, left, currRes));
   }
 
   @Override
@@ -304,8 +310,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.AND, left, right));
+    addInstruction(new Instruction(op.AND, left, currRes));
   }
 
   @Override
@@ -313,8 +318,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.ADD, left, right));
+    addInstruction(new Instruction(op.ADD, left, currRes));
   }
 
   @Override
@@ -322,8 +326,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.SUB, left, right));
+    addInstruction(new Instruction(op.SUB, left, currRes));
   }
 
   @Override
@@ -331,8 +334,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.OR, left, right));
+    addInstruction(new Instruction(op.OR, left, currRes));
   }
 
   @Override
@@ -340,8 +342,7 @@ public class SSA implements NodeVisitor {
     node.left().accept(this);
     Result left = currRes;
     node.right().accept(this);
-    Result right = currRes;
-    addInstruction(new Instruction(op.CMP, left, right));
+    addInstruction(new Instruction(op.CMP, left, currRes));
   }
 
   @Override
@@ -387,10 +388,62 @@ public class SSA implements NodeVisitor {
     params = savedArgList;
   }
 
+  // TODO: Use Stack var "indicies" to compute the address of the array
   @Override
   public void visit(ArrayIndex node) {
-    node.left.accept(this);
+    boolean nested = false;
+    Result resOfPrev = null;
+    if (currDim != -1) {
+      nested = true;
+      resOfPrev = currRes;
+    }
+    currDim++;
+    // Get Result of right to add to prev Mult
+    int saveDim = currDim; // Saving currDim just in case node.right is another ArrayIndex
+    currDim = -1;
     node.right.accept(this);
+    currDim = saveDim;
+    Result rightRes = currRes;
+    // If this is not the first ArrayIndex then add previous Result to node.right result
+    if (nested) {
+      addInstruction(new Instruction(op.ADD, resOfPrev, rightRes));
+    }
+
+    // If ArrayIndex is not the last, then MUL nextDimiension by node.right result
+    if (node.left.getClass().equals(ArrayIndex.class)) {
+      Result nxtMaxDim = new Result();
+      nxtMaxDim.kind = Result.CONST;
+      nxtMaxDim.value =
+        ((ArrayType) node.symbol.type).dimVals().get(currDim + 1);
+      addInstruction(new Instruction(op.MUL, currRes, nxtMaxDim));
+    } else {
+      // MUL the addy by 4 to fit PC DLX format
+      Result nxtMaxDim = new Result();
+      nxtMaxDim.kind = Result.CONST;
+      nxtMaxDim.value = 4;
+      addInstruction(new Instruction(op.MUL, currRes, nxtMaxDim));
+      Result mResult = currRes;
+
+      // Get left result (should be a variable) and set it as kind addy since we are getting the address of this result
+      node.left.accept(this);
+      currRes.kind = Result.ADDY;
+      Result leftRes = currRes;
+
+      // Make the GDB Result to have x: ADD GDB var.name
+      Result gdb = new Result();
+      gdb.kind = Result.GDB;
+      addInstruction(new Instruction(op.ADD, gdb, leftRes));
+
+      // Doing ADDA instruction using saved mResult and GDB inst
+      addInstruction(new Instruction(op.ADDA, currRes, mResult));
+
+      currDim--;
+      return;
+    }
+
+    node.left.accept(this);
+
+    currDim--;
   }
 
   public void addInstruction(Instruction inst) {

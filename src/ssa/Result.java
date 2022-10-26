@@ -4,6 +4,7 @@ import pl434.DLX;
 import pl434.Symbol;
 import types.FloatType;
 import types.FuncType;
+import types.IntType;
 import types.Type;
 
 public class Result {
@@ -12,13 +13,13 @@ public class Result {
   static final int VAR = 1;
   static final int PROC = 2;
   static final int ADDY = 3;
-  static final int SELECT = 4;
-  static final int INST = 5;
+  static final int INST = 4;
+  static final int GDB = 5;
   public int kind;
   public int inst;
   public int regno;
   public int value;
-  public Type type;
+  public Type type = new IntType();
 
   public int addy;
   public Symbol var;
@@ -44,6 +45,10 @@ public class Result {
               : "_" + var.my_assign
           )
         );
+      case ADDY:
+        return var.name;
+      case GDB:
+        return "GDB";
     }
     return "Error(Could not format Result to any given type)";
   }

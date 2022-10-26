@@ -10,6 +10,7 @@ public class Block {
   public static int block_num = 1;
   public int my_num;
   public List<Block> edges;
+  public List<Block> domEdges;
   boolean hasBreak;
   public List<String> edgeLabels;
 
@@ -17,6 +18,7 @@ public class Block {
     instructions = new ArrayList<>();
     edges = new ArrayList<>();
     edgeLabels = new ArrayList<>();
+    domEdges = new ArrayList<>();
     my_num = Block.block_num++;
     hasBreak = false;
     label = "";

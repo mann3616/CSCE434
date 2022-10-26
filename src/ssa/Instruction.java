@@ -6,6 +6,7 @@ public class Instruction {
 
   public enum op {
     NEG,
+    ADDA,
     ADD,
     SUB,
     MUL,
@@ -13,7 +14,6 @@ public class Instruction {
     POW,
     AND,
     OR,
-    XOR,
     DIV,
     CMP,
     BEQ,
