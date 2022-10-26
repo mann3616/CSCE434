@@ -75,16 +75,16 @@ public class Instruction {
   @Override
   public String toString() {
     if (func_params != null) {
-      String call = my_num + ": " + inst.name() + " ";
+      String call = my_num + " : " + inst.name() + " ";
       for (Result i : func_params) {
         call += i + " ";
       }
       return call.substring(0, call.length() - 1);
     } else if (right == null && left == null) {
-      return my_num + ": " + inst.name();
+      return my_num + " : " + inst.name();
     } else if (left == null) {
-      return my_num + ": " + inst.name() + " " + right;
+      return my_num + " : " + inst.name() + " " + right;
     }
-    return my_num + ": " + inst.name() + " " + left + " " + right;
+    return my_num + " : " + inst.name() + " " + left + " " + right;
   }
 }
