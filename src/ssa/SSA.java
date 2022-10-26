@@ -30,7 +30,6 @@ public class SSA implements NodeVisitor {
       s.accept(this);
     }
     //if (!currBlock.instructions.isEmpty()) {
-    addCurr();
     // } else {
     //   for (Block b : blocks) {
     //     for (int i = b.edges.size() - 1; i >= 0; i--) {
@@ -56,6 +55,7 @@ public class SSA implements NodeVisitor {
   public void visit(FunctionDeclaration node) {
     currBlock.label = node.function.name;
     node.body().accept(this);
+    addCurr();
   }
 
   @Override
@@ -72,36 +72,50 @@ public class SSA implements NodeVisitor {
     node.functions().accept(this);
     currBlock.label = "main";
     node.mainStatementSequence().accept(this);
+    Result end = new Result();
+    end.kind = Result.CONST;
+    end.value = 0;
+    end.type = new IntType();
+    addInstruction(new Instruction(op.RET, null, end));
+    addCurr();
   }
 
   @Override
   public void visit(RepeatStatement node) {
     Block oldBlock = currBlock;
-    //TODO: Connect relation to sequence (just incase there are split blocks during sequence part)
-    Block begin = currBlock;
+    // Connecting previous block to repeatBlock unless it is empty
+    Block begin = currBlock; // Just initalizing
     if (!currBlock.instructions.isEmpty()) {
       addCurr();
+      begin = currBlock;
       oldBlock.addEdge(begin, "");
     }
     node.sequence().accept(this);
-    Block endSeq = blocks.get(blocks.size() - 1);
-    Block save = currBlock;
-    currBlock = endSeq;
+    Block endSeq = currBlock;
+    if (endSeq.hasBreak) {
+      addCurr();
+      endSeq.addEdge(currBlock, "");
+    }
+    // Have to save this currBlock to keep Block numbers aligned
     node.relation().accept(this);
     Block relBlock = currBlock;
-    currBlock = save;
-    addCurr();
+    Result relRes = currRes;
+
+    // Connecting relation to the start of the repeatStat
     relBlock.addEdge(begin, "then");
+
+    //Now connect relationBlock to nextCurrBlock
+    addCurr(); //Wiping Curr
     if (node.relation().getClass().equals(Relation.class)) {
       addRelInstJump(
         relBlock,
         ((Relation) node.relation()).rel(),
-        currRes,
+        relRes,
         currBlock,
         "else"
       );
     } else {
-      addRelInstJump(relBlock, "==", currRes, currBlock, "else");
+      addRelInstJump(relBlock, "==", relRes, currBlock, "else");
     }
   }
 
@@ -118,8 +132,6 @@ public class SSA implements NodeVisitor {
     }
     node.relation().accept(this);
     Result relRes = currRes;
-    //Added relationBlock as an edge
-
     // Now focus on connecting relationBlock to everything
     oldBlock = currBlock;
 
@@ -141,7 +153,8 @@ public class SSA implements NodeVisitor {
 
     node.sequence().accept(this);
     // After doing the sequence now we can add BRA instruction to the end of the last block added by this sequence
-    addRelInstJump(blocks.get(blocks.size() - 1), "", null, oldBlock, "");
+    addRelInstJump(currBlock, "", null, oldBlock, "");
+    addCurr();
     oldBlock.addEdge(currBlock, "else");
   }
 
@@ -161,8 +174,13 @@ public class SSA implements NodeVisitor {
     // Save old block to relate this Block to the ifStat "then" block
     addCurr();
 
+    // Connecting relation to the first block that needs to be run
     oldBlock.addEdge(currBlock, "then");
     node.ifSequence().accept(this);
+
+    // Ending last ifSequence block
+    Block lastThen = currBlock;
+    addCurr();
 
     //Adding else block (even if it is not an else) to jump statement for relation() and adds edge
     if (node.relation().getClass().equals(Relation.class)) {
@@ -176,13 +194,15 @@ public class SSA implements NodeVisitor {
     } else {
       addRelInstJump(oldBlock, "==", relRes, currBlock, "else");
     }
+
     if (node.elseSequence() != null) {
       node.elseSequence().accept(this);
-      oldBlock.edges.get(1).addEdge(currBlock, "");
       //Add reference to the currBlock so that these blocks can be related to after the if/else statement
+      Block lastElseBlock = currBlock;
+      addCurr();
+      lastElseBlock.addEdge(currBlock, "");
     }
-    //Add reference to the currBlock for the "then" sequence
-    oldBlock.edges.get(0).addEdge(currBlock, "else");
+    lastThen.addEdge(currBlock, "");
   }
 
   @Override

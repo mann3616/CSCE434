@@ -63,6 +63,23 @@ public class Block {
           "\"" +
           "];"
         );
+      } else {
+        int j = 0;
+        for (Block bb : b.edges) {
+          asString.append(
+            "\nBB" +
+            my_num +
+            " -> " +
+            "BB" +
+            bb.my_num +
+            " " +
+            "[label=\"" +
+            (hasBreak ? edgeLabels.get(i) : "") +
+            "\"" +
+            "];"
+          );
+          j++;
+        }
       }
       i++;
     }
