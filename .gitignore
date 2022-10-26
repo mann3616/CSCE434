@@ -1,4 +1,5 @@
 *.zip
+*.dot
 *launch.json
 *settings.json
 project1/p*.txt
