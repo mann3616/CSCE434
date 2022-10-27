@@ -1,0 +1,9 @@
+//Simple parsing test
+main 
+int x, y,z;
+{
+    let x = 51; 
+    let y = 2 * x;
+    let x = x + y * y; 
+    call printInt(y);
+}.
