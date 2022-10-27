@@ -702,7 +702,7 @@ public class TypeChecker implements NodeVisitor {
       currentFunction.type = lt;
     } else if (((ArrayType) node.symbol.type).dims == currIndex + 1) {
       currentFunction.type = ((ArrayType) node.symbol.type).type;
-    } else {
+    } else if (!node.left.getClass().equals(ArrayIndex.class)) {
       int i = ((ArrayType) node.symbol.type).dims - 1;
       ArrayList<Integer> l = new ArrayList<>();
       for (; i > currIndex; i--) {
@@ -710,6 +710,8 @@ public class TypeChecker implements NodeVisitor {
       }
       currentFunction.type =
         new ArrayType(((ArrayType) node.symbol.type).type, l.size(), l);
+    } else {
+      currentFunction.type = lt;
     }
     currIndex--;
   }
