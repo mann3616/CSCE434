@@ -1,0 +1,19 @@
+// Kyle Owens
+// Tests nested repeats
+
+main
+
+int x, y;
+
+{
+	let x = call readInt();
+	let y = 0;
+
+	repeat
+		let y++;
+		call printInt(y);
+		repeat
+		    let y = y + 1;
+		until (y >= x - 10);
+	until (y >= x);
+}.

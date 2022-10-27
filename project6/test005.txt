@@ -1,0 +1,35 @@
+//Nathan Purwosumarto
+//Test case for checking function recursion and function nesting, done inside repeat statement w phi instruction
+
+main
+
+int myNum;
+
+function fibonacci(int a) : int {
+    if (a <= 0) then
+        return 0;
+    else
+        if (a <= 2) then
+            return 1;
+        else
+            return call fibonacci(a - 1) + call fibonacci(a - 2);
+        fi;
+    fi;
+};
+
+function boolFromInt(int a) : bool {
+    if (a > 0) then
+        return true;
+    else
+        return false;
+    fi;
+};
+
+{
+    let myNum = 5; // one phi instruction should be generated for myNum inside repeat block
+    repeat
+        call printInt(call fibonacci(myNum));
+        call printBool(call boolFromInt(call fibonacci(myNum+1)));
+        let myNum--;
+    until (myNum == 0);
+}.

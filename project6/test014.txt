@@ -1,0 +1,37 @@
+// Rushil Udani
+// circular phi instructions, function parameters/locals
+
+main
+    int i, x, y;
+
+function foo() : int {
+    if (call readBool()) then
+        return call readInt();
+    else
+        return 21;
+    fi;
+};
+
+function bar(int x) : int {
+    int i;
+    // both x and i are new here!
+    while (x > y*1) do
+        let y--;
+        let i++;
+    od;
+    return i;
+};
+
+{
+    let i = 5;
+    repeat
+        // the phi here depends on the i before and after the loop
+        let x = call foo();
+        call bar(x);
+        if (i > 0) then
+            let i--;
+        fi;
+        // the phi here depends on the i inside the if statement and at the top of the loop
+    until (i == 0);
+    call println();
+}.

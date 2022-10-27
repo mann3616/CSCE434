@@ -1,0 +1,25 @@
+// Justin Herring
+// if statement nested inside repeat loop
+
+main 
+int a, b, c, n;
+{
+    let a = call readInt();
+    let b = call readInt();
+    let c = a * b;
+
+    let n = 10;
+    repeat 
+        if ((a < 0) or (b < 0)) then
+            let a = -1 * a + 5;
+            let b = -3 * b - 4;
+        else 
+            let a = a ^ 2 - 2 * a;
+            let b = -1 * b;
+        fi;
+        let c = (c - a) * b; 
+        let n--;
+    until (n == 0);
+
+    call printInt(c);
+}.
