@@ -14,6 +14,8 @@ public class Block {
   public List<Block> parents;
   public List<Block> edges;
   public HashSet<Block> edgeSet;
+  public HashSet<Block> domFront;
+  public HashSet<Block> idomChildren;
   Block iDom;
   public LinkedHashSet<Block> doms;
   boolean hasBreak;
@@ -21,11 +23,13 @@ public class Block {
 
   public Block() {
     iDom = null;
+    domFront = new HashSet<>();
     parents = new ArrayList<>();
     instructions = new ArrayList<>();
     edges = new ArrayList<>();
     edgeLabels = new ArrayList<>();
     doms = new LinkedHashSet<>();
+    idomChildren = new HashSet<>();
     my_num = Block.block_num++;
     hasBreak = false;
     label = "";
@@ -59,6 +63,7 @@ public class Block {
         }
         if (noDoms) {
           iDom = a;
+          a.idomChildren.add(this);
           return;
         }
       }

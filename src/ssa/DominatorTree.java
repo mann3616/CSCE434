@@ -1,9 +1,7 @@
 package ssa;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Stack;
 
 public class DominatorTree {
@@ -11,6 +9,11 @@ public class DominatorTree {
   HashSet<Block> possibleBlocks = new HashSet<>();
 
   Block objective;
+
+  // To solve for DF, if X dominates parent of Y and does not strictly dominate Y (meaning X is not an ancestor of Y in the Dom tree)
+  // Put in simple DF is when:
+  // - X dominates his own aunts/uncles (the Y's)
+  // - X is connected to his own siblings (more Y's)
 
   public DominatorTree(SSA ssa) {
     for (Block b : ssa.blocks) {
@@ -43,10 +46,39 @@ public class DominatorTree {
       bfsStack.addAll(nxtBlocks);
     }
 
+    // Solve for Immediate dominance
     for (Block b : visited) {
       b.solveIDom();
     }
+    compDF(root);
     printDoms(new HashSet<>(), root);
+  }
+
+  public void compDF(Block root) {
+    // local + LRS
+
+    // Comp Local
+    compLocal(root);
+
+    //Iterate through all DT children
+    for (Block c : root.idomChildren) {
+      // Recur and compute the child
+      compDF(c);
+      // Add all child DF to this DF
+      for (Block cDF : c.domFront) {
+        if (!cDF.doms.contains(root)) {
+          root.domFront.add(cDF);
+        }
+      }
+    }
+  }
+
+  public void compLocal(Block root) {
+    for (Block b : root.edges) {
+      if (!b.doms.contains(root)) {
+        root.domFront.add(b);
+      }
+    }
   }
 
   public void printDoms(HashSet<Block> visited, Block root) {
@@ -63,6 +95,11 @@ public class DominatorTree {
     for (Block b : root.doms) {
       System.out.println("  BB" + b.my_num);
     }
+    System.out.print("  DomFront:");
+    for (Block b : root.domFront) {
+      System.out.print(" BB" + b.my_num);
+    }
+    System.out.println();
     for (int i = 0; i < root.edges.size(); i++) {
       printDoms(visited, root.edges.get(i));
     }
