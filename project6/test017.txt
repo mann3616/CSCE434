@@ -1,0 +1,13 @@
+// Emmanuel Gonzalez
+// Array's
+main
+int[4][20] doodle;
+
+function bozo(int[] every) : int
+{
+    return every[0];
+};
+
+{
+    let doodle[2][ doodle[0][5] ] = call bozo(doodle[0]);
+}.

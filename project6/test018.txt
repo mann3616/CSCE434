@@ -1,0 +1,16 @@
+main
+
+float[10] f1, f2;
+bool[5][10][15] b1;
+int i, j, k;
+
+{
+    let i = 2;
+    let j = i;
+    let k = j;
+    let b1[0][i][i - 2] = true;
+    let b1[i][i*j][1] = false;
+    let b1[i][j][k] = not (b1[i+0][j*1][k^1] or b1[1][1][1]);
+
+    let f1 = f2; // 434H: should handle this
+}.

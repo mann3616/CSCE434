@@ -1,0 +1,27 @@
+// local shadows global
+main
+
+int a, b, c;
+
+function test(int i, int ii, int iii) : void
+{
+	int a, b, c;
+
+	let a = i; 
+	let b = ii;
+	let c = iii;
+	if (b < c) then
+		while ( b + 1  < c) do
+			let a += 1;
+			while ( b + 2  < c ) do
+				let b += 1;
+			od;
+		od;
+	fi;
+	let b = c + 1;
+	call printInt(b); // 4
+};
+
+{
+	call test(1,2,3);
+}.

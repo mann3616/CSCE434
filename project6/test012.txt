@@ -1,0 +1,22 @@
+// Vinesh Ravuri
+// Nested while with if statement
+main
+
+int a, b, c;
+
+{
+	let a = call readInt();
+	let b = 0;
+	let c = call readInt();
+
+	while (a <= c) do
+		let a += b;
+		while (b <= c) do
+		    let b -= 1;
+		    let c += 3;
+		    if (c >= 2) then
+		        let c -= 4;
+		    fi;
+		od;
+	od;
+}.

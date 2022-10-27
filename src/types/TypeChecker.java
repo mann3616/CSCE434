@@ -75,15 +75,16 @@ public class TypeChecker implements NodeVisitor {
         }
       }
       if (checkHasReturn) {
-        reportError(
-          node.lineNumber(),
-          node.charPosition(),
-          "Function " +
-          currFunc.name +
-          " does not return, expected return of " +
-          ((FuncType) currFunc.type).returnType() +
-          "."
-        );
+        // TODO: uncomment after PA6
+        // reportError(
+        //   node.lineNumber(),
+        //   node.charPosition(),
+        //   "Function " +
+        //   currFunc.name +
+        //   " does not return, expected return of " +
+        //   ((FuncType) currFunc.type).returnType() +
+        //   "."
+        // );
         checkHasReturn = false;
       }
     }

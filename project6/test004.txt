@@ -1,0 +1,24 @@
+// Nested Ifs
+main
+int x, y, z;
+
+{
+    let x = 1;
+    let y = 2;
+    let z = 3;
+    while(y > 0) do
+        if(x == 1) then
+            let x++;
+            if(y == 2) then
+                let y = y - 1;
+            else
+                let y = y - 1;
+                let z = z - 1;
+            fi;
+        else
+            call println();
+        fi;
+        call println();
+    od;
+
+}.

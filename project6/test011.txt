@@ -1,0 +1,28 @@
+// Macy Drew
+// Early return
+
+main
+int a, b, c, d;
+
+function foo (int a, int b, int c, int d) : int 
+{
+    while (a < b) do
+        let c = a;
+        let c++;
+        if (c > d) then
+	        let d = d + 2;
+        else
+	        return d;
+	    fi;
+        let a = c;
+    od;
+    return a;   
+};
+
+{
+    let a = 5;
+    let b = 8;
+    let d = 1;
+    
+    call printInt(call foo(a,b,0,d));
+}.

@@ -1,0 +1,40 @@
+// Carlos Luna
+// Nested if statement
+
+main 
+
+int x, y, z;
+
+bool a_bool, b_bool;
+
+function fn() : int {
+    bool c_bool;
+
+    let c_bool = 10 < 5;
+
+    if(call readInt() > 5) then
+        if(c_bool) then 
+            call printInt(5);
+        else
+            call printInt(10);
+        fi;
+
+    else
+        call printBool(a_bool);
+    fi;
+
+    let x = 10;
+
+    return x + 30 + y;
+};
+
+function fn(int x) : void {
+    call printInt(x);
+};
+
+{
+
+    let a_bool = not (false or b_bool and call readBool());
+
+    call printInt(x);
+}.

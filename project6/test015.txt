@@ -1,0 +1,32 @@
+// Logan Perry
+// Nested statement stress test
+
+main
+
+int x;
+int y;
+
+{
+    let x = 1;
+    let y = 1;
+
+    if (x<y) then
+        while(x>y) do
+            repeat
+                while (x<y) do
+                    if(x==y) then
+                        let x--;
+                    fi;
+                od;
+            until (x <= y);
+        od;
+    else
+        repeat
+            if(x==y) then 
+                while (y<x) do 
+                    let x++;
+                od;
+            fi;
+        until (x <= y);
+    fi;
+}.

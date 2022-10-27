@@ -1,0 +1,30 @@
+main
+int i,j,k;
+
+function printInt(int k, int j, int i): void
+{
+    call printInt(k);
+    call printInt(j);
+    call printInt(i);
+    call println();
+};
+
+{
+    let i = 1 ^ 100 ;
+    let j = i;
+    let k = i - 1;
+    while (k < 10^2) do 
+        if (j < 10*i) then
+            let j = i;
+            let k = k + 2;
+        else
+            let j = k;
+            let k = k + 2;
+            let i = i + 1;
+        fi;
+        if (k % 10 == 0) then
+            call printInt(i,j,k);
+        fi;
+    od;
+    call printInt(i,j,k);
+}.

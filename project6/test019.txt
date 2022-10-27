@@ -1,0 +1,25 @@
+// based on test009: 
+// Emory Fields
+// nested while statements
+
+main
+int a, b, c, d;
+{
+	let a = 10;
+	let b = 20;
+	while (a < b + 1000) do
+		let a = a + 2;
+        while (b + 0 < 100) do
+            let b ++;
+            let a += b;
+        od;
+		if ( 1 > 0 ) then
+            let d = a;
+        fi;
+        if (c < 2*10) then
+            let c = 3;
+        fi;
+	od;
+	call printInt(c);
+	call printInt(d); 
+}.
