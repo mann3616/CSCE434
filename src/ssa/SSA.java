@@ -79,6 +79,9 @@ public class SSA implements NodeVisitor {
     end.type = new IntType();
     addInstruction(new Instruction(op.RET, null, end));
     addCurr();
+    removeEmpties();
+    DominatorTree tree = new DominatorTree(this);
+    tree.buildTree(roots.get(0));
   }
 
   @Override
@@ -469,7 +472,6 @@ public class SSA implements NodeVisitor {
   }
 
   public String asDotGraph() {
-    removeEmpties();
     StringBuffer graph = new StringBuffer();
     graph.append("digraph G {\n");
     for (Block b : blocks) {
