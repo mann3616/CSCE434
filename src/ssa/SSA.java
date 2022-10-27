@@ -15,6 +15,7 @@ import types.*;
 // The second will find merging points of a CFG and use PHI to merge same vars (see lecture slide 08-SSA.pdf)
 public class SSA implements NodeVisitor {
 
+  // To Calculate PHI
   Block currBlock;
   Result currRes;
   HashMap<Integer, Block> hmblocks = new HashMap<>();
@@ -81,7 +82,10 @@ public class SSA implements NodeVisitor {
     addCurr();
     removeEmpties();
     DominatorTree tree = new DominatorTree(this);
-    tree.buildTree(roots.get(0));
+    for (Block b : roots) {
+      tree.buildTree(b);
+      System.out.println();
+    }
   }
 
   @Override

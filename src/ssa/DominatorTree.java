@@ -30,14 +30,24 @@ public class DominatorTree {
       Stack<Block> nxtBlocks = new Stack<>();
       while (!bfsStack.isEmpty()) {
         Block nxt = bfsStack.pop();
+        if (nxt.my_num == 4) {
+          System.out.println("Stop");
+        }
+        if (nxt.my_num == 2) {
+          System.out.println("Stop");
+        }
+        if (nxt.my_num == 2) {
+          System.out.println("Stop");
+        }
         if (visited.contains(nxt)) {
           continue;
         } else {
           visited.add(nxt);
           for (Block child : nxt.edges) {
-            if (!visited.contains(child)) {
+            if (!child.visited.contains(nxt)) {
               compareParents(child, nxt);
               nxtBlocks.add(child);
+              child.visited.add(nxt);
             }
           }
         }
@@ -56,7 +66,9 @@ public class DominatorTree {
 
   public void compDF(Block root) {
     // local + LRS
-
+    if (root.my_num == 2) {
+      System.out.println();
+    }
     // Comp Local
     compLocal(root);
 
@@ -66,7 +78,7 @@ public class DominatorTree {
       compDF(c);
       // Add all child DF to this DF
       for (Block cDF : c.domFront) {
-        if (!cDF.doms.contains(root)) {
+        if (!cDF.doms.contains(root) || cDF == root) {
           root.domFront.add(cDF);
         }
       }

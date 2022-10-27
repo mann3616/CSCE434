@@ -12,6 +12,7 @@ public class Block {
   public static int block_num = 1;
   public int my_num;
   public List<Block> parents;
+  public HashSet<Block> visited;
   public List<Block> edges;
   public HashSet<Block> edgeSet;
   public HashSet<Block> domFront;
@@ -22,6 +23,7 @@ public class Block {
   public List<String> edgeLabels;
 
   public Block() {
+    visited = new HashSet<>();
     iDom = null;
     domFront = new HashSet<>();
     parents = new ArrayList<>();
