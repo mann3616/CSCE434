@@ -1,7 +1,7 @@
 *.zip
 *.dot
-*launch.json
-*settings.json
+.vscode/launch.json
+.vscode/settings.json
 project1/p*.txt
 project2/p*.txt
 project3/p*.txt
