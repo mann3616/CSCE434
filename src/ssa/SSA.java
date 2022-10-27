@@ -231,7 +231,7 @@ public class SSA implements NodeVisitor {
   public void visit(AddressOf node) {
     currRes = new Result();
     currRes.kind = Result.VAR;
-    currRes.var = new Symbol(node.symbol(), this.assign);
+    currRes.var = node.symbol();
   }
 
   @Override
