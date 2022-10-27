@@ -148,7 +148,7 @@ public class CompilerTester {
     if (!tc.check(ast)) {
       System.out.println("Error type-checking file.");
       System.out.println(tc.errorReport());
-      System.exit(-4);
+      // System.exit(-4);
     }
 
     String dotgraph_text = null;
