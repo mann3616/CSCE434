@@ -30,15 +30,6 @@ public class DominatorTree {
       Stack<Block> nxtBlocks = new Stack<>();
       while (!bfsStack.isEmpty()) {
         Block nxt = bfsStack.pop();
-        if (nxt.my_num == 4) {
-          System.out.println("Stop");
-        }
-        if (nxt.my_num == 2) {
-          System.out.println("Stop");
-        }
-        if (nxt.my_num == 2) {
-          System.out.println("Stop");
-        }
         if (visited.contains(nxt)) {
           continue;
         } else {
