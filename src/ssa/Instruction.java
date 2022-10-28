@@ -1,6 +1,8 @@
 package ssa;
 
 import java.util.ArrayList;
+import java.util.List;
+import pl434.Symbol;
 
 public class Instruction {
 
@@ -36,7 +38,8 @@ public class Instruction {
 
   public static int instruction_num = 0;
   public int my_num;
-  Result left, right;
+  Result left, right, third; // TODO: third is for the third Result that needs to be printed out and stuff MAY need a 4th
+  List<Symbol> doPhiOn;
   ArrayList<Result> func_params;
   op inst;
 
@@ -65,6 +68,7 @@ public class Instruction {
   }
 
   public Instruction(op inst) {
+    doPhiOn = new ArrayList<>();
     this.func_params = null;
     this.inst = inst;
     this.left = null;
@@ -74,7 +78,24 @@ public class Instruction {
 
   @Override
   public String toString() {
-    if (func_params != null) {
+    // TODO: change this if you got time, but tbh i doubt the teacher will care
+    if (inst.equals(op.PHI)) {
+      return (
+        my_num +
+        " : " +
+        inst.name() +
+        " " +
+        (
+          left.var.my_assign > right.var.my_assign
+            ? left.var.name + left.var.my_assign + 1
+            : right.var.name + right.var.my_assign + 1
+        ) +
+        " =: " +
+        left +
+        " " +
+        right
+      );
+    } else if (func_params != null) {
       String call = my_num + " : " + inst.name() + " ";
       for (Result i : func_params) {
         call += i + " ";

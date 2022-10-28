@@ -14,6 +14,7 @@ public class Symbol {
   public int my_assign;
   public boolean assign;
   public boolean builtinFunc;
+  public Symbol OG;
 
   public Symbol(String name, Type type) {
     builtinFunc = false;
@@ -21,12 +22,14 @@ public class Symbol {
     this.name = name;
     this.type = type;
     my_assign = -1;
+    OG = this;
   }
 
   public Symbol(Symbol simba, boolean assign) {
     if (this.equals(simba)) {
       throw new RuntimeErrorException(null, "Can't set Symbol to itself");
     }
+    this.OG = simba.OG;
     this.my_assign = Instruction.instruction_num;
     if (!assign && !simba.assign) {
       // If this variable has not been assigned yet

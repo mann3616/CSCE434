@@ -3,6 +3,8 @@ package ssa;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Stack;
+import pl434.Symbol;
+import ssa.Instruction.op;
 
 public class DominatorTree {
 
@@ -10,14 +12,38 @@ public class DominatorTree {
 
   Block objective;
 
-  // To solve for DF, if X dominates parent of Y and does not strictly dominate Y (meaning X is not an ancestor of Y in the Dom tree)
-  // Put in simple DF is when:
-  // - X dominates his own aunts/uncles (the Y's)
-  // - X is connected to his own siblings (more Y's)
-
   public DominatorTree(SSA ssa) {
     for (Block b : ssa.blocks) {
       possibleBlocks.add(b);
+    }
+  }
+
+  public void iterPhi(HashSet<Block> visited, Block root) {
+    // Add all PHI to all blocks
+    if (visited.contains(root)) {
+      return;
+    }
+    visited.add(root);
+    for (Block df : root.domFront) {
+      addPhi(root, df);
+    }
+    // Explore edges and do the same
+    for (Block e : root.edges) {
+      for (Symbol i : root.latest.keySet()) {
+        if (!e.latest.containsKey(i)) {
+          e.latest.put(i, root.latest.get(i));
+        }
+      }
+      iterPhi(visited, e);
+    }
+  }
+
+  // df gets PHI for a symbol if needed
+  public void addPhi(Block root, Block df) {
+    for (Symbol x : root.blockVars) {
+      if (df.blockVars.contains(x)) {
+        df.phis.put(x, new Instruction(op.PHI));
+      }
     }
   }
 

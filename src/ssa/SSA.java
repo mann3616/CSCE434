@@ -223,7 +223,9 @@ public class SSA implements NodeVisitor {
     if (node.addressOf().getClass().equals(ArrayIndex.class)) {
       addInstruction(new Instruction(op.STORE, right, currRes));
     } else {
+      Result res = currRes;
       addInstruction(new Instruction(op.MOVE, right, currRes));
+      currBlock.latest.put(res.var.OG, res.var);
     }
   }
 
@@ -231,7 +233,7 @@ public class SSA implements NodeVisitor {
   public void visit(AddressOf node) {
     currRes = new Result();
     currRes.kind = Result.VAR;
-    currRes.var = node.symbol();
+    currRes.var = new Symbol(node.symbol(), this.assign);
   }
 
   @Override
