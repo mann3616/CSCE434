@@ -39,10 +39,6 @@ public class Block {
   HashMap<Symbol, Symbol> phi1 = new HashMap<>();
   HashMap<Symbol, Symbol> phi2 = new HashMap<>();
 
-  // Phi info (set of vars), and var to list of instructions
-
-  // Add all phi's then DFS through and fill in PHI's as needed
-  // After we renumber
   public HashSet<Symbol> blockVars;
   public HashMap<Symbol, List<Symbol>> OGtoUse;
   public TreeMap<Symbol, Instruction> phis;
@@ -51,6 +47,7 @@ public class Block {
   HashMap<Symbol, Symbol> latest = new HashMap<>();
 
   public Block() {
+    edgeSet = new HashSet<>();
     OGtoUse = new HashMap<>();
     phis =
       new TreeMap<>(
@@ -130,8 +127,7 @@ public class Block {
     boolean move1,
     Instruction keep
   ) {
-    // may need to add memory of modified instructions
-    // keep != i
+    // If there is a move then we do not reset latest, if there
     if (visited.contains(root)) {
       return;
     }
@@ -168,6 +164,22 @@ public class Block {
         }
       }
     }
+    if (!move1 && root.phis.containsKey(OG) && root != this) {
+      if (
+        !root.phi1.containsKey(OG) ||
+        root.phi1.get(OG).my_assign < keep.third.var.my_assign
+      ) {
+        if (root.phi1.containsKey(OG)) {
+          root.phi2.put(OG, root.phi1.get(OG));
+        }
+        root.phi1.put(OG, keep.third.var);
+      } else if (
+        !root.phi2.containsKey(OG) ||
+        root.phi2.get(OG).my_assign < keep.third.var.my_assign
+      ) {
+        root.phi2.put(OG, keep.third.var);
+      }
+    }
     for (Block b : root.edges) {
       instRenumber(visited, b, move1, keep);
     }
@@ -188,9 +200,14 @@ public class Block {
   // May need to be updated to resolve bigger or smaller phis
   public void addPhi(Symbol phi, Symbol version) {
     // What does this do?
-    if (!phi1.containsKey(phi)) {
+    if (!phi1.containsKey(phi) || phi1.get(phi).my_assign < version.my_assign) {
+      if (phi1.containsKey(phi)) {
+        phi2.put(phi, phi1.get(phi));
+      }
       phi1.put(phi, version);
-    } else if (!phi2.containsKey(phi)) {
+    } else if (
+      !phi2.containsKey(phi) || phi2.get(phi).my_assign < version.my_assign
+    ) {
       phi2.put(phi, version);
     }
   }
@@ -255,6 +272,7 @@ public class Block {
   public void addEdge(Block block, String edgeLabel) {
     edges.add(block);
     edgeLabels.add(edgeLabel);
+    edgeSet.add(block);
     block.parents.add(this);
   }
 
