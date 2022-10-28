@@ -2,6 +2,7 @@ package ssa;
 
 import ast.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -84,6 +85,17 @@ public class SSA implements NodeVisitor {
     removeEmpties();
     DominatorTree tree = new DominatorTree(this);
     // Do we add the phi instructions now?
+    for (Block b : blocks) {
+      Comparator c = new Comparator<Block>() {
+        @Override
+        public int compare(Block o1, Block o2) {
+          // TODO Auto-generated method stub
+          return o1.firstInst.my_num - o2.firstInst.my_num;
+        }
+      };
+      b.edges.sort(c);
+      b.parents.sort(c);
+    }
     for (Block b : roots) {
       tree.buildTree(b);
       System.out.println();

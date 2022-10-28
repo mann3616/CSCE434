@@ -41,10 +41,8 @@ public class DominatorTree {
   // df gets PHI for a symbol if needed
   public void addPhi(Block root, Block df) {
     for (Symbol x : root.blockVars) {
-      if (!df.blockVars.contains(x)) {
-        // You take dominance frontiers
-        df.phis.put(x, new Instruction(op.PHI));
-      }
+      // You take dominance frontiers
+      df.phis.put(x, new Instruction(op.PHI));
     }
   }
 

@@ -38,7 +38,7 @@ public class Instruction {
 
   public static int instruction_num = 0;
   public int my_num;
-  Result left, right, third; // TODO: third is for the third Result that needs to be printed out and stuff MAY need a 4th
+  Result left, right, third, fourth; // TODO: third is for the third Result that needs to be printed out and stuff MAY need a 4th
   List<Symbol> doPhiOn;
   ArrayList<Result> func_params;
   op inst;
@@ -92,11 +92,7 @@ public class Instruction {
             : (right.var.my_assign)
         ) +
         ") " +
-        (
-          left.var.my_assign > right.var.my_assign
-            ? left.var.name + "_" + (left.var.my_assign + 1)
-            : right.var.name + "_" + (right.var.my_assign + 1)
-        ) +
+        third +
         " := " +
         right +
         " " +

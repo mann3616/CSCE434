@@ -1,11 +1,15 @@
 package ssa;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Stack;
+import java.util.TreeMap;
 import pl434.Symbol;
 import ssa.Instruction.op;
 import types.FuncType;
@@ -23,6 +27,7 @@ public class Block {
   public List<Block> edges;
   public HashSet<Block> edgeSet;
   public List<Block> parents;
+  public Instruction firstInst;
 
   // Dom tree graph info
   public HashSet<Block> visited;
@@ -40,16 +45,25 @@ public class Block {
   // After we renumber
   public HashSet<Symbol> blockVars;
   public HashMap<Symbol, List<Symbol>> OGtoUse;
-  public HashMap<Symbol, Instruction> phis;
+  public TreeMap<Symbol, Instruction> phis;
   public HashMap<Symbol, LinkedHashSet<Instruction>> symbolLocation;
   public List<Instruction> assigns = new ArrayList<>();
   HashMap<Symbol, Symbol> latest = new HashMap<>();
 
   public Block() {
     OGtoUse = new HashMap<>();
-    phis = new HashMap<>();
+    phis =
+      new TreeMap<>(
+        new Comparator<Symbol>() {
+          @Override
+          public int compare(Symbol o1, Symbol o2) {
+            // TODO Auto-generated method stub
+            return o1.my_assign - o2.my_assign;
+          }
+        }
+      );
     symbolLocation = new HashMap<>();
-    blockVars = new HashSet();
+    blockVars = new HashSet<>();
     visited = new HashSet<>();
     iDom = null;
     domFront = new HashSet<>();
@@ -87,9 +101,25 @@ public class Block {
             : (c.getValue().right.var.my_assign + 1)
         );
       c.getValue().my_num = index_num;
-      instructions.add(0, c.getValue());
+      c.getValue().third = new Result();
+      c.getValue().third.kind = Result.VAR;
+      c.getValue().third.var = new Symbol(c.getKey(), true);
+      c.getValue().third.var.my_assign = index_num;
       // Need to visit EVERY block
-      instRenumber(new HashSet<>(), this, index_num, true);
+      instRenumber(new HashSet<>(), this, false, c.getValue());
+      local_instructions.add(c.getValue());
+    }
+    local_instructions.sort(
+      new Comparator<Instruction>() {
+        @Override
+        public int compare(Instruction o1, Instruction o2) {
+          // TODO Auto-generated method stub
+          return o2.my_num - o1.my_num;
+        }
+      }
+    );
+    for (Instruction i : local_instructions) {
+      instructions.add(0, i);
     }
   }
 
@@ -97,28 +127,49 @@ public class Block {
   public void instRenumber(
     HashSet<Block> visited,
     Block root,
-    int above,
-    boolean initial_call
+    boolean move1,
+    Instruction keep
   ) {
     // may need to add memory of modified instructions
     // keep != i
     if (visited.contains(root)) {
       return;
     }
+    Symbol OG = keep.third.var.OG;
     visited.add(root);
-    for (Instruction I : root.instructions) {
-      if (initial_call) {
-        if (I.my_num > above) {
-          I.my_num++;
+    for (Instruction i : root.instructions) {
+      if (i.my_num >= keep.my_num) {
+        i.my_num++;
+      }
+      if (i.inst == op.PHI) {
+        continue;
+      }
+      if (i.inst.equals(op.MOVE)) {
+        if (OG == i.right.var.OG) {
+          move1 = true;
         }
-      } else {
-        if (I.my_num >= above) {
-          I.my_num++;
+        i.right.var.my_assign = i.my_num;
+      }
+      // If we haven't moved into the var then continue setting all instances with PHI var
+      if (
+        !move1 &&
+        root.symbolLocation.containsKey(OG) &&
+        root.symbolLocation.get(OG).contains(i)
+      ) {
+        if (
+          i.left != null && i.left.kind == Result.VAR && i.left.var.OG == OG
+        ) {
+          i.left.var = keep.third.var;
+        }
+        if (
+          i.right != null && i.right.kind == Result.VAR && i.right.var.OG == OG
+        ) {
+          i.right.var = keep.third.var;
         }
       }
     }
     for (Block b : root.edges) {
-      instRenumber(visited, b, above, false);
+      instRenumber(visited, b, move1, keep);
     }
   }
 
@@ -145,8 +196,14 @@ public class Block {
   }
 
   public void addInstruction(Instruction inst) {
+    if (instructions.isEmpty()) {
+      firstInst = inst;
+    }
     instructions.add(inst);
     // Add left Result if it's a symbol that is not a function
+    // if (inst.inst == op.ADD) {
+    //   System.out.println("STOP");
+    // }
     if (inst.inst.equals(op.MOVE)) {
       assigns.add(inst);
       // if inst.right is a variable type, then we can add it as a block var
@@ -160,7 +217,7 @@ public class Block {
     if (
       inst.left != null &&
       inst.left.kind == Result.VAR &&
-      inst.left.var.OG.type.getClass().equals(FuncType.class)
+      !inst.left.var.OG.type.getClass().equals(FuncType.class)
     ) {
       blockVars.add(inst.left.var.OG);
       // Add instruction to Symbol
@@ -179,7 +236,7 @@ public class Block {
       !inst.inst.equals(op.STORE) &&
       inst.right != null &&
       inst.right.kind == Result.VAR &&
-      inst.right.var.OG.type.getClass().equals(FuncType.class)
+      !inst.right.var.OG.type.getClass().equals(FuncType.class)
     ) {
       blockVars.add(inst.right.var.OG);
       // Add instruction to Symbol
