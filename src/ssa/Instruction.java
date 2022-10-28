@@ -85,15 +85,22 @@ public class Instruction {
         " : " +
         inst.name() +
         " " +
+        "(" +
+        (
+          left.var.my_assign < right.var.my_assign
+            ? (left.var.my_assign)
+            : (right.var.my_assign)
+        ) +
+        ") " +
         (
           left.var.my_assign > right.var.my_assign
-            ? left.var.name + left.var.my_assign + 1
-            : right.var.name + right.var.my_assign + 1
+            ? left.var.name + "_" + (left.var.my_assign + 1)
+            : right.var.name + "_" + (right.var.my_assign + 1)
         ) +
-        " =: " +
-        left +
+        " := " +
+        right +
         " " +
-        right
+        left
       );
     } else if (func_params != null) {
       String call = my_num + " : " + inst.name() + " ";

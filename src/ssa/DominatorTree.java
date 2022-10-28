@@ -41,7 +41,8 @@ public class DominatorTree {
   // df gets PHI for a symbol if needed
   public void addPhi(Block root, Block df) {
     for (Symbol x : root.blockVars) {
-      if (df.blockVars.contains(x)) {
+      if (!df.blockVars.contains(x)) {
+        // You take dominance frontiers
         df.phis.put(x, new Instruction(op.PHI));
       }
     }
@@ -82,6 +83,7 @@ public class DominatorTree {
   }
 
   public void compDF(Block root) {
+    // overflow error?
     // local + LRS
     if (root.my_num == 2) {
       System.out.println();

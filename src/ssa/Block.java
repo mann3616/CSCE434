@@ -49,6 +49,7 @@ public class Block {
     OGtoUse = new HashMap<>();
     phis = new HashMap<>();
     symbolLocation = new HashMap<>();
+    blockVars = new HashSet();
     visited = new HashSet<>();
     iDom = null;
     domFront = new HashSet<>();
@@ -66,7 +67,10 @@ public class Block {
 
   // Create instructions for each
   public void createPhiInst() {
+    // This adds them in reverse order
+    List<Instruction> local_instructions = new ArrayList<>();
     for (Entry<Symbol, Instruction> c : phis.entrySet()) {
+      // This is so we don't do it twice
       if (!phi1.containsKey(c.getKey()) || !phi2.containsKey(c.getKey())) {
         continue;
       }
@@ -76,13 +80,53 @@ public class Block {
       c.getValue().left = new Result();
       c.getValue().left.var = phi2.get(c.getKey());
       c.getValue().left.kind = Result.VAR;
+      int index_num =
+        (
+          c.getValue().left.var.my_assign > c.getValue().right.var.my_assign
+            ? (c.getValue().left.var.my_assign + 1)
+            : (c.getValue().right.var.my_assign + 1)
+        );
+      c.getValue().my_num = index_num;
       instructions.add(0, c.getValue());
+      // Need to visit EVERY block
+      instRenumber(new HashSet<>(), this, index_num, true);
+    }
+  }
+
+  // Replace above with instruction keep
+  public void instRenumber(
+    HashSet<Block> visited,
+    Block root,
+    int above,
+    boolean initial_call
+  ) {
+    // may need to add memory of modified instructions
+    // keep != i
+    if (visited.contains(root)) {
+      return;
+    }
+    visited.add(root);
+    for (Instruction I : root.instructions) {
+      if (initial_call) {
+        if (I.my_num > above) {
+          I.my_num++;
+        }
+      } else {
+        if (I.my_num >= above) {
+          I.my_num++;
+        }
+      }
+    }
+    for (Block b : root.edges) {
+      instRenumber(visited, b, above, false);
     }
   }
 
   public void findPhiVars() {
     for (Block p : parents) {
       for (Entry<Symbol, Symbol> n : p.latest.entrySet()) {
+        // When should we add phi?
+        // We add phi's if phis contains this...
         if (phis.containsKey(n.getKey())) {
           addPhi(n.getKey(), n.getValue());
         }
@@ -92,6 +136,7 @@ public class Block {
 
   // May need to be updated to resolve bigger or smaller phis
   public void addPhi(Symbol phi, Symbol version) {
+    // What does this do?
     if (!phi1.containsKey(phi)) {
       phi1.put(phi, version);
     } else if (!phi2.containsKey(phi)) {
@@ -104,6 +149,10 @@ public class Block {
     // Add left Result if it's a symbol that is not a function
     if (inst.inst.equals(op.MOVE)) {
       assigns.add(inst);
+      // if inst.right is a variable type, then we can add it as a block var
+      if (inst.right.kind == Result.VAR) {
+        blockVars.add(inst.right.var.OG);
+      }
     }
     if (inst.inst.equals(op.LOAD)) {
       return;

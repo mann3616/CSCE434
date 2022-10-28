@@ -3,6 +3,7 @@ package ssa;
 import ast.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Stack;
 import pl434.DLX;
@@ -82,9 +83,17 @@ public class SSA implements NodeVisitor {
     addCurr();
     removeEmpties();
     DominatorTree tree = new DominatorTree(this);
+    // Do we add the phi instructions now?
     for (Block b : roots) {
       tree.buildTree(b);
       System.out.println();
+      HashSet<Block> visited = new HashSet<>();
+      tree.iterPhi(visited, b);
+    }
+    for (Block b : blocks) {
+      b.findPhiVars();
+      b.createPhiInst();
+      // Maybe run a renumber here?
     }
   }
 
@@ -271,7 +280,7 @@ public class SSA implements NodeVisitor {
   @Override
   public void visit(FloatLiteral node) {
     currRes = new Result();
-    currRes.value = DLX.fromFP32ToFP16(Float.parseFloat(node.literal()));
+    //currRes.value = DLX.fromFP32ToFP16(Float.parseFloat(node.literal()));
     currRes.kind = Result.CONST;
     currRes.type = new FloatType();
   }

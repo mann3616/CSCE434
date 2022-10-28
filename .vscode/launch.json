@@ -9,6 +9,13 @@
             "name": "Launch CompilerTester",
             "request": "launch",
             "mainClass": "pl434.CompilerTester",
+            "projectName": "CSCE434_107e2446"
+        },
+        {
+            "type": "java",
+            "name": "Launch CompilerTester",
+            "request": "launch",
+            "mainClass": "pl434.CompilerTester",
             "args": "-s project6/ptest000.txt -i project3/dummy.in --cfg --onefile",
             "projectName": "CSCE434_9bbb598c"
         }

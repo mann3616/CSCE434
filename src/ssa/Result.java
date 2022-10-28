@@ -31,7 +31,7 @@ public class Result {
         return "(" + inst + ")";
       case CONST:
         if (type.getClass().equals(FloatType.class)) {
-          return DLX.toFP32FromFP16(value) + "";
+          //return DLX.toFP32FromFP16(value) + "";
         }
         return value + "";
       case PROC:

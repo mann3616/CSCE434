@@ -9,5 +9,5 @@ float x, y, z;
 	let c = 1.2;
 
 	let x = 1.4;
-	call printInt(x);
+	call printInt(a);
 }.
