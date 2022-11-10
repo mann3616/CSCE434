@@ -30,6 +30,7 @@ public class SSA implements NodeVisitor {
   boolean assign;
   int currDim;
 
+  // TODO: test012, test014
   public SSA() {
     currBlock = new Block();
     currDim = -1;
@@ -49,6 +50,9 @@ public class SSA implements NodeVisitor {
   public void findInner(HashSet<Block> visited, Block curr) {
     for (Block b : curr.parents) {
       if (b.isJoinNode && !visited.contains(b)) {
+        for (Block nxt : curr.edges) {
+          findInner(visited, nxt);
+        }
         return;
       }
     }

@@ -109,7 +109,7 @@ public class DominatorTree {
 
   public void compLocal(Block root) {
     for (Block b : root.edges) {
-      if (!b.doms.contains(root) || root == b) {
+      if (!b.doms.contains(root) || root == b || b.endIfNode) {
         root.domFront.add(b);
       }
     }
