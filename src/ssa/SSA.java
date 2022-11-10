@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Stack;
 import pl434.DLX;
 import pl434.Symbol;
@@ -23,6 +24,7 @@ public class SSA implements NodeVisitor {
   HashMap<Integer, Block> hmblocks = new HashMap<>();
   List<Block> blocks;
   List<Block> roots;
+  HashMap<Symbol, Symbol> allSymbols = new HashMap<>();
   ArrayList<Result> params;
   Stack<Result> indices;
   boolean assign;
@@ -38,6 +40,37 @@ public class SSA implements NodeVisitor {
     indices = new Stack<>();
   }
 
+  public void buildPhi() {
+    for (Block b : roots) {
+      findInner(new HashSet<>(), b);
+    }
+  }
+
+  public void findInner(HashSet<Block> visited, Block curr) {
+    for (Block b : curr.parents) {
+      if (b.isJoinNode && !visited.contains(b)) {
+        return;
+      }
+    }
+    if (visited.contains(curr)) {
+      return;
+    }
+    visited.add(curr);
+    if (curr.endIfNode) {
+      curr.findPhiVars();
+      curr.createPhiInst();
+    }
+    for (Block nxt : curr.edges) {
+      findInner(visited, nxt);
+    }
+    System.out.println(curr.my_num);
+    if (!curr.endIfNode) {
+      curr.findPhiVars();
+      curr.createPhiInst();
+    }
+  }
+
+  @Override
   public void visit(StatementSequence node) {
     for (Statement s : node) {
       s.accept(this);
@@ -85,28 +118,55 @@ public class SSA implements NodeVisitor {
     removeEmpties();
     DominatorTree tree = new DominatorTree(this);
     // Do we add the phi instructions now?
-    for (Block b : blocks) {
-      Comparator c = new Comparator<Block>() {
-        @Override
-        public int compare(Block o1, Block o2) {
-          // TODO Auto-generated method stub
-          return o1.firstInst.my_num - o2.firstInst.my_num;
+    Comparator c = new Comparator<Block>() {
+      @Override
+      public int compare(Block o1, Block o2) {
+        // TODO Auto-generated method stub
+        if (o1.firstInst == null || o2.firstInst == null) {
+          return 0;
         }
-      };
+        return o1.firstInst.my_num - o2.firstInst.my_num;
+      }
+    };
+    for (Block b : blocks) {
       b.edges.sort(c);
       b.parents.sort(c);
     }
     for (Block b : roots) {
       tree.buildTree(b);
       System.out.println();
-      HashSet<Block> visited = new HashSet<>();
-      tree.iterPhi(visited, b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
+      tree.iterPhi(new HashSet<>(), b);
     }
-    for (Block b : blocks) {
-      b.findPhiVars();
-      b.createPhiInst();
-      // Maybe run a renumber here?
-    }
+    setDefaultLatest();
+    buildPhi();
+    // HashSet<Block> st = new HashSet<>();
+    // for (Block b : blocks) {
+    //   if (b.isJoinNode) {
+    //     for (Block bb : b.parents) {
+    //       if (bb.isJoinNode) {
+    //         st.add(b);
+    //       }
+    //     }
+    //   }
+    //   if (!st.contains(b)) {
+    //     b.findPhiVars();
+    //     b.createPhiInst();
+    //   }
+    //   // Maybe run a renumber here?
+    // }
+    // for (Block b : st) {
+    //   b.findPhiVars();
+    //   b.createPhiInst();
+    // }
   }
 
   @Override
@@ -118,6 +178,7 @@ public class SSA implements NodeVisitor {
       addCurr();
       begin = currBlock;
       oldBlock.addEdge(begin, "");
+      begin.isJoinNode = true;
     }
     node.sequence().accept(this);
     Block endSeq = currBlock;
@@ -131,21 +192,20 @@ public class SSA implements NodeVisitor {
     Result relRes = currRes;
 
     // Connecting relation to the start of the repeatStat
-    relBlock.addEdge(begin, "then");
-
-    //Now connect relationBlock to nextCurrBlock
     addCurr(); //Wiping Curr
     if (node.relation().getClass().equals(Relation.class)) {
       addRelInstJump(
         relBlock,
         ((Relation) node.relation()).rel(),
         relRes,
-        currBlock,
+        begin,
         "else"
       );
     } else {
-      addRelInstJump(relBlock, "==", relRes, currBlock, "else");
+      addRelInstJump(relBlock, "==", relRes, begin, "else");
     }
+    //Now connect relationBlock to nextCurrBlock
+    relBlock.addEdge(currBlock, "then");
   }
 
   @Override
@@ -160,6 +220,7 @@ public class SSA implements NodeVisitor {
       oldBlock.addEdge(currBlock, "");
     }
     node.relation().accept(this);
+    currBlock.isJoinNode = true;
     Result relRes = currRes;
     // Now focus on connecting relationBlock to everything
     oldBlock = currBlock;
@@ -204,7 +265,17 @@ public class SSA implements NodeVisitor {
     addCurr();
 
     // Connecting relation to the first block that needs to be run
-    oldBlock.addEdge(currBlock, "then");
+    if (node.relation().getClass().equals(Relation.class)) {
+      addRelInstJump(
+        oldBlock,
+        ((Relation) node.relation()).rel(),
+        relRes,
+        currBlock,
+        "then"
+      );
+    } else {
+      addRelInstJump(oldBlock, "==", relRes, currBlock, "then");
+    }
     node.ifSequence().accept(this);
 
     // Ending last ifSequence block
@@ -212,17 +283,7 @@ public class SSA implements NodeVisitor {
     addCurr();
 
     //Adding else block (even if it is not an else) to jump statement for relation() and adds edge
-    if (node.relation().getClass().equals(Relation.class)) {
-      addRelInstJump(
-        oldBlock,
-        ((Relation) node.relation()).rel(),
-        relRes,
-        currBlock,
-        "else"
-      );
-    } else {
-      addRelInstJump(oldBlock, "==", relRes, currBlock, "else");
-    }
+    oldBlock.addEdge(currBlock, "else");
 
     if (node.elseSequence() != null) {
       node.elseSequence().accept(this);
@@ -232,6 +293,8 @@ public class SSA implements NodeVisitor {
       lastElseBlock.addEdge(currBlock, "");
     }
     lastThen.addEdge(currBlock, "");
+    currBlock.isJoinNode = true;
+    currBlock.endIfNode = true;
   }
 
   @Override
@@ -245,8 +308,15 @@ public class SSA implements NodeVisitor {
       addInstruction(new Instruction(op.STORE, right, currRes));
     } else {
       Result res = currRes;
-      addInstruction(new Instruction(op.MOVE, right, currRes));
+      Instruction i = new Instruction(op.MOVE, right, currRes);
+      addInstruction(i);
       currBlock.latest.put(res.var.OG, res.var);
+      res.var.OG.instruction = i;
+      if (!allSymbols.containsKey(res.var.OG)) {
+        Symbol def = new Symbol(res.var.OG, true);
+        def.my_assign = -1;
+        allSymbols.put(res.var.OG, def);
+      }
     }
   }
 
@@ -479,7 +549,7 @@ public class SSA implements NodeVisitor {
   public void addInstruction(Instruction inst) {
     currRes = new Result();
     currRes.kind = Result.INST;
-    currRes.inst = inst.my_num;
+    currRes.inst = inst;
     currBlock.addInstruction(inst);
   }
 
@@ -515,9 +585,12 @@ public class SSA implements NodeVisitor {
       if (!b.instructions.isEmpty()) {
         int stop = b.edges.size();
         for (int i = 0; i < stop; i++) {
-          if (b.edges.get(i).instructions.isEmpty()) {
+          if (
+            b.edges.get(i).instructions.isEmpty() && !b.edges.get(i).isJoinNode
+          ) {
             for (Block bb : b.edges.get(i).edges) {
               b.addEdge(bb, b.edgeLabels.get(i));
+              bb.parents.remove(b.edges.get(i));
             }
             b.edges.remove(i--);
             stop--;
@@ -536,7 +609,7 @@ public class SSA implements NodeVisitor {
   ) {
     Result right = new Result();
     right.kind = Result.PROC;
-    right.value = oblock.my_num;
+    right.proc = oblock;
     block.addEdge(oblock, edgeL);
     block.hasBreak = true;
     switch (tok) {
@@ -561,6 +634,16 @@ public class SSA implements NodeVisitor {
       default:
         block.addInstruction(new Instruction(op.BRA, right));
         break;
+    }
+  }
+
+  public void setDefaultLatest() {
+    for (Block b : blocks) {
+      for (Entry<Symbol, Symbol> s : allSymbols.entrySet()) {
+        if (!b.latest.containsKey(s.getKey())) {
+          b.latest.put(s.getKey(), s.getValue());
+        }
+      }
     }
   }
 }

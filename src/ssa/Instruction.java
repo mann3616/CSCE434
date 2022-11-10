@@ -87,9 +87,13 @@ public class Instruction {
         " " +
         "(" +
         (
-          left.var.my_assign < right.var.my_assign
-            ? (left.var.my_assign)
-            : (right.var.my_assign)
+          left.var.instruction == null
+            ? "-1"
+            : (
+              left.var.instruction.my_num < right.var.instruction.my_num
+                ? (left.var.instruction.my_num)
+                : (right.var.instruction.my_num)
+            )
         ) +
         ") " +
         third +

@@ -22,6 +22,8 @@ public class Block {
   public String label;
   public List<Instruction> instructions;
   boolean hasBreak;
+  boolean endIfNode = false;
+  boolean isJoinNode;
 
   // Graphing info
   public List<Block> edges;
@@ -41,24 +43,27 @@ public class Block {
 
   public HashSet<Symbol> blockVars;
   public HashMap<Symbol, List<Symbol>> OGtoUse;
-  public TreeMap<Symbol, Instruction> phis;
+  public HashMap<Symbol, Instruction> phis;
   public HashMap<Symbol, LinkedHashSet<Instruction>> symbolLocation;
   public List<Instruction> assigns = new ArrayList<>();
   HashMap<Symbol, Symbol> latest = new HashMap<>();
 
   public Block() {
+    isJoinNode = false;
     edgeSet = new HashSet<>();
     OGtoUse = new HashMap<>();
-    phis =
-      new TreeMap<>(
-        new Comparator<Symbol>() {
-          @Override
-          public int compare(Symbol o1, Symbol o2) {
-            // TODO Auto-generated method stub
-            return o1.my_assign - o2.my_assign;
-          }
-        }
-      );
+    firstInst = null;
+    phis = new HashMap<>();
+    // new Comparator<Symbol>() {
+    //   @Override
+    //   public int compare(Symbol o1, Symbol o2) {
+    //     // TODO Auto-generated method stub
+    //     if(o1.equals(o2)) {
+    //       return 0;
+    //     }
+    //     return o1.my_assign - o2.my_assign;
+    //   }
+    // }
     symbolLocation = new HashMap<>();
     blockVars = new HashSet<>();
     visited = new HashSet<>();
@@ -85,6 +90,9 @@ public class Block {
       if (!phi1.containsKey(c.getKey()) || !phi2.containsKey(c.getKey())) {
         continue;
       }
+      if (phi1.get(c.getKey()) == phi2.get(c.getKey())) {
+        continue;
+      }
       c.getValue().right = new Result();
       c.getValue().right.kind = Result.VAR;
       c.getValue().right.var = phi1.get(c.getKey());
@@ -102,7 +110,13 @@ public class Block {
       c.getValue().third.kind = Result.VAR;
       c.getValue().third.var = new Symbol(c.getKey(), true);
       c.getValue().third.var.my_assign = index_num;
+      c.getValue().third.var.instruction = c.getValue();
       // Need to visit EVERY block
+      if (
+        c.getValue().third.var.my_assign > this.latest.get(c.getKey()).my_assign
+      ) {
+        this.latest.put(c.getKey(), c.getValue().third.var);
+      }
       instRenumber(new HashSet<>(), this, false, c.getValue());
       local_instructions.add(c.getValue());
     }
@@ -153,12 +167,18 @@ public class Block {
         root.symbolLocation.get(OG).contains(i)
       ) {
         if (
-          i.left != null && i.left.kind == Result.VAR && i.left.var.OG == OG
+          !move1 &&
+          i.left != null &&
+          i.left.kind == Result.VAR &&
+          i.left.var.OG == OG
         ) {
           i.left.var = keep.third.var;
         }
         if (
-          i.right != null && i.right.kind == Result.VAR && i.right.var.OG == OG
+          !move1 &&
+          i.right != null &&
+          i.right.kind == Result.VAR &&
+          i.right.var.OG == OG
         ) {
           i.right.var = keep.third.var;
         }
@@ -183,6 +203,9 @@ public class Block {
     for (Block b : root.edges) {
       instRenumber(visited, b, move1, keep);
     }
+    for (Block b : root.parents) {
+      instRenumber(visited, b, move1, keep);
+    }
   }
 
   public void findPhiVars() {
@@ -200,13 +223,20 @@ public class Block {
   // May need to be updated to resolve bigger or smaller phis
   public void addPhi(Symbol phi, Symbol version) {
     // What does this do?
-    if (!phi1.containsKey(phi) || phi1.get(phi).my_assign < version.my_assign) {
+    if (
+      !phi1.containsKey(phi) ||
+      phi1.get(phi).getVersion() < version.getVersion()
+    ) {
       if (phi1.containsKey(phi)) {
         phi2.put(phi, phi1.get(phi));
       }
       phi1.put(phi, version);
     } else if (
-      !phi2.containsKey(phi) || phi2.get(phi).my_assign < version.my_assign
+      !phi2.containsKey(phi) ||
+      (
+        phi2.get(phi).getVersion() < version.getVersion() &&
+        version.getVersion() != phi1.get(phi).getVersion()
+      )
     ) {
       phi2.put(phi, version);
     }
@@ -226,6 +256,7 @@ public class Block {
       // if inst.right is a variable type, then we can add it as a block var
       if (inst.right.kind == Result.VAR) {
         blockVars.add(inst.right.var.OG);
+        inst.right.var.instruction = inst;
       }
     }
     if (inst.inst.equals(op.LOAD)) {

@@ -12,11 +12,13 @@ public class Symbol {
   public Type type;
   public static int static_assign = 0;
   public int my_assign;
+  public Instruction instruction;
   public boolean assign;
   public boolean builtinFunc;
   public Symbol OG;
 
   public Symbol(String name, Type type) {
+    instruction = null;
     builtinFunc = false;
     assign = false;
     this.name = name;
@@ -33,12 +35,18 @@ public class Symbol {
     this.my_assign = Instruction.instruction_num;
     if (!assign && !simba.assign) {
       // If this variable has not been assigned yet
+      instruction = null;
       this.assign = false;
       my_assign = -1;
     } else if (simba.assign && !assign) {
       // If this variable has been assigned previously and we are currently not assigning to this var
       this.assign = true;
       this.my_assign = simba.my_assign;
+      if (simba.instruction != null) {
+        instruction = simba.instruction;
+      } else {
+        instruction = null;
+      }
     } else {
       // Variable is being assigned and the parent symbol needs the newly updated version #
       this.assign = true;
@@ -101,8 +109,15 @@ public class Symbol {
     return param;
   }
 
+  public int getVersion() {
+    if (instruction == null) {
+      return -1;
+    }
+    return instruction.my_num;
+  }
+
   @Override
   public String toString() {
-    return name + my_assign;
+    return name + (instruction == null ? "_-1" : "_" + instruction.my_num);
   }
 }

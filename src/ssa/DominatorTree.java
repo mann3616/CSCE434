@@ -24,9 +24,6 @@ public class DominatorTree {
       return;
     }
     visited.add(root);
-    for (Block df : root.domFront) {
-      addPhi(root, df);
-    }
     // Explore edges and do the same
     for (Block e : root.edges) {
       for (Symbol i : root.latest.keySet()) {
@@ -36,6 +33,9 @@ public class DominatorTree {
       }
       iterPhi(visited, e);
     }
+    for (Block df : root.domFront) {
+      addPhi(root, df);
+    }
   }
 
   // df gets PHI for a symbol if needed
@@ -43,6 +43,11 @@ public class DominatorTree {
     for (Symbol x : root.blockVars) {
       // You take dominance frontiers
       df.phis.put(x, new Instruction(op.PHI));
+    }
+    if (root.isJoinNode) {
+      for (Symbol x : root.phis.keySet()) {
+        df.phis.put(x, new Instruction(op.PHI));
+      }
     }
   }
 
@@ -104,7 +109,7 @@ public class DominatorTree {
 
   public void compLocal(Block root) {
     for (Block b : root.edges) {
-      if (!b.doms.contains(root)) {
+      if (!b.doms.contains(root) || root == b) {
         root.domFront.add(b);
       }
     }

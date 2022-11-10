@@ -16,7 +16,8 @@ public class Result {
   static final int INST = 4;
   static final int GDB = 5;
   public int kind;
-  public int inst;
+  public Instruction inst;
+  public Block proc;
   public int regno;
   public int value;
   public Type type = new IntType();
@@ -28,23 +29,20 @@ public class Result {
   public String toString() {
     switch (kind) {
       case INST:
-        return "(" + inst + ")";
+        return "(" + inst.my_num + ")";
       case CONST:
         if (type.getClass().equals(FloatType.class)) {
           //return DLX.toFP32FromFP16(value) + "";
         }
         return value + "";
       case PROC:
-        return "[" + value + "]";
+        return "[" + proc.my_num + "]";
       case VAR:
-        return (
-          var.name +
-          (
-            var.type.getClass().equals(FuncType.class)
-              ? ""
-              : "_" + var.my_assign
-          )
-        );
+        if (var.type.getClass().equals(FuncType.class)) {
+          return var.name;
+        } else {
+          return var.toString();
+        }
       case ADDY:
         return var.name;
       case GDB:
