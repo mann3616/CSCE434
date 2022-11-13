@@ -2,9 +2,11 @@ package pl434;
 
 import ast.*;
 import java.io.*;
+import java.util.*;
 import org.apache.commons.cli.*;
 import types.*;
 
+//PA 7 generates 2 digraphs, one un-optimized, one optimized.
 public class CompilerTester {
 
   public static void main(String[] args) {
@@ -16,7 +18,7 @@ public class CompilerTester {
     options.addOption("a", "astOut", false, "Print AST");
 
     options.addOption(
-      "graphDir",
+      "gDir",
       "graphDir",
       false,
       "Graph dir, default will be current dir"
@@ -30,7 +32,6 @@ public class CompilerTester {
       false,
       "If true, 'ast.dot' and 'cfg.dot' are the names for files in graphs/"
     );
-
     options.addOption(
       "allowVersions",
       "allowVersions",
@@ -148,7 +149,7 @@ public class CompilerTester {
     if (!tc.check(ast)) {
       System.out.println("Error type-checking file.");
       System.out.println(tc.errorReport());
-      // System.exit(-4);
+      System.exit(-4);
     }
 
     String dotgraph_text = null;
@@ -184,13 +185,24 @@ public class CompilerTester {
         System.exit(-2);
       }
     }
+
     // Comment these out for PA 7 - 8 - 9
-    // String[] optArgs = cmd.getOptionValues("opt");
-    // List<String> optArguments = (optArgs!=null && optArgs.length != 0) ? Arrays.asList(optArgs) : new ArrayList<String>();
+    String[] optArgs = cmd.getOptionValues("opt");
+    List<String> optArguments = (optArgs != null && optArgs.length != 0)
+      ? Arrays.asList(optArgs)
+      : new ArrayList<String>();
 
-    // //PA 7
-    // c.optimization(optArguments,options);
-
+    //PA 7
+    try {
+      dotgraph_text = c.optimization(optArguments, options);
+      System.out.println(dotgraph_text);
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.out.println(
+        "Error caught - see stderr for stack trace " + e.getMessage()
+      );
+      System.exit(-6);
+    }
     // //PA 8
     // c.regAlloc(numRegs);
 

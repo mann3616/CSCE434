@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Stack;
+import org.apache.commons.cli.Options;
 import pl434.Token.Kind;
 import ssa.*;
 import types.*;
@@ -750,5 +751,9 @@ public class Compiler {
     ssa = new SSA();
     ssa.visit(node);
     return ssa;
+  }
+
+  public String optimization(List<String> optArguments, Options options) {
+    return "Implement";
   }
 }
