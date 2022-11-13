@@ -193,6 +193,8 @@ public class CompilerTester {
       : new ArrayList<String>();
 
     //PA 7
+    // Saving unopt because it asked for it
+    String unoptimized_dotgraph = dotgraph_text;
     try {
       dotgraph_text = c.optimization(optArguments, options);
       System.out.println(dotgraph_text);
