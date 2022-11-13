@@ -1,0 +1,11 @@
+main
+
+int x, y, z;
+
+// cp cf dce
+{
+    let x = 51;
+    let y = 2 * x + y;
+    let x = x + y * 2 + z;
+    call printInt(y);
+}.

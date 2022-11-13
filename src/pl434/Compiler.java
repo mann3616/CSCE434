@@ -754,6 +754,10 @@ public class Compiler {
   }
 
   public String optimization(List<String> optArguments, Options options) {
+    for (int i = 0; i < optArguments.size(); i++) {
+      System.out.println(optArguments.get(i));
+    }
+    System.out.println(options);
     return "Implement";
   }
 }
