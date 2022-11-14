@@ -1,7 +1,9 @@
 package ssa;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import ssa.Instruction.op;
 
 public class Optimize {
 
@@ -13,15 +15,77 @@ public class Optimize {
 
   public void dead_code_elim() {}
 
-  public void copy_propogation() {}
-
-  public void constant_propogation() {}
+  public boolean copy_propogation() {
+    boolean changed = false;
+    // TODO: make revisions to PHI for copy_propogation
+    // (Maybe? cuz we can also compare between two different symbols as well)
+    for (Block b : ssa.blocks) {
+      for (Instruction i : b.instructions) {
+        // Is left a variable?
+        if (i.left != null && i.left.kind == Result.VAR) {
+          //Left is a variable, okay then using the MOVE instruction refed by the variable are we assigning a var?
+          if (
+            i.left.var.instruction != null &&
+            i.left.var.instruction.left.kind == Result.VAR
+          ) {
+            i.left = i.left.var.instruction.left;
+            changed = true;
+          }
+        }
+        // Same as above but for the right side
+        if (
+          i.right != null && i.right.kind == Result.VAR && i.inst != op.MOVE
+        ) {
+          if (
+            i.right.var.instruction != null &&
+            i.right.var.instruction.left.kind == Result.VAR
+          ) {
+            i.right = i.right.var.instruction.left;
+            changed = true;
+          }
+        }
+      }
+    }
+    return changed;
+  }
 
   public void subexpr_elim() {}
 
+  public boolean constant_propogation() {
+    boolean changed = false;
+    for (Block b : ssa.blocks) {
+      for (Instruction i : b.instructions) {
+        // Is left a variable?
+        if (i.left != null && i.left.kind == Result.VAR) {
+          //Left is a variable, okay then using the MOVE instruction refed by the variable are we assigning a const?
+          if (
+            i.left.var.instruction != null &&
+            i.left.var.instruction.left.kind == Result.CONST
+          ) {
+            i.left = i.left.var.instruction.left;
+            changed = true;
+          }
+        }
+        // Same as above but for the right side
+        if (
+          i.right != null && i.right.kind == Result.VAR && i.inst != op.MOVE
+        ) {
+          if (
+            i.right.var.instruction != null &&
+            i.right.var.instruction.left.kind == Result.CONST
+          ) {
+            i.right = i.right.var.instruction.left;
+            changed = true;
+          }
+        }
+      }
+    }
+    return changed;
+  }
+
   public boolean constant_folding() {
     boolean changed = false;
-    for (Block b : ssa.roots) {
+    for (Block b : ssa.blocks) {
       int index = 0;
       int new_val = -101;
       for (Instruction i : b.instructions) {

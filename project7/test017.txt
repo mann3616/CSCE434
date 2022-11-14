@@ -1,0 +1,11 @@
+//Emmanuel Gonzalez
+// Arrays and constant + copy propogation
+main
+int[5][7] a;
+int b, c, d;
+{
+    let b = 5;
+    let d = b - 1;
+    let c = d;
+    let a[b - 1 - c][b - 1] = d - 1;
+}.
