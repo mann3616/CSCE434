@@ -26,9 +26,11 @@ public class DominatorTree {
     visited.add(root);
     // Explore edges and do the same
     for (Block e : root.edges) {
-      for (Symbol i : root.latest.keySet()) {
-        if (!e.latest.containsKey(i)) {
-          e.latest.put(i, root.latest.get(i));
+      if (!root.doms.contains(e)) {
+        for (Symbol i : root.latest.keySet()) {
+          if (!e.latest.containsKey(i)) {
+            e.latest.put(i, root.latest.get(i));
+          }
         }
       }
       iterPhi(visited, e);
@@ -65,7 +67,7 @@ public class DominatorTree {
         } else {
           visited.add(nxt);
           for (Block child : nxt.edges) {
-            if (!child.visited.contains(nxt)) {
+            if (!child.visited.contains(nxt) && !nxt.doms.contains(child)) {
               compareParents(child, nxt);
               nxtBlocks.add(child);
               child.visited.add(nxt);
@@ -81,23 +83,27 @@ public class DominatorTree {
     for (Block b : visited) {
       b.solveIDom();
     }
-    compDF(root);
+    compDF(new HashSet<>(), root);
     printDoms(new HashSet<>(), root);
   }
 
-  public void compDF(Block root) {
+  public void compDF(HashSet<Block> visited, Block root) {
     // overflow error?
     // local + LRS
+    if (visited.contains(root)) {
+      return;
+    }
     if (root.my_num == 2) {
       System.out.println();
     }
     // Comp Local
     compLocal(root);
+    visited.add(root);
 
     //Iterate through all DT children
     for (Block c : root.idomChildren) {
       // Recur and compute the child
-      compDF(c);
+      compDF(visited, c);
       // Add all child DF to this DF
       for (Block cDF : c.domFront) {
         if (!cDF.doms.contains(root) || cDF == root) {
@@ -142,7 +148,9 @@ public class DominatorTree {
   public void compareParents(Block block, Block parent) {
     if (block.doms.size() == 1) {
       for (Block dom : parent.doms) {
-        block.doms.add(dom);
+        if (dom != block) {
+          block.doms.add(dom);
+        }
       }
     } else {
       ArrayList<Block> intersectComp = new ArrayList<>();

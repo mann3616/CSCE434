@@ -90,9 +90,9 @@ public class Instruction {
           left.var.instruction == null
             ? "-1"
             : (
-              left.var.instruction.my_num < right.var.instruction.my_num
-                ? (left.var.instruction.my_num)
-                : (right.var.instruction.my_num)
+              left.var.getVersion() < right.var.getVersion()
+                ? (left.var.getVersion())
+                : (right.var.getVersion())
             )
         ) +
         ") " +

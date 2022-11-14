@@ -17,6 +17,7 @@ import types.FuncType;
 public class Block {
 
   // Block info
+  SSA ssa;
   public static int block_num = 1;
   public int my_num;
   public String label;
@@ -33,6 +34,7 @@ public class Block {
 
   // Dom tree graph info
   public HashSet<Block> visited;
+  public HashSet<Block> parsVisited = new HashSet<>();
   public HashSet<Block> domFront;
   public HashSet<Block> idomChildren;
   Block iDom;
@@ -40,6 +42,7 @@ public class Block {
   public List<String> edgeLabels;
   HashMap<Symbol, Symbol> phi1 = new HashMap<>();
   HashMap<Symbol, Symbol> phi2 = new HashMap<>();
+  HashMap<Block, HashMap<Symbol, Symbol>> phiBlock = new HashMap<>();
 
   public HashSet<Symbol> blockVars;
   public HashMap<Symbol, List<Symbol>> OGtoUse;
@@ -48,7 +51,8 @@ public class Block {
   public List<Instruction> assigns = new ArrayList<>();
   HashMap<Symbol, Symbol> latest = new HashMap<>();
 
-  public Block() {
+  public Block(SSA ssa) {
+    this.ssa = ssa;
     isJoinNode = false;
     edgeSet = new HashSet<>();
     OGtoUse = new HashMap<>();
@@ -84,7 +88,6 @@ public class Block {
   // Create instructions for each
   public void createPhiInst() {
     // This adds them in reverse order
-    List<Instruction> local_instructions = new ArrayList<>();
     for (Entry<Symbol, Instruction> c : phis.entrySet()) {
       // This is so we don't do it twice
       if (!phi1.containsKey(c.getKey()) || !phi2.containsKey(c.getKey())) {
@@ -101,9 +104,10 @@ public class Block {
       c.getValue().left.kind = Result.VAR;
       int index_num =
         (
-          c.getValue().left.var.my_assign > c.getValue().right.var.my_assign
-            ? (c.getValue().left.var.my_assign + 1)
-            : (c.getValue().right.var.my_assign + 1)
+          c.getValue().left.var.getVersion() >
+            c.getValue().right.var.getVersion()
+            ? (c.getValue().left.var.getVersion() + 1)
+            : (c.getValue().right.var.getVersion() + 1)
         );
       c.getValue().my_num = index_num;
       c.getValue().third = new Result();
@@ -117,20 +121,16 @@ public class Block {
       ) {
         this.latest.put(c.getKey(), c.getValue().third.var);
       }
-      instRenumber(new HashSet<>(), this, false, c.getValue());
-      local_instructions.add(c.getValue());
-    }
-    local_instructions.sort(
-      new Comparator<Instruction>() {
-        @Override
-        public int compare(Instruction o1, Instruction o2) {
-          // TODO Auto-generated method stub
-          return o2.my_num - o1.my_num;
+      HashSet<Block> visited = new HashSet<>();
+      instRenumber(visited, this, false, c.getValue(), null);
+      // Finish renumbering blocks
+      for (Block re : ssa.blocks) {
+        if (!visited.contains(re)) {
+          renumBlock(true, re, c.getValue(), null);
+          visited.add(re);
         }
       }
-    );
-    for (Instruction i : local_instructions) {
-      instructions.add(0, i);
+      instructions.add(0, c.getValue());
     }
   }
 
@@ -139,26 +139,47 @@ public class Block {
     HashSet<Block> visited,
     Block root,
     boolean move1,
-    Instruction keep
+    Instruction keep,
+    Block prev
   ) {
     // If there is a move then we do not reset latest, if there
     if (visited.contains(root)) {
       return;
     }
+    if (prev != null) {
+      root.parsVisited.add(prev);
+    }
+    if (root == this || root.parsVisited.size() == root.parents.size()) {
+      visited.add(root);
+      root.parsVisited.clear();
+    }
+    move1 = renumBlock(move1, root, keep, prev);
+    for (Block b : root.edges) {
+      instRenumber(visited, b, move1, keep, root);
+    }
+  }
+
+  public boolean renumBlock(
+    boolean move1,
+    Block root,
+    Instruction keep,
+    Block prev
+  ) {
     Symbol OG = keep.third.var.OG;
-    visited.add(root);
     for (Instruction i : root.instructions) {
-      if (i.my_num >= keep.my_num) {
+      if (root.parsVisited.isEmpty() && i.my_num >= keep.my_num) {
         i.my_num++;
       }
       if (i.inst == op.PHI) {
+        if (!move1) {
+          move1 = phiSwitch(i, keep, root, prev);
+        }
         continue;
       }
       if (i.inst.equals(op.MOVE)) {
         if (OG == i.right.var.OG) {
           move1 = true;
         }
-        i.right.var.my_assign = i.my_num;
       }
       // If we haven't moved into the var then continue setting all instances with PHI var
       if (
@@ -167,18 +188,12 @@ public class Block {
         root.symbolLocation.get(OG).contains(i)
       ) {
         if (
-          !move1 &&
-          i.left != null &&
-          i.left.kind == Result.VAR &&
-          i.left.var.OG == OG
+          i.left != null && i.left.kind == Result.VAR && i.left.var.OG == OG
         ) {
           i.left.var = keep.third.var;
         }
         if (
-          !move1 &&
-          i.right != null &&
-          i.right.kind == Result.VAR &&
-          i.right.var.OG == OG
+          i.right != null && i.right.kind == Result.VAR && i.right.var.OG == OG
         ) {
           i.right.var = keep.third.var;
         }
@@ -186,26 +201,65 @@ public class Block {
     }
     if (!move1 && root.phis.containsKey(OG) && root != this) {
       if (
-        !root.phi1.containsKey(OG) ||
-        root.phi1.get(OG).my_assign < keep.third.var.my_assign
+        root.phiBlock.get(prev) == root.phi1 &&
+        (
+          !root.phi1.containsKey(OG) ||
+          (
+            root.phi1.get(OG).getVersion() < keep.third.var.getVersion() &&
+            (
+              !root.phi2.containsKey(OG) ||
+              keep.third.var.getVersion() != root.phi2.get(OG).getVersion()
+            )
+          )
+        )
       ) {
-        if (root.phi1.containsKey(OG)) {
-          root.phi2.put(OG, root.phi1.get(OG));
-        }
+        // if (root.phi1.containsKey(OG)) {
+        //   root.phi2.put(OG, root.phi1.get(OG));
+        // }
         root.phi1.put(OG, keep.third.var);
       } else if (
-        !root.phi2.containsKey(OG) ||
-        root.phi2.get(OG).my_assign < keep.third.var.my_assign
+        root.phiBlock.get(prev) == root.phi2 &&
+        (
+          !root.phi2.containsKey(OG) ||
+          (
+            root.phi2.get(OG).getVersion() < keep.third.var.getVersion() &&
+            (
+              !root.phi1.containsKey(OG) ||
+              keep.third.var.getVersion() != root.phi1.get(OG).getVersion()
+            )
+          )
+        )
       ) {
         root.phi2.put(OG, keep.third.var);
       }
     }
-    for (Block b : root.edges) {
-      instRenumber(visited, b, move1, keep);
+    return move1;
+  }
+
+  public boolean phiSwitch(
+    Instruction phi,
+    Instruction keep,
+    Block root,
+    Block prev
+  ) {
+    Symbol OG = keep.third.var.OG;
+    if (phi.third.var.OG != OG) {
+      return false;
     }
-    for (Block b : root.parents) {
-      instRenumber(visited, b, move1, keep);
+    if (
+      root.phiBlock.get(prev) == root.phi1 &&
+      keep.third.var.getVersion() > phi.right.var.getVersion()
+    ) {
+      phi.right.var = keep.third.var;
+      return true;
+    } else if (
+      root.phiBlock.get(prev) == root.phi2 &&
+      keep.third.var.getVersion() > phi.left.var.getVersion()
+    ) {
+      phi.left.var = keep.third.var;
+      return true;
     }
+    return false;
   }
 
   public void findPhiVars() {
@@ -214,28 +268,43 @@ public class Block {
         // When should we add phi?
         // We add phi's if phis contains this...
         if (phis.containsKey(n.getKey())) {
-          addPhi(n.getKey(), n.getValue());
+          addPhi(n.getKey(), n.getValue(), p);
         }
       }
     }
   }
 
   // May need to be updated to resolve bigger or smaller phis
-  public void addPhi(Symbol phi, Symbol version) {
+  public void addPhi(Symbol phi, Symbol version, Block par) {
     // What does this do?
     if (
-      !phi1.containsKey(phi) ||
-      phi1.get(phi).getVersion() < version.getVersion()
+      phiBlock.get(par) == phi1 &&
+      (
+        !phi1.containsKey(phi) ||
+        (
+          phi1.get(phi).getVersion() < version.getVersion() &&
+          (
+            !phi2.containsKey(phi) ||
+            version.getVersion() != phi2.get(phi).getVersion()
+          )
+        )
+      )
     ) {
-      if (phi1.containsKey(phi)) {
-        phi2.put(phi, phi1.get(phi));
-      }
+      // if (phi1.containsKey(phi)) {
+      //   phi2.put(phi, phi1.get(phi));
+      // }
       phi1.put(phi, version);
     } else if (
-      !phi2.containsKey(phi) ||
+      phiBlock.get(par) == phi2 &&
       (
-        phi2.get(phi).getVersion() < version.getVersion() &&
-        version.getVersion() != phi1.get(phi).getVersion()
+        !phi2.containsKey(phi) ||
+        (
+          phi2.get(phi).getVersion() < version.getVersion() &&
+          (
+            !phi1.containsKey(phi) ||
+            version.getVersion() != phi1.get(phi).getVersion()
+          )
+        )
       )
     ) {
       phi2.put(phi, version);
@@ -304,6 +373,11 @@ public class Block {
     edges.add(block);
     edgeLabels.add(edgeLabel);
     edgeSet.add(block);
+    if (block.parents.isEmpty()) {
+      block.phiBlock.put(this, block.phi1);
+    } else {
+      block.phiBlock.put(this, block.phi2);
+    }
     block.parents.add(this);
   }
 

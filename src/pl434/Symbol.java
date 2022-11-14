@@ -1,14 +1,14 @@
 package pl434;
 
 import javax.management.RuntimeErrorException;
+import ssa.Block;
 import ssa.Instruction;
 import types.*;
 
 public class Symbol {
 
   public String name;
-  // TODO: Add other parameters like type
-
+  public Block phiEdge = null; // Used in Block to make sure the correct phi is being replaced
   public Type type;
   public static int static_assign = 0;
   public int my_assign;
