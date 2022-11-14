@@ -754,10 +754,75 @@ public class Compiler {
   }
 
   public String optimization(List<String> optArguments, Options options) {
-    for (int i = 0; i < optArguments.size(); i++) {
-      System.out.println(optArguments.get(i));
+    // Not sure why it wants the Options object in here
+    boolean maxSelected = optArguments.contains("max");
+    boolean maxOptSelected = optArguments.contains("maxOpt");
+
+    //User may pick both max and maxOpt which is incorrect argument use
+    //So in that case we simply give maxOpt priority to avoid such issues
+    if (maxOptSelected) {
+      // In maxOpt, order matters. Repeat the chosen optimizations in their input order until convergence
+      boolean notConverged = false;
+      while (notConverged) {
+        SSA initialSsa = ssa;
+        runChosenArguments(optArguments);
+        notConverged = (initialSsa != ssa);
+      }
+    } else if (maxSelected) {
+      // In max, order does not matter. Try every optimization until convergence
+      boolean notConverged = false;
+      while (notConverged) {
+        SSA initialSsa = ssa;
+        runEveryArgument();
+        notConverged = (initialSsa != ssa);
+      }
+    } else {
+      runChosenArguments(optArguments);
     }
-    System.out.println(options);
-    return "Implement";
+
+    // Now take the SSA and print it as a dotGraph
+    return ssa.asDotGraph();
+  }
+
+  private void runChosenArguments(List<String> optArguments) {
+    // These should directly fiddle with the SSA
+    for (int i = 0; i < optArguments.size(); i++) {
+      switch (optArguments.get(i)) {
+        case "cp":
+          //Constant propogation
+          break;
+        case "cf":
+          //Constant folding
+          break;
+        case "cpp":
+          //Copy Propogation
+          break;
+        case "cse":
+          //Common subexpression elimination
+          break;
+        case "dce":
+          //Dead Code Elimination
+          break;
+        case "ofe":
+          //Orphan function elimination
+          break;
+      }
+    }
+  }
+
+  private void runEveryArgument() {
+    //Call every single optimization func every run
+    //Constant propogation
+
+    //Constant folding
+
+    //Copy Propogation
+
+    //Common subexpression elimination
+
+    //Dead Code Elimination
+
+    //Orphan function elimination
+
   }
 }
