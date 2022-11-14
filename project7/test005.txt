@@ -1,0 +1,21 @@
+//max
+
+main
+
+int u,v,r,s,t,w;
+int x,y,z;
+
+{
+    let w = call readInt();
+    
+    let y = w;
+    let z = 4;
+    let v = y * y;
+    let u = z + 2;
+    let r = w * w;
+    let t = r + v;
+    let s = u * t;
+    call printInt(s);
+    call println();
+
+}.
