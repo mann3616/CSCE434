@@ -37,6 +37,7 @@ public class Instruction {
   }
 
   public static int instruction_num = 0;
+  boolean eliminated = false;
   public int my_num;
   Result left, right, third, fourth; // TODO: third is for the third Result that needs to be printed out and stuff MAY need a 4th
   List<Symbol> doPhiOn;
@@ -79,40 +80,47 @@ public class Instruction {
   @Override
   public String toString() {
     // TODO: change this if you got time, but tbh i doubt the teacher will care
+    String elimString = "";
+    if (eliminated) {
+      elimString = "elim";
+    }
     if (inst.equals(op.PHI)) {
       return (
-        my_num +
-        " : " +
-        inst.name() +
-        " " +
-        "(" +
+        elimString +
         (
-          left.var.instruction == null
-            ? "-1"
-            : (
-              left.var.getVersion() < right.var.getVersion()
-                ? (left.var.getVersion())
-                : (right.var.getVersion())
-            )
-        ) +
-        ") " +
-        third +
-        " := " +
-        right +
-        " " +
-        left
+          my_num +
+          " : " +
+          inst.name() +
+          " " +
+          "(" +
+          (
+            left.var.instruction == null
+              ? "-1"
+              : (
+                left.var.getVersion() < right.var.getVersion()
+                  ? (left.var.getVersion())
+                  : (right.var.getVersion())
+              )
+          ) +
+          ") " +
+          third +
+          " := " +
+          right +
+          " " +
+          left
+        )
       );
     } else if (func_params != null) {
       String call = my_num + " : " + inst.name() + " ";
       for (Result i : func_params) {
         call += i + " ";
       }
-      return call.substring(0, call.length() - 1);
+      return elimString + call.substring(0, call.length() - 1);
     } else if (right == null && left == null) {
-      return my_num + " : " + inst.name();
+      return elimString + my_num + " : " + inst.name();
     } else if (left == null) {
-      return my_num + " : " + inst.name() + " " + right;
+      return elimString + my_num + " : " + inst.name() + " " + right;
     }
-    return my_num + " : " + inst.name() + " " + left + " " + right;
+    return elimString + my_num + " : " + inst.name() + " " + left + " " + right;
   }
 }
