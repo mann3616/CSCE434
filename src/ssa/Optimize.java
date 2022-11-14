@@ -260,5 +260,35 @@ public class Optimize {
     return changed;
   }
 
-  public void orphan_function() {}
+  public void orphan_function() {
+    // Get the list of functions, check every instruction and remove the functions that have been called,
+    // Elim the entire block of a function that isn't used
+    // Issue - How to deal with functions with multiple parameters?
+    // IE, overloaded functions?
+    // For now, we assume there's only one definition of a function
+    ArrayList<String> functions = new ArrayList<>();
+    for (Block b : ssa.roots) {
+      if (b.label != "main") {
+        functions.add(b.label);
+      }
+    }
+
+    //Loop through all instructions
+    for (Instruction i : ssa.allInstructions) {
+      // If the instruction is a function call, remove the
+      if (i.inst == Instruction.op.CALL) {
+        String function_name = i.func_params.get(0).toString();
+        functions.remove(function_name);
+      }
+    }
+
+    ArrayList<Block> blocksToRemove = new ArrayList<>();
+    for (Block b : ssa.blocks) {
+      if (functions.contains(b.label)) {
+        System.out.println("Removing function: " + b.label);
+        blocksToRemove.add(b);
+      }
+    }
+    ssa.blocks.removeAll(blocksToRemove);
+  }
 }

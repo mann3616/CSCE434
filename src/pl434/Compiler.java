@@ -807,7 +807,7 @@ public class Compiler {
           optimize.dead_code_elim();
           break;
         case "ofe":
-          //Orphan function elimination
+          optimize.orphan_function();
           break;
       }
     }
