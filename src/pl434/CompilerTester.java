@@ -51,6 +51,22 @@ public class CompilerTester {
       false,
       "Run all available optimizations till convergence"
     );
+    options.addOption("cp", "constant_prop", false, "Constant propagation");
+    options.addOption("cf", "constant_folding", false, "Constant folding");
+    options.addOption("cpp", "copy_prop", false, "Copy propagation");
+    options.addOption(
+      "cse",
+      "common_subexpr_elim",
+      false,
+      "Common subexpression elimination"
+    );
+    options.addOption("dce", "dead_code_elim", false, "Dead code elimination");
+    options.addOption(
+      "ofe",
+      "orphan_func_elim",
+      false,
+      "Orphan Function Elimination"
+    );
 
     HelpFormatter formatter = new HelpFormatter();
     CommandLineParser cmdParser = new DefaultParser();
