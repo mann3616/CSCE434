@@ -32,7 +32,7 @@ public class SSA implements NodeVisitor {
 
   // TODO: test012, test014
   public SSA() {
-    currBlock = new Block();
+    currBlock = new Block(this);
     currDim = -1;
     this.assign = false;
     params = new ArrayList<>();
@@ -43,7 +43,27 @@ public class SSA implements NodeVisitor {
 
   public void buildPhi() {
     for (Block b : roots) {
-      findInner(new HashSet<>(), b);
+      findInnerByDomFront(new HashSet<>(), b);
+    }
+  }
+
+  public void findInnerByDomFront(HashSet<Block> visited, Block curr) {
+    if (visited.contains(curr)) {
+      return;
+    }
+    visited.add(curr);
+    for (Block b : curr.edges) {
+      if (!curr.domFront.contains(b)) {
+        findInnerByDomFront(visited, b);
+      }
+    }
+    System.out.println(curr.my_num);
+    curr.findPhiVars();
+    curr.createPhiInst();
+    for (Block b : curr.edges) {
+      if (curr.domFront.contains(b)) {
+        findInnerByDomFront(visited, b);
+      }
     }
   }
 
@@ -67,7 +87,6 @@ public class SSA implements NodeVisitor {
     for (Block nxt : curr.edges) {
       findInner(visited, nxt);
     }
-    System.out.println(curr.my_num);
     if (!curr.endIfNode) {
       curr.findPhiVars();
       curr.createPhiInst();
@@ -569,7 +588,7 @@ public class SSA implements NodeVisitor {
     currRes = new Result();
     currRes.kind = Result.PROC;
     currRes.value = currBlock.my_num;
-    currBlock = new Block();
+    currBlock = new Block(this);
   }
 
   public String asDotGraph() {
