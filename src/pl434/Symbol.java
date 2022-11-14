@@ -11,6 +11,7 @@ public class Symbol {
   public Block phiEdge = null; // Used in Block to make sure the correct phi is being replaced
   public Type type;
   public static int static_assign = 0;
+  boolean assignedToConst = true;
   public int my_assign;
   public Instruction instruction;
   public boolean assign;
