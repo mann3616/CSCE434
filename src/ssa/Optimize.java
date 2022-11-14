@@ -25,6 +25,10 @@ public class Optimize {
       int index = 0;
       int new_val = -101;
       for (Instruction i : b.instructions) {
+        if (i.eliminated) {
+          index++;
+          continue;
+        }
         switch (i.inst) {
           case NEG:
             if (i.right.kind == Result.CONST) {
@@ -72,6 +76,17 @@ public class Optimize {
           case OR:
             if (i.right.kind == Result.CONST && i.left.kind == Result.CONST) {
               new_val = i.right.value | i.left.value;
+              changed = i.eliminated = true;
+            }
+            break;
+          case CMP:
+            if (i.right.kind == Result.CONST && i.left.kind == Result.CONST) {
+              new_val =
+                (
+                  i.right.value - i.left.value >= 0
+                    ? (i.right.value - i.left.value != 0 ? 1 : 0)
+                    : -1
+                );
               changed = i.eliminated = true;
             }
             break;
