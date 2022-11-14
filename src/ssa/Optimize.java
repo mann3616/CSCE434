@@ -3,6 +3,7 @@ package ssa;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import pl434.Symbol;
 import ssa.Instruction.op;
 
 public class Optimize {
@@ -13,7 +14,94 @@ public class Optimize {
     this.ssa = ssa;
   }
 
-  public void dead_code_elim() {}
+  public void dead_code_elim() {
+    // Give every block an in-set and and out-set
+    // The in-sets and out-sets already exist within the block class
+
+    ArrayList<Instruction> instructionSet = ssa.allInstructions;
+    boolean change_detected;
+    int loop_count = 0;
+    do {
+      change_detected = false;
+      // Traverse backwards
+      // for every instruction in SSA
+      for (int i = instructionSet.size() - 1; i >= 0; i--) {
+        Instruction currentInstruction = instructionSet.get(i);
+        // First save the current in-set and out-set
+        HashSet<String> originalInSet = currentInstruction.InSet;
+        HashSet<String> originalOutSet = currentInstruction.OutSet;
+
+        HashSet<String> definedSet = new HashSet<>();
+        HashSet<String> usedSet = new HashSet<>();
+        // MOV e f means move value of e into f
+        switch (currentInstruction.inst) {
+          case MOVE:
+            if (currentInstruction.left.isVariable()) {
+              usedSet.add(currentInstruction.left.var.name);
+            }
+            if (currentInstruction.right.isVariable()) {
+              definedSet.add(currentInstruction.right.var.name);
+            }
+            break;
+          default:
+            if (
+              currentInstruction.left != null &&
+              currentInstruction.left.isVariable()
+            ) {
+              usedSet.add(currentInstruction.left.var.name);
+            }
+            if (
+              currentInstruction.right != null &&
+              currentInstruction.right.isVariable()
+            ) {
+              usedSet.add(currentInstruction.right.var.name);
+            }
+            // We can figure out what to do with phi later
+            break;
+        }
+
+        // For out, find the union of previous variables in the in set for each succeeding node of n
+        // out[n] := ∪ {in[s] | s ε succ[n]}
+        // outSet of a node = the union of all the inSets of n's successors
+        for (int j = instructionSet.size() - 1; j > i; j--) {
+          currentInstruction.OutSet.addAll(instructionSet.get(j).InSet);
+        }
+
+        // in[n] := use[n] ∪ (out[n] - def[n])
+        // (out[n] - def[n])
+        HashSet<String> temporaryOutSet = new HashSet<String>();
+        temporaryOutSet.addAll(currentInstruction.OutSet);
+        temporaryOutSet.removeAll(definedSet);
+        // use[n]
+        usedSet.addAll(temporaryOutSet);
+        currentInstruction.InSet = usedSet;
+
+        boolean inSetChanged =
+          (!originalInSet.equals(currentInstruction.InSet));
+        boolean outSetChanged =
+          (!originalOutSet.equals(currentInstruction.OutSet));
+        if (inSetChanged || outSetChanged) {
+          // This only needs to trigger once to repeat the loop
+          change_detected = true;
+        }
+      }
+      // Iterate, until IN and OUT set are constants for last two consecutive iterations.
+      loop_count++;
+    } while (change_detected);
+
+    for (Instruction instruction : instructionSet) {
+      if (instruction.inst == op.MOVE) {
+        // Right is a variable that is being assigned to
+        // If the outset does not contain a variable that is being defined,
+        // Then it means that this definition is unused, so remove it
+        if (!instruction.OutSet.contains(instruction.right.var.name)) {
+          instruction.eliminated = true;
+        }
+      }
+    }
+    // Next, do block checking
+
+  }
 
   public boolean copy_propogation() {
     boolean changed = false;

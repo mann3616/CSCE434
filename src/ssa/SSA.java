@@ -30,6 +30,8 @@ public class SSA implements NodeVisitor {
   boolean assign;
   int currDim;
 
+  public ArrayList<Instruction> allInstructions = new ArrayList<>();
+
   // TODO: test012, test014
   public SSA() {
     currBlock = new Block(this);
@@ -574,6 +576,8 @@ public class SSA implements NodeVisitor {
     currRes.kind = Result.INST;
     currRes.inst = inst;
     currBlock.addInstruction(inst);
+    // We're now saving all instructions in order ,,, I think
+    allInstructions.add(inst);
   }
 
   public void addBlock(Block b) {
