@@ -92,6 +92,11 @@ public class Optimize {
     } while (change_detected);
 
     boolean change_made = false;
+    // Get the instruction set of the main block
+
+    for (Block b : ssa.roots) {
+      System.out.println("Block " + b);
+    }
     for (Instruction instruction : instructionSet) {
       if (instruction.inst == op.MOVE) {
         // Right is a variable that is being assigned to

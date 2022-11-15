@@ -785,35 +785,35 @@ public class Compiler {
       switch (optArguments.get(i)) {
         case "cp":
           //Constant propogation
-          while (optimize.constant_propogation()) {
+          if (optimize.constant_propogation()) {
             change = true;
           }
           break;
         case "cf":
           //Constant folding
-          while (optimize.constant_folding()) {
+          if (optimize.constant_folding()) {
             change = true;
           }
           break;
         case "cpp":
           //Copy Propogation
-          while (optimize.copy_propogation()) {
+          if (optimize.copy_propogation()) {
             change = true;
           }
           break;
         case "cse":
           //Common subexpression elimination
-          while (optimize.subexpr_elim()) {
+          if (optimize.subexpr_elim()) {
             change = true;
           }
           break;
         case "dce":
-          while (optimize.dead_code_elim()) {
+          if (optimize.dead_code_elim()) {
             change = true;
           }
           break;
         case "ofe":
-          while (optimize.orphan_function()) {
+          if (optimize.orphan_function()) {
             change = true;
           }
           break;
@@ -824,22 +824,22 @@ public class Compiler {
 
   private boolean runEveryArgument() {
     boolean change = false;
-    while (optimize.constant_propogation()) {
+    if (optimize.constant_propogation()) {
       change = true;
     }
-    while (optimize.constant_folding()) {
+    if (optimize.constant_folding()) {
       change = true;
     }
-    while (optimize.copy_propogation()) {
+    if (optimize.copy_propogation()) {
       change = true;
     }
-    while (optimize.subexpr_elim()) {
+    if (optimize.subexpr_elim()) {
       change = true;
     }
-    while (optimize.dead_code_elim()) {
+    if (optimize.dead_code_elim()) {
       change = true;
     }
-    while (optimize.orphan_function()) {
+    if (optimize.orphan_function()) {
       change = true;
     }
     return change;
