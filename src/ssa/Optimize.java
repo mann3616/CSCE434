@@ -18,13 +18,12 @@ public class Optimize {
     this.ssa = ssa;
   }
 
-  public void dead_code_elim() {
+  public boolean dead_code_elim() {
     // Give every block an in-set and and out-set
     // The in-sets and out-sets already exist within the block class
 
     ArrayList<Instruction> instructionSet = ssa.allInstructions;
     boolean change_detected;
-    int loop_count = 0;
     do {
       change_detected = false;
       // Traverse backwards
@@ -90,21 +89,22 @@ public class Optimize {
         }
       }
       // Iterate, until IN and OUT set are constants for last two consecutive iterations.
-      loop_count++;
     } while (change_detected);
 
+    boolean change_made = false;
     for (Instruction instruction : instructionSet) {
       if (instruction.inst == op.MOVE) {
         // Right is a variable that is being assigned to
         // If the outset does not contain a variable that is being defined,
         // Then it means that this definition is unused, so remove it
         if (!instruction.OutSet.contains(instruction.right.var.name)) {
+          change_made = true;
           instruction.eliminated = true;
         }
       }
     }
     // Next, do block checking
-
+    return change_made;
   }
 
   public boolean copy_propogation() {
@@ -703,6 +703,7 @@ public class Optimize {
   }
 
   public boolean constant_folding() {
+    // TODO: Deal with special arithmetic cases of 0 and 1
     boolean changed = false;
     for (Block b : ssa.blocks) {
       int index = 0;
@@ -734,7 +735,29 @@ public class Optimize {
               new_val = 0;
               changed = i.eliminated = true;
             }
-            // Add something for multiplying by 1
+            if (rightConst && i.right.value == 1) {
+              if (leftConst) {
+                new_val = i.left.value;
+                changed = i.eliminated = true;
+              }
+            } else if (leftConst && i.left.value == 1) {
+              if (rightConst) {
+                new_val = i.right.value;
+                changed = i.eliminated = true;
+              }
+            }
+
+            if (rightConst && i.right.value == -1) {
+              if (leftConst) {
+                new_val = i.left.value * -1;
+                changed = i.eliminated = true;
+              }
+            } else if (leftConst && i.left.value == -1) {
+              if (rightConst) {
+                new_val = i.right.value * -1;
+                changed = i.eliminated = true;
+              }
+            }
             break;
           case MOD:
             if (i.right.kind == Result.CONST && i.left.kind == Result.CONST) {
@@ -756,7 +779,11 @@ public class Optimize {
             break;
           case DIV:
             if (i.right.kind == Result.CONST && i.left.kind == Result.CONST) {
-              new_val = i.left.value / i.right.value;
+              if (i.right.value == 1) {
+                new_val = i.left.value;
+              } else if (i.right.value == -1) {
+                new_val = i.left.value * -1;
+              }
               changed = i.eliminated = true;
             }
             break;
@@ -801,7 +828,7 @@ public class Optimize {
     return changed;
   }
 
-  public void orphan_function() {
+  public boolean orphan_function() {
     // Get the list of functions, check every instruction and remove the functions that have been called,
     // Elim the entire block of a function that isn't used
     // Issue - How to deal with functions with multiple parameters?
@@ -824,13 +851,15 @@ public class Optimize {
     }
 
     ArrayList<Block> blocksToRemove = new ArrayList<>();
+    boolean change_made = false;
     for (Block b : ssa.blocks) {
       if (functions.contains(b.label)) {
-        System.out.println("Removing function: " + b.label);
+        change_made = true;
         blocksToRemove.add(b);
       }
     }
     ssa.blocks.removeAll(blocksToRemove);
+    return change_made;
   }
 
   public static boolean isExpr(Instruction instruction) {
