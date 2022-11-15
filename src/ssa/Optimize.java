@@ -180,7 +180,7 @@ public class Optimize {
     // Do Find Best Place
     // Clean up
     for (Block b : ssa.roots) {
-      findBestPlace(new HashSet<>(), b);
+      changed = changed || findBestPlace(new HashSet<>(), b);
     }
     for (Block b : ssa.blocks) {
       for (Instruction i : b.instructions) {

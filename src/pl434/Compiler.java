@@ -765,20 +765,11 @@ public class Compiler {
     //So in that case we simply give maxOpt priority to avoid such issues
     if (maxOptSelected) {
       // In maxOpt, order matters. Repeat the chosen optimizations in their input order until convergence
-      boolean notConverged = false;
-      while (notConverged) {
-        SSA initialSsa = ssa;
-        runChosenArguments(optArguments);
-        notConverged = (initialSsa != ssa);
-      }
+      while (runChosenArguments(optArguments));
     } else if (maxSelected) {
       // In max, order does not matter. Try every optimization until convergence
       boolean notConverged = false;
-      while (notConverged) {
-        SSA initialSsa = ssa;
-        runEveryArgument();
-        notConverged = (initialSsa != ssa);
-      }
+      while (runEveryArgument());
     } else {
       runChosenArguments(optArguments);
     }
@@ -787,45 +778,70 @@ public class Compiler {
     return ssa.asDotGraph();
   }
 
-  private void runChosenArguments(List<String> optArguments) {
+  private boolean runChosenArguments(List<String> optArguments) {
     // These should directly fiddle with the SSA
+    boolean change = false;
     for (int i = 0; i < optArguments.size(); i++) {
       switch (optArguments.get(i)) {
         case "cp":
           //Constant propogation
+          while (optimize.constant_propogation()) {
+            change = true;
+          }
           break;
         case "cf":
           //Constant folding
+          while (optimize.constant_folding()) {
+            change = true;
+          }
           break;
         case "cpp":
           //Copy Propogation
+          while (optimize.copy_propogation()) {
+            change = true;
+          }
           break;
         case "cse":
           //Common subexpression elimination
+          while (optimize.subexpr_elim()) {
+            change = true;
+          }
           break;
         case "dce":
-          optimize.dead_code_elim();
+          while (optimize.dead_code_elim()) {
+            change = true;
+          }
           break;
         case "ofe":
-          optimize.orphan_function();
+          while (optimize.orphan_function()) {
+            change = true;
+          }
           break;
       }
     }
+    return change;
   }
 
-  private void runEveryArgument() {
-    //Call every single optimization func every run
-    //Constant propogation
-
-    //Constant folding
-
-    //Copy Propogation
-
-    //Common subexpression elimination
-
-    //Dead Code Elimination
-
-    //Orphan function elimination
-
+  private boolean runEveryArgument() {
+    boolean change = false;
+    while (optimize.constant_propogation()) {
+      change = true;
+    }
+    while (optimize.constant_folding()) {
+      change = true;
+    }
+    while (optimize.copy_propogation()) {
+      change = true;
+    }
+    while (optimize.subexpr_elim()) {
+      change = true;
+    }
+    while (optimize.dead_code_elim()) {
+      change = true;
+    }
+    while (optimize.orphan_function()) {
+      change = true;
+    }
+    return change;
   }
 }
