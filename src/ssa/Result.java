@@ -50,4 +50,11 @@ public class Result {
     }
     return "Error(Could not format Result to any given type)";
   }
+
+  public boolean isVariable() {
+    if (this.kind == VAR) {
+      return true;
+    }
+    return false;
+  }
 }

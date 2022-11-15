@@ -1,0 +1,31 @@
+
+main
+
+int a, b;
+
+// ofe
+function bar () : int
+{
+    int c, d;
+
+    let c = 1;
+    let d = 2;
+    let a = c + d + b;
+    let a = c + d + b;
+    call printInt(35);
+    return 1;
+};
+
+{
+    let a = 1;
+    let b = 1000;
+    while (a < b) do // a: 2 -> 1024
+        let a = a * 2;
+        //let b = a + 1;
+
+        call printInt(a);
+        call printInt(b);
+        call println();
+    od;
+    let b = a;
+}.

@@ -1,6 +1,7 @@
 package ssa;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import pl434.Symbol;
 
@@ -40,14 +41,18 @@ public class Instruction {
   boolean eliminated = false;
   Block blockLoc = null;
   public int my_num;
-  Result left, right, third, fourth; // TODO: third is for the third Result that needs to be printed out and stuff MAY need a 4th
+  public Result left, right, third; // TODO: third is for the third Result that needs to be printed out
   List<Symbol> doPhiOn;
   ArrayList<Result> func_params;
   List<Instruction> availableExpr = new ArrayList<>();
   List<Instruction> equivList = new ArrayList<>();
   boolean rootExpr = false;
   boolean isArrayMul = false;
-  op inst;
+  public op inst;
+
+  // Used for calculating in and out sets
+  public HashSet<String> InSet = new HashSet<String>();
+  public HashSet<String> OutSet = new HashSet<String>();
 
   public Instruction(op inst, ArrayList<Result> func_params) {
     this.func_params = func_params;

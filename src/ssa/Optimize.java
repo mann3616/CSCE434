@@ -18,7 +18,94 @@ public class Optimize {
     this.ssa = ssa;
   }
 
-  public void dead_code_elim() {}
+  public void dead_code_elim() {
+    // Give every block an in-set and and out-set
+    // The in-sets and out-sets already exist within the block class
+
+    ArrayList<Instruction> instructionSet = ssa.allInstructions;
+    boolean change_detected;
+    int loop_count = 0;
+    do {
+      change_detected = false;
+      // Traverse backwards
+      // for every instruction in SSA
+      for (int i = instructionSet.size() - 1; i >= 0; i--) {
+        Instruction currentInstruction = instructionSet.get(i);
+        // First save the current in-set and out-set
+        HashSet<String> originalInSet = currentInstruction.InSet;
+        HashSet<String> originalOutSet = currentInstruction.OutSet;
+
+        HashSet<String> definedSet = new HashSet<>();
+        HashSet<String> usedSet = new HashSet<>();
+        // MOV e f means move value of e into f
+        switch (currentInstruction.inst) {
+          case MOVE:
+            if (currentInstruction.left.isVariable()) {
+              usedSet.add(currentInstruction.left.var.name);
+            }
+            if (currentInstruction.right.isVariable()) {
+              definedSet.add(currentInstruction.right.var.name);
+            }
+            break;
+          default:
+            if (
+              currentInstruction.left != null &&
+              currentInstruction.left.isVariable()
+            ) {
+              usedSet.add(currentInstruction.left.var.name);
+            }
+            if (
+              currentInstruction.right != null &&
+              currentInstruction.right.isVariable()
+            ) {
+              usedSet.add(currentInstruction.right.var.name);
+            }
+            // We can figure out what to do with phi later
+            break;
+        }
+
+        // For out, find the union of previous variables in the in set for each succeeding node of n
+        // out[n] := ∪ {in[s] | s ε succ[n]}
+        // outSet of a node = the union of all the inSets of n's successors
+        for (int j = instructionSet.size() - 1; j > i; j--) {
+          currentInstruction.OutSet.addAll(instructionSet.get(j).InSet);
+        }
+
+        // in[n] := use[n] ∪ (out[n] - def[n])
+        // (out[n] - def[n])
+        HashSet<String> temporaryOutSet = new HashSet<String>();
+        temporaryOutSet.addAll(currentInstruction.OutSet);
+        temporaryOutSet.removeAll(definedSet);
+        // use[n]
+        usedSet.addAll(temporaryOutSet);
+        currentInstruction.InSet = usedSet;
+
+        boolean inSetChanged =
+          (!originalInSet.equals(currentInstruction.InSet));
+        boolean outSetChanged =
+          (!originalOutSet.equals(currentInstruction.OutSet));
+        if (inSetChanged || outSetChanged) {
+          // This only needs to trigger once to repeat the loop
+          change_detected = true;
+        }
+      }
+      // Iterate, until IN and OUT set are constants for last two consecutive iterations.
+      loop_count++;
+    } while (change_detected);
+
+    for (Instruction instruction : instructionSet) {
+      if (instruction.inst == op.MOVE) {
+        // Right is a variable that is being assigned to
+        // If the outset does not contain a variable that is being defined,
+        // Then it means that this definition is unused, so remove it
+        if (!instruction.OutSet.contains(instruction.right.var.name)) {
+          instruction.eliminated = true;
+        }
+      }
+    }
+    // Next, do block checking
+
+  }
 
   public boolean copy_propogation() {
     boolean changed = false;
@@ -400,7 +487,37 @@ public class Optimize {
     return changed;
   }
 
-  public void orphan_function() {}
+  public void orphan_function() {
+    // Get the list of functions, check every instruction and remove the functions that have been called,
+    // Elim the entire block of a function that isn't used
+    // Issue - How to deal with functions with multiple parameters?
+    // IE, overloaded functions?
+    // For now, we assume there's only one definition of a function
+    ArrayList<String> functions = new ArrayList<>();
+    for (Block b : ssa.roots) {
+      if (b.label != "main") {
+        functions.add(b.label);
+      }
+    }
+
+    //Loop through all instructions
+    for (Instruction i : ssa.allInstructions) {
+      // If the instruction is a function call, remove the
+      if (i.inst == Instruction.op.CALL) {
+        String function_name = i.func_params.get(0).toString();
+        functions.remove(function_name);
+      }
+    }
+
+    ArrayList<Block> blocksToRemove = new ArrayList<>();
+    for (Block b : ssa.blocks) {
+      if (functions.contains(b.label)) {
+        System.out.println("Removing function: " + b.label);
+        blocksToRemove.add(b);
+      }
+    }
+    ssa.blocks.removeAll(blocksToRemove);
+  }
 
   public static boolean isExpr(Instruction instruction) {
     switch (instruction.inst) {

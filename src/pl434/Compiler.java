@@ -111,6 +111,8 @@ public class Compiler {
 
   private int numDataRegisters; // available registers are [1..numDataRegisters]
 
+  private Optimize optimize;
+
   // Need to map from IDENT to memory offset
 
   public Compiler(Scanner scanner, int numRegs) {
@@ -754,6 +756,7 @@ public class Compiler {
   }
 
   public String optimization(List<String> optArguments, Options options) {
+    optimize = new Optimize(ssa);
     // Not sure why it wants the Options object in here
     boolean maxSelected = optArguments.contains("max");
     boolean maxOptSelected = optArguments.contains("maxOpt");
@@ -801,10 +804,10 @@ public class Compiler {
           //Common subexpression elimination
           break;
         case "dce":
-          //Dead Code Elimination
+          optimize.dead_code_elim();
           break;
         case "ofe":
-          //Orphan function elimination
+          optimize.orphan_function();
           break;
       }
     }
