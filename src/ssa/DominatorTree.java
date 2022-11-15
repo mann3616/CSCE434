@@ -84,7 +84,7 @@ public class DominatorTree {
       b.solveIDom();
     }
     compDF(new HashSet<>(), root);
-    printDoms(new HashSet<>(), root);
+    //printDoms(new HashSet<>(), root);
   }
 
   public void compDF(HashSet<Block> visited, Block root) {

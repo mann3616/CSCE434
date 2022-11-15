@@ -45,7 +45,6 @@ public class Block {
   HashMap<Block, HashMap<Symbol, Symbol>> phiBlock = new HashMap<>();
 
   public HashSet<Symbol> blockVars;
-  public HashMap<Symbol, List<Symbol>> OGtoUse;
   public HashMap<Symbol, Instruction> phis;
   public HashMap<Symbol, LinkedHashSet<Instruction>> symbolLocation;
   public List<Instruction> assigns = new ArrayList<>();
@@ -55,7 +54,6 @@ public class Block {
     this.ssa = ssa;
     isJoinNode = false;
     edgeSet = new HashSet<>();
-    OGtoUse = new HashMap<>();
     firstInst = null;
     phis = new HashMap<>();
     // new Comparator<Symbol>() {
@@ -343,10 +341,6 @@ public class Block {
       }
       symbolLocation.get(inst.left.var.OG).add(inst);
       // Add new instance of Symbol to it's orignal
-      if (!OGtoUse.containsKey(inst.left.var.OG)) {
-        OGtoUse.put(inst.left.var.OG, new ArrayList<>());
-      }
-      OGtoUse.get(inst.left.var.OG).add(inst.left.var);
     }
     // Add right Result if it's a symbol that is not a function
     if (
@@ -362,10 +356,6 @@ public class Block {
       }
       symbolLocation.get(inst.right.var.OG).add(inst);
       // Add new instance of Symbol to it's original
-      if (!OGtoUse.containsKey(inst.right.var.OG)) {
-        OGtoUse.put(inst.right.var.OG, new ArrayList<>());
-      }
-      OGtoUse.get(inst.right.var.OG).add(inst.right.var);
     }
   }
 

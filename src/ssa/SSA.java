@@ -29,6 +29,7 @@ public class SSA implements NodeVisitor {
   Stack<Result> indices;
   boolean assign;
   int currDim;
+  Optimize opt;
 
   // TODO: test012, test014
   public SSA() {
@@ -39,6 +40,7 @@ public class SSA implements NodeVisitor {
     blocks = new ArrayList<>();
     roots = new ArrayList<>();
     indices = new Stack<>();
+    opt = new Optimize(this);
   }
 
   public void buildPhi() {
@@ -57,39 +59,13 @@ public class SSA implements NodeVisitor {
         findInnerByDomFront(visited, b);
       }
     }
-    System.out.println(curr.my_num);
+    //System.out.println(curr.my_num);
     curr.findPhiVars();
     curr.createPhiInst();
     for (Block b : curr.edges) {
       if (curr.domFront.contains(b)) {
         findInnerByDomFront(visited, b);
       }
-    }
-  }
-
-  public void findInner(HashSet<Block> visited, Block curr) {
-    for (Block b : curr.parents) {
-      if (b.isJoinNode && !visited.contains(b)) {
-        for (Block nxt : curr.edges) {
-          findInner(visited, nxt);
-        }
-        return;
-      }
-    }
-    if (visited.contains(curr)) {
-      return;
-    }
-    visited.add(curr);
-    if (curr.endIfNode) {
-      curr.findPhiVars();
-      curr.createPhiInst();
-    }
-    for (Block nxt : curr.edges) {
-      findInner(visited, nxt);
-    }
-    if (!curr.endIfNode) {
-      curr.findPhiVars();
-      curr.createPhiInst();
     }
   }
 
@@ -171,6 +147,13 @@ public class SSA implements NodeVisitor {
     }
     setDefaultLatest();
     buildPhi();
+    for (Block b : blocks) {
+      b.visited.clear();
+      for (Instruction i : b.instructions) {
+        i.blockLoc = b;
+      }
+    }
+    opt.subexpr_elim();
     // HashSet<Block> st = new HashSet<>();
     // for (Block b : blocks) {
     //   if (b.isJoinNode) {
@@ -545,6 +528,8 @@ public class SSA implements NodeVisitor {
       nxtMaxDim.kind = Result.CONST;
       nxtMaxDim.value = 4;
       addInstruction(new Instruction(op.MUL, currRes, nxtMaxDim));
+      currBlock.instructions.get(currBlock.instructions.size() - 1).isArrayMul =
+        true;
       Result mResult = currRes;
 
       // Get left result (should be a variable) and set it as kind addy since we are getting the address of this result
