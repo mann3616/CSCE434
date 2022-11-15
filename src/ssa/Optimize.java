@@ -389,6 +389,7 @@ public class Optimize {
   }
 
   public boolean constant_folding() {
+    // TODO: Deal with special arithmetic cases of 0 and 1
     boolean changed = false;
     for (Block b : ssa.blocks) {
       int index = 0;
@@ -420,7 +421,29 @@ public class Optimize {
               new_val = 0;
               changed = i.eliminated = true;
             }
-            // Add something for multiplying by 1
+            if (rightConst && i.right.value == 1) {
+              if (leftConst) {
+                new_val = i.left.value;
+                changed = i.eliminated = true;
+              }
+            } else if (leftConst && i.left.value == 1) {
+              if (rightConst) {
+                new_val = i.right.value;
+                changed = i.eliminated = true;
+              }
+            }
+
+            if (rightConst && i.right.value == -1) {
+              if (leftConst) {
+                new_val = i.left.value * -1;
+                changed = i.eliminated = true;
+              }
+            } else if (leftConst && i.left.value == -1) {
+              if (rightConst) {
+                new_val = i.right.value * -1;
+                changed = i.eliminated = true;
+              }
+            }
             break;
           case MOD:
             if (i.right.kind == Result.CONST && i.left.kind == Result.CONST) {
@@ -442,7 +465,11 @@ public class Optimize {
             break;
           case DIV:
             if (i.right.kind == Result.CONST && i.left.kind == Result.CONST) {
-              new_val = i.left.value / i.right.value;
+              if (i.right.value == 1) {
+                new_val = i.left.value;
+              } else if (i.right.value == -1) {
+                new_val = i.left.value * -1;
+              }
               changed = i.eliminated = true;
             }
             break;
