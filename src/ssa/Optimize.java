@@ -159,7 +159,7 @@ public class Optimize {
     //Clearing visited map on each block
     // All constant subexpr can be ignored
 
-    changed = true;
+    changed = false;
     for (Block b : ssa.roots) {
       findAvailableExpr(new HashSet<>(), b, null);
     }
@@ -180,7 +180,7 @@ public class Optimize {
     // Do Find Best Place
     // Clean up
     for (Block b : ssa.roots) {
-      changed = changed || findBestPlace(new HashSet<>(), b);
+      changed = findBestPlace(new HashSet<>(), b) || changed;
     }
     for (Block b : ssa.blocks) {
       for (Instruction i : b.instructions) {
@@ -214,9 +214,7 @@ public class Optimize {
     if (visited.contains(root)) {
       return change;
     }
-    if (root.visited.size() == root.parents.size()) {
-      visited.add(root);
-    }
+    visited.add(root);
     int k = -1;
     List<Instruction> fuList = new ArrayList<>();
     for (Instruction i : root.instructions) {
@@ -306,6 +304,7 @@ public class Optimize {
             rep.right.var = thisInst.right.var;
           }
         }
+
         single.clear(); // Clear instructions for op.MOVE
         instBehind = 0;
         sing = 0;
@@ -420,7 +419,7 @@ public class Optimize {
       sing++;
     }
     for (Block e : root.edges) {
-      change = change || findBestPlace(visited, e);
+      change = findBestPlace(visited, e) || change;
     }
     return change;
   }
@@ -501,7 +500,11 @@ public class Optimize {
     //Only for printing
     if (visited.contains(root)) {
       for (Instruction j : root.instructions) {
-        System.out.println((j.eliminated ? "elim - " : "") + j.my_num);
+        System.out.println(
+          (j.eliminated ? "elim - " : "") +
+          j.my_num +
+          (j.mainEquiv ? " isMainEquiv" : "")
+        );
         for (Instruction k : j.availableExpr) {
           System.out.println("  " + k);
           for (Instruction q : k.equivList) {
