@@ -157,12 +157,42 @@ public class Optimize {
     // Cuz parantheses
 
     //Clearing visited map on each block
+    // All constant subexpr can be ignored
 
     changed = true;
     for (Block b : ssa.roots) {
       findAvailableExpr(new HashSet<>(), b, null);
     }
     for (Block b : ssa.blocks) {
+      b.visited.clear();
+    }
+    for (Block b : ssa.blocks) {
+      for (Instruction i : b.instructions) {
+        if (i.eliminated) continue;
+        if (i.left != null && i.left.kind == Result.INST) {
+          i.left.inst.usedAt = i;
+        }
+        if (i.right != null && i.right.kind == Result.INST) {
+          i.right.inst.usedAt = i;
+        }
+      }
+    }
+    // Do Find Best Place
+    // Clean up
+    for (Block b : ssa.roots) {
+      changed = changed || findBestPlace(new HashSet<>(), b);
+    }
+    for (Block b : ssa.blocks) {
+      for (Instruction i : b.instructions) {
+        if (i.left != null && i.left.kind == Result.INST) {
+          i.left.inst.usedAt = null;
+        }
+        if (i.right != null && i.right.kind == Result.INST) {
+          i.right.inst.usedAt = null;
+        }
+        i.availableExpr.clear();
+        i.equivList.clear();
+      }
       b.visited.clear();
     }
     return changed;
@@ -173,15 +203,276 @@ public class Optimize {
 
   }
 
-  //TODO: Implement another traversal that does several things
-  // 1.   Using the equivExpr list. Find each Instruction's block and find the common dominator for all.
-  // 2.   Do this in the same pathing taken for findAvailableExpr
-  // 3.   When using the findAvailableExpr start from the bottom to the top and
-  // 4.   Use the versioning to figure out where to place the value
-  // Case 0: an expresion is teh format (x+y) * (x+y) - just check if that is the rootExpr
-  // Case 1:  z = (x+y)*2 | b = (x+y)*5 | c = (x+y) *2 - t0 = x+y | t1 = t0*2 | z = t1 | b = t0*5 | c = t1 (this takes two passes of subexprElim)
-  // ISSUE: if block children could have the same expression as each other but never know since they were ran from a parent
-  // Solution: Compare all blocks that do not dominate each other !
+  /*
+   * Iterate through all instructions
+   * If an instruction has a nonempty equivList and no other instruction has an equivList with it inside
+   * The subExpr must encapsulate as much as possible while keeping the same equivList size
+   * Gonna need something that says if this expression is the mainExpr
+   */
+  public boolean findBestPlace(HashSet<Block> visited, Block root) {
+    boolean change = false;
+    if (visited.contains(root)) {
+      return change;
+    }
+    if (root.visited.size() == root.parents.size()) {
+      visited.add(root);
+    }
+    int k = -1;
+    List<Instruction> fuList = new ArrayList<>();
+    for (Instruction i : root.instructions) {
+      // If the instruction is not the mainEquiv or the equivList is empty then skip
+      k++;
+      if (i.eliminated || !i.mainEquiv || i.equivList.isEmpty()) {
+        continue;
+      }
+      // Is where it's used also have the same equivalences
+      // Need to do it like this because the nxt instruction might not be for it
+      if (i.usedAt != null) {
+        // Make sure the equivList from i is the equivList of curr but all the instruction nums are + 1
+        boolean equiv = true;
+        for (Instruction nxt : i.equivList) {
+          // Basically if where they were usedAt do not compare
+          // then we know this is the best we can get on this branch of instruction
+          if (!nxt.usedAt.compare(i.usedAt)) {
+            equiv = false;
+            break;
+          }
+        }
+        // If equivalent then go to nxt instruction
+        if (equiv) {
+          continue;
+        }
+      }
+      // So now that we have made sure that this is the biggest we can do then we replace all with new symbol
+      // First get the list of instructions that will occur
+      instructionList(fuList, i);
+      // Now that we have updated the list with the instructions then we add the delimiter
+      Result res = new Result();
+      res.kind = Result.VAR;
+      res.var = new Symbol(subSymbol, true);
+      fuList.add(new Instruction(op.MOVE, null, res)); // Set left to null until after forLoop
+    }
+    // I should now have a fullList of things that need to be created and made
+    change = !fuList.isEmpty();
+    List<Instruction> single = new ArrayList<>();
+    Instruction before = null;
+    Block find = null;
+    int f = -1;
+    // If after is null then all I have to do is put it in the very root node
+    int sing = 0;
+    int instBehind = 0;
+    for (int i = 0; i < fuList.size(); i++) {
+      Instruction thisInst = fuList.get(i);
+      if (thisInst.inst == op.MOVE) {
+        thisInst.left = new Result();
+        thisInst.left.kind = Result.INST;
+        thisInst.left.inst = single.get(single.size() - 1);
+        thisInst.right.var.instruction = thisInst;
+        single.add(thisInst);
+        for (Instruction place : single) {
+          int prev = find.instructions.get(f + 1).my_num;
+          renumber(prev);
+          place.my_num = prev;
+          find.instructions.add(f + 1, place);
+          f++;
+        }
+        Instruction rep = fuList.get(i - 1).usedAt;
+        if (
+          rep.left != null &&
+          rep.left.kind == Result.INST &&
+          rep.left.inst == rep
+        ) {
+          rep.left.inst = null;
+          rep.left.kind = Result.VAR;
+          rep.left.var = thisInst.right.var;
+        } else {
+          rep.right.inst = null;
+          rep.right.kind = Result.VAR;
+          rep.right.var = thisInst.right.var;
+        }
+        for (Instruction rr : fuList.get(i - 1).equivList) {
+          rep = rr.usedAt;
+          if (
+            rep.left != null &&
+            rep.left.kind == Result.INST &&
+            rep.left.inst == rep
+          ) {
+            rep.left.inst = null;
+            rep.left.kind = Result.VAR;
+            rep.left.var = thisInst.right.var;
+          } else {
+            rep.right.inst = null;
+            rep.right.kind = Result.VAR;
+            rep.right.var = thisInst.right.var;
+          }
+        }
+        single.clear(); // Clear instructions for op.MOVE
+        instBehind = 0;
+        sing = 0;
+        continue;
+      }
+      // Before and f have been created
+      if (i == 0 || fuList.get(i - 1).inst == op.MOVE) {
+        // Find After (common Dominator between equivList and itself)
+        boolean itself = true;
+        // If they all have the same dom of it then it will go there
+        for (Instruction a : thisInst.equivList) {
+          if (!a.blockLoc.doms.contains(thisInst.blockLoc)) {
+            itself = false;
+          }
+        }
+        if (!itself) {
+          find = findBlock(new HashSet<>(), thisInst, thisInst.blockLoc);
+          // Find best place to put it
+          f = find.instructions.size() - 1;
+          for (; f >= 0; f--) {
+            if (
+              !find.instructions.get(f).eliminated &&
+              (
+                find.instructions.get(f).inst == op.MOVE ||
+                find.instructions.get(f).inst == op.PHI
+              ) ||
+              f == 0
+            ) {
+              before = find.instructions.get(f);
+              f =
+                (
+                  f == 0 &&
+                    find.instructions.get(f).inst != op.MOVE &&
+                    find.instructions.get(f).inst != op.PHI
+                    ? -1
+                    : f
+                );
+              break;
+            }
+          }
+        } else {
+          // Find Best place to put it
+          find = thisInst.blockLoc;
+          f = 0;
+          for (Instruction ff : find.instructions) {
+            if (thisInst == ff) {
+              break;
+            }
+            f++;
+          }
+          for (; f >= 0; f--) {
+            if (
+              !find.instructions.get(f).eliminated &&
+              (
+                find.instructions.get(f).inst == op.MOVE ||
+                find.instructions.get(f).inst == op.PHI
+              ) ||
+              f == 0
+            ) {
+              before = find.instructions.get(f);
+              f = (f == 0 ? -1 : f);
+              break;
+            }
+          }
+        }
+      }
+      // Create new instructions based on these in fuList
+      Result right = new Result();
+      right.kind = thisInst.right.kind;
+      if (right.kind == Result.INST) {
+        right.inst = single.get(sing - instBehind--);
+      }
+      if (right.kind == Result.VAR) {
+        right.var = thisInst.right.var;
+      }
+      if (right.kind == Result.CONST) {
+        right.value = thisInst.right.value;
+      }
+      if (right.kind == Result.PROC) {
+        right.proc = thisInst.right.proc;
+      }
+      Result left = null;
+      if (thisInst.left != null) {
+        left = new Result();
+        left.kind = thisInst.left.kind;
+        if (left.kind == Result.INST) {
+          left.inst = single.get(sing - instBehind--);
+        } else if (right.kind != Result.INST) {
+          instBehind++;
+        }
+        if (left.kind == Result.VAR) {
+          left.var = thisInst.left.var;
+        }
+        if (left.kind == Result.CONST) {
+          left.value = thisInst.left.value;
+        }
+        Instruction jk = new Instruction(thisInst.inst, left, right);
+        jk.blockLoc = find;
+        single.add(jk);
+      } else {
+        if (right.kind != Result.INST) {
+          instBehind++;
+        }
+        Instruction jk = new Instruction(thisInst.inst, null, right);
+        jk.blockLoc = find;
+        single.add(jk);
+      }
+      thisInst.eliminated = true;
+      for (Instruction kInstruction : thisInst.equivList) {
+        kInstruction.eliminated = true;
+      }
+      sing++;
+    }
+    for (Block e : root.edges) {
+      change = change || findBestPlace(visited, e);
+    }
+    return change;
+  }
+
+  public void renumber(int ren) {
+    for (Block b : ssa.blocks) {
+      for (Instruction i : b.instructions) {
+        if (i.my_num >= ren) {
+          i.my_num++;
+        }
+      }
+    }
+  }
+
+  public void instructionList(List<Instruction> insts, Instruction root) {
+    if (root.left != null && root.left.kind == Result.INST) {
+      instructionList(insts, root.left.inst);
+    }
+    if (root.right != null && root.right.kind == Result.INST) {
+      instructionList(insts, root.right.inst);
+    }
+    insts.add(root);
+  }
+
+  public Block findBlock(
+    HashSet<Block> visited,
+    Instruction thisInst,
+    Block root
+  ) {
+    if (visited.contains(root)) {
+      return root;
+    }
+    visited.add(root);
+    if (thisInst.blockLoc.doms.contains(root)) {
+      boolean done = true;
+      for (Instruction bb : thisInst.equivList) {
+        if (!bb.blockLoc.doms.contains(root)) {
+          done = false;
+        }
+      }
+      if (done) {
+        return root;
+      }
+    }
+    for (Block b : root.parents) {
+      Block a = findBlock(visited, thisInst, b);
+      if (a != null) {
+        return a;
+      }
+    }
+    return null;
+  }
 
   //Calculates Available Expressions
   public void findAvailableExpr(
@@ -207,6 +498,7 @@ public class Optimize {
         );
       }
     }
+    //Only for printing
     if (visited.contains(root)) {
       for (Instruction j : root.instructions) {
         System.out.println((j.eliminated ? "elim - " : "") + j.my_num);
@@ -243,6 +535,15 @@ public class Optimize {
         boolean exists = false;
         for (int p = 0; p < size; p++) {
           if (currExpr.availableExpr.get(p).compare(lastAvailable)) {
+            if (lastAvailable != currExpr.availableExpr.get(p)) {
+              currExpr.availableExpr.get(p).equivList.add(lastAvailable); // IS ORDER DEPENDENT BUT SHOULD WORK IF THE NEXT STEP IS COMPUTED IN THE SAME ORDER AS THIS ONE
+              lastAvailable.mainEquiv = false;
+              // Add the expressions equivList to the currExpr
+              for (Instruction q : lastAvailable.equivList) {
+                q.mainEquiv = false;
+                currExpr.availableExpr.get(p).equivList.add(q);
+              }
+            }
             exists = true;
             break;
           }
@@ -311,20 +612,32 @@ public class Optimize {
         }
         // If none of the above occurred check that if left || right are instructions then check that the instruction has not been removed
         else {
-          if (
-            exprToRm.left != null &&
-            exprToRm.left.kind == Result.INST &&
-            !currExpr.availableExpr.contains(exprToRm.left.inst)
-          ) {
-            currExpr.availableExpr.remove(k--);
-            size--;
+          if (exprToRm.left != null && exprToRm.left.kind == Result.INST) {
+            boolean hasAvailable = false;
+            for (Instruction contains : currExpr.availableExpr) {
+              if (contains.compare(exprToRm.left.inst)) {
+                hasAvailable = true;
+                break;
+              }
+            }
+            if (!hasAvailable) {
+              currExpr.availableExpr.remove(k--);
+              size--;
+            }
           } else if (
-            exprToRm.right != null &&
-            exprToRm.right.kind == Result.INST &&
-            !currExpr.availableExpr.contains(exprToRm.right.inst)
+            exprToRm.right != null && exprToRm.right.kind == Result.INST
           ) {
-            currExpr.availableExpr.remove(k--);
-            size--;
+            boolean hasAvailable = false;
+            for (Instruction contains : currExpr.availableExpr) {
+              if (contains.compare(exprToRm.right.inst)) {
+                hasAvailable = true;
+                break;
+              }
+            }
+            if (!hasAvailable) {
+              currExpr.availableExpr.remove(k--);
+              size--;
+            }
           }
         }
       }
@@ -344,7 +657,8 @@ public class Optimize {
         exists = true;
         // If the subExpr is not a direct copy but still equal,
         // then we add the other instruction to the list of copies
-        if (subexpr != currExpr && !subexpr.equivList.contains(currExpr)) {
+        if (!subexpr.equivList.contains(currExpr)) {
+          currExpr.mainEquiv = false;
           subexpr.equivList.add(currExpr);
         }
         break;

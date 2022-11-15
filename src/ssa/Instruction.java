@@ -39,15 +39,17 @@ public class Instruction {
 
   public static int instruction_num = 0;
   boolean eliminated = false;
+  public Instruction usedAt = null;
   Block blockLoc = null;
   public int my_num;
   public Result left, right, third; // TODO: third is for the third Result that needs to be printed out
   List<Symbol> doPhiOn;
   ArrayList<Result> func_params;
   List<Instruction> availableExpr = new ArrayList<>();
-  List<Instruction> equivList = new ArrayList<>();
+  HashSet<Instruction> equivList = new HashSet<>();
   boolean rootExpr = false;
   boolean isArrayMul = false;
+  boolean mainEquiv = true;
   public op inst;
 
   // Used for calculating in and out sets
@@ -59,6 +61,11 @@ public class Instruction {
     this.inst = inst;
     this.left = null;
     this.right = null;
+    for (Result r : func_params) {
+      if (r.kind == Result.INST) {
+        r.inst.usedAt = this;
+      }
+    }
     my_num = Instruction.instruction_num++;
   }
 
@@ -92,7 +99,11 @@ public class Instruction {
     if (c.right != null && right != null && c.right.kind == right.kind) {
       rightC = (right.kind == Result.CONST && right.value == c.right.value);
       rightC =
-        rightC || (right.kind == Result.VAR && right.var.OG == c.right.var.OG);
+        rightC ||
+        (
+          right.kind == Result.VAR &&
+          right.var.getVersion() == c.right.var.getVersion()
+        );
       rightC =
         rightC || (right.kind == Result.PROC && right.proc == c.right.proc);
       rightC =
@@ -107,7 +118,11 @@ public class Instruction {
     if (c.left != null && left != null && c.left.kind == left.kind) {
       leftC = (left.kind == Result.CONST && left.value == c.left.value);
       leftC =
-        leftC || (left.kind == Result.VAR && left.var.OG == c.left.var.OG);
+        leftC ||
+        (
+          left.kind == Result.VAR &&
+          left.var.getVersion() == c.left.var.getVersion()
+        );
       leftC = leftC || (left.kind == Result.PROC && left.proc == c.left.proc);
       leftC =
         leftC || (left.kind == Result.INST && left.inst.compare(c.left.inst));
@@ -121,7 +136,11 @@ public class Instruction {
         leftC =
           leftC || (left.kind == Result.CONST && left.value == c.right.value);
         leftC =
-          leftC || (left.kind == Result.VAR && left.var.OG == c.right.var.OG);
+          leftC ||
+          (
+            left.kind == Result.VAR &&
+            left.var.getVersion() == c.right.var.getVersion()
+          );
         leftC =
           leftC ||
           (left.kind == Result.INST && left.inst.compare(c.right.inst));
@@ -130,7 +149,11 @@ public class Instruction {
         rightC =
           rightC || (right.kind == Result.CONST && right.value == c.left.value);
         rightC =
-          rightC || (right.kind == Result.VAR && right.var.OG == c.left.var.OG);
+          rightC ||
+          (
+            right.kind == Result.VAR &&
+            right.var.getVersion() == c.left.var.getVersion()
+          );
         rightC =
           rightC ||
           (right.kind == Result.INST && right.inst.compare(c.left.inst));
