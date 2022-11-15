@@ -1,0 +1,47 @@
+main
+// cse dce
+
+function without_loop():void{
+
+    int a,b,c,d,e,x,y;
+
+    let b = c + d;
+    let e = c + d;
+    if(b == e) then
+        let x = c + d;
+        let a = b + c;
+    else
+        let y = a + b;
+    fi;
+    let x = a + b;
+    let y = c + d;
+
+    let x = b * c / x;
+    let y = b * c / e;
+    call printInt(x);
+    call printInt(y);
+};
+
+function with_loop():void{
+
+    int w,x,y,z;
+
+    while(true) do
+        let x = y + z;
+        let y = y + z;
+        if(x == y) then
+            let w = x + y;
+            let z = z + y;
+        else
+            let y = w + x;
+        fi;
+        let w = w + x;
+        let z = x + y;
+    od;
+    call printInt(w);
+};
+
+{
+    call without_loop();
+    call with_loop();
+}.

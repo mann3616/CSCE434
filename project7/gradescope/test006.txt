@@ -1,0 +1,38 @@
+// Justin Herring
+// as cp ofe
+// 1 uninitialized variable
+
+main
+
+int x, y, z;
+
+function baz (int x) : int
+{
+    int n;
+
+    let n = 1000;
+    if (n < 100) then
+        let n = 2;
+    fi;
+    return n;
+};
+
+function foo (int x) : void
+{
+    if ((x / 2) >= 12) then
+        call printInt(x * 2);
+    fi;
+    call baz(1000);
+};
+
+{
+    let x = 25;
+    let y = 1 * x + 0 - 1000 * 0;
+
+    if (x < 100) then
+        let y = 99 * y;
+    fi;
+
+    call printInt(y);
+    call printInt(z); // z is uninitialized
+}.

@@ -1,0 +1,30 @@
+// nested if/while testcase
+
+main
+
+int a, b, c, d, e;
+
+{
+    let a = 1;
+    let b = 2;
+    let c = 3;
+    let d = 4;
+    let e = 5;
+
+    while ((c+4) < d) do
+        if ((a+5-b) > (b*6)) then
+            let a = a / c * d;
+            let d = d - 1;
+            call printInt(a);
+            call printInt(d);
+        else
+            let d = a + b;
+            call printInt(d);
+        fi;
+        call println();
+    od;
+
+    let e = c - a + b;
+    call printInt(e); // 4
+    let a = a + b;
+}.
