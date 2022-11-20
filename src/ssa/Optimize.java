@@ -841,6 +841,96 @@ public class Optimize {
               changed = i.eliminated = true;
             }
             break;
+          case BLT:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value >= 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BLE:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value > 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BNE:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value == 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BEQ:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value != 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BGT:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value <= 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BGE:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value < 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
         }
         index++;
         if (i.eliminated) {

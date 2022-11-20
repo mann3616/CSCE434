@@ -626,22 +626,22 @@ public class SSA implements NodeVisitor {
     block.hasBreak = true;
     switch (tok) {
       case "==":
-        block.addInstruction(new Instruction(op.BNE, left, right));
-        break;
-      case "!=":
         block.addInstruction(new Instruction(op.BEQ, left, right));
         break;
+      case "!=":
+        block.addInstruction(new Instruction(op.BNE, left, right));
+        break;
       case ">=":
-        block.addInstruction(new Instruction(op.BLT, left, right));
-        break;
-      case "<=":
-        block.addInstruction(new Instruction(op.BGT, left, right));
-        break;
-      case "<":
         block.addInstruction(new Instruction(op.BGE, left, right));
         break;
-      case ">":
+      case "<=":
         block.addInstruction(new Instruction(op.BLE, left, right));
+        break;
+      case "<":
+        block.addInstruction(new Instruction(op.BLT, left, right));
+        break;
+      case ">":
+        block.addInstruction(new Instruction(op.BGT, left, right));
         break;
       default:
         block.addInstruction(new Instruction(op.BRA, right));
