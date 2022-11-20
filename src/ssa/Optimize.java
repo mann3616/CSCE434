@@ -957,7 +957,7 @@ public class Optimize {
     // For now, we assume there's only one definition of a function
     ArrayList<String> functions = new ArrayList<>();
     for (Block b : ssa.roots) {
-      if (b.label != "main") {
+      if (!b.label.equals("main")) {
         functions.add(b.label);
       }
     }
@@ -974,7 +974,7 @@ public class Optimize {
     ArrayList<Block> blocksToRemove = new ArrayList<>();
     boolean change_made = false;
     for (Block b : ssa.blocks) {
-      if (functions.contains(b.label)) {
+      if (functions.contains(b.label) && !b.label.equals("main")) {
         change_made = true;
         blocksToRemove.add(b);
       }
