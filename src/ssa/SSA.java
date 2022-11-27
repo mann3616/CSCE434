@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
+import java.util.function.Predicate;
 import pl434.DLX;
 import pl434.Symbol;
 import ssa.Instruction.op;
@@ -116,7 +117,7 @@ public class SSA implements NodeVisitor {
     end.type = new IntType();
     addInstruction(new Instruction(op.RET, null, end));
     addCurr();
-    removeEmpties();
+    //removeEmpties();
     DominatorTree tree = new DominatorTree(this);
     // Do we add the phi instructions now?
     Comparator c = new Comparator<Block>() {
@@ -155,7 +156,7 @@ public class SSA implements NodeVisitor {
         i.blockLoc = b;
       }
     }
-    opt.subexpr_elim();
+    // opt.subexpr_elim();
     // HashSet<Block> st = new HashSet<>();
     // for (Block b : blocks) {
     //   if (b.isJoinNode) {
@@ -593,14 +594,18 @@ public class SSA implements NodeVisitor {
   }
 
   public void removeEmpties() {
+    boolean changed = false;
     for (Block b : blocks) {
       if (!b.instructions.isEmpty()) {
+        // If this block has an edge that does not have any instructions then remove that block
         int stop = b.edges.size();
         for (int i = 0; i < stop; i++) {
           if (
-            b.edges.get(i).instructions.isEmpty() && !b.edges.get(i).isJoinNode
+            b.edges.get(i).instructions.isEmpty()
+            //&& !b.edges.get(i).isJoinNode
           ) {
             for (Block bb : b.edges.get(i).edges) {
+              changed = true;
               b.addEdge(bb, b.edgeLabels.get(i));
               bb.parents.remove(b.edges.get(i));
             }
@@ -609,6 +614,9 @@ public class SSA implements NodeVisitor {
           }
         }
       }
+    }
+    if (changed) {
+      removeEmpties();
     }
   }
 
@@ -657,5 +665,29 @@ public class SSA implements NodeVisitor {
         }
       }
     }
+  }
+
+  public void fixUpSSA() {
+    // Removing all eliminated instructions
+    for (Block b : blocks) {
+      int size = b.instructions.size();
+      for (int j = 0; j < size; j++) {
+        Instruction i = b.instructions.get(j);
+        if (!i.eliminated) continue;
+        for (Block fixer : blocks) {
+          for (Instruction ii : fixer.instructions) {
+            if (i.my_num <= ii.my_num) continue;
+            ii.my_num--;
+          }
+        }
+        b.instructions.remove(j--);
+        size--;
+      }
+    }
+    // Finished removing all eliminated instructions
+    // Set empty block edges correctly
+    removeEmpties();
+    //Remove all empty blocks
+    blocks.removeIf(o -> o.instructions.isEmpty());
   }
 }
