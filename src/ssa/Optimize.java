@@ -104,7 +104,12 @@ public class Optimize {
         mainInstructions = (ArrayList<Instruction>) b.instructions;
       }
     }
+
     for (Instruction instruction : instructionSet) {
+      System.out.println(instruction);
+      System.out.println("InSet: " + instruction.InSet);
+      System.out.println("OutSet: " + instruction.OutSet);
+      System.out.println("-----------------------------------");
       if (!instruction.eliminated && instruction.inst == op.MOVE) {
         // Right is a variable that is being assigned to
         // If the outset does not contain a variable that is being defined,
@@ -116,6 +121,10 @@ public class Optimize {
       }
     }
     // Next, do block checking
+
+    // We can delete code blocks by checking what's used in mainInstructions
+    // If a function isn't called in main, then it is considered dead.
+
     return change_made;
   }
 
