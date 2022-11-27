@@ -205,38 +205,35 @@ public class CompilerTester {
       );
       System.exit(-6);
     }
-    // //PA 8
-    // c.regAlloc(numRegs);
+    c.regAlloc(numRegs);
+    //   int[] program = c.genCode();
+    //   if (c.hasError()) {
+    //       System.err.println("Error compiling file");
+    //       System.err.println(c.errorReport());
+    //       System.exit(-4);
+    //   }
 
-    // //PA 9
-    // int[] program = c.genCode();
-    // if (c.hasError()) {
-    //     System.err.println("Error compiling file");
-    //     System.err.println(c.errorReport());
-    //     System.exit(-4);
-    // }
+    //   if (cmd.hasOption("asm")) {
 
-    // if (cmd.hasOption("asm")) {
+    //       String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
+    //       try (PrintStream out = new PrintStream(asmFile)) {
+    //           for (int i = 0; i < program.length; i++) {
+    //               out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
+    //           }
+    //       } catch (IOException e) {
+    //           System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
+    //           System.exit(-5);
+    //       }
+    //   }
 
-    //     String asmFile = sourceFile.substring(0, sourceFile.lastIndexOf('.')) + "_asm.txt";
-    //     try (PrintStream out = new PrintStream(asmFile)) {
-    //         for (int i = 0; i < program.length; i++) {
-    //             out.print(i + ":\t" + DLX.instrString(program[i])); // \newline included in DLX.instrString()
-    //         }
-    //     } catch (IOException e) {
-    //         System.err.println("Error accessing the asm file: \"" + asmFile + "\"");
-    //         System.exit(-5);
-    //     }
-    // }
-
-    // DLX.load(program);
-    // try {
-    //     DLX.execute(in);
-    // } catch (IOException e) {
-    //     e.printStackTrace();
-    //     System.err.println("IOException inside DLX");
-    //     System.exit(-6);
-    // }
+    //   DLX.load(program);
+    //   try {
+    //       DLX.execute(in);
+    //   } catch (IOException e) {
+    //       e.printStackTrace();
+    //       System.err.println("IOException inside DLX");
+    //       System.exit(-6);
+    //   }
 
   }
 }

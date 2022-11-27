@@ -3,6 +3,7 @@ package pl434;
 import ast.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Stack;
@@ -843,5 +844,176 @@ public class Compiler {
       change = true;
     }
     return change;
+  }
+
+  // Creates live in and live out sets for all instructions
+  private void calculateLiveness() {
+    ArrayList<Instruction> instructionSet = ssa.allInstructions;
+    boolean change_detected;
+    do {
+      change_detected = false;
+      // Traverse backwards
+      // for every instruction in SSA
+      for (int i = instructionSet.size() - 1; i >= 0; i--) {
+        Instruction currentInstruction = instructionSet.get(i);
+        if (currentInstruction.isEliminated()) {
+          continue;
+        }
+        // First save the current in-set and out-set
+        HashSet<String> originalInSet = currentInstruction.InSet;
+        HashSet<String> originalOutSet = currentInstruction.OutSet;
+
+        HashSet<String> definedSet = new HashSet<>();
+        HashSet<String> usedSet = new HashSet<>();
+        // MOV e f means move value of e into f
+        switch (currentInstruction.inst) {
+          case MOVE:
+            if (currentInstruction.left.isVariable()) {
+              usedSet.add(currentInstruction.left.var.name);
+            }
+            if (currentInstruction.right.isVariable()) {
+              definedSet.add(currentInstruction.right.var.name);
+            }
+            break;
+          default:
+            if (
+              currentInstruction.left != null &&
+              currentInstruction.left.isVariable()
+            ) {
+              usedSet.add(currentInstruction.left.var.name);
+            }
+            if (
+              currentInstruction.right != null &&
+              currentInstruction.right.isVariable()
+            ) {
+              usedSet.add(currentInstruction.right.var.name);
+            }
+            break;
+        }
+
+        // For out, find the union of previous variables in the in set for each succeeding node of n
+        // out[n] := ∪ {in[s] | s ε succ[n]}
+        // outSet of a node = the union of all the inSets of n's successors
+        for (int j = instructionSet.size() - 1; j > i; j--) {
+          currentInstruction.OutSet.addAll(instructionSet.get(j).InSet);
+        }
+
+        // in[n] := use[n] ∪ (out[n] - def[n])
+        // (out[n] - def[n])
+        HashSet<String> temporaryOutSet = new HashSet<String>();
+        temporaryOutSet.addAll(currentInstruction.OutSet);
+        temporaryOutSet.removeAll(definedSet);
+        // use[n]
+        usedSet.addAll(temporaryOutSet);
+        currentInstruction.InSet = usedSet;
+
+        boolean inSetChanged =
+          (!originalInSet.equals(currentInstruction.InSet));
+        boolean outSetChanged =
+          (!originalOutSet.equals(currentInstruction.OutSet));
+        if (inSetChanged || outSetChanged) {
+          // This only needs to trigger once to repeat the loop
+          change_detected = true;
+        }
+      }
+      // Iterate, until IN and OUT set are constants for last two consecutive iterations.
+    } while (change_detected);
+  }
+
+  private void printLiveness() {
+    for (Instruction instruction : ssa.allInstructions) {
+      System.out.println("-----------------------------------");
+      System.out.println(instruction);
+      System.out.println("InSet: " + instruction.InSet);
+      System.out.println("OutSet: " + instruction.OutSet);
+    }
+  }
+
+  public void regAlloc(int numRegs) {
+    // Calculates all live sets
+    calculateLiveness();
+    // After calculate liveness, all instructions have insets and outsets
+    printLiveness();
+    // Populates the variable hashmap to get all variables
+    populateLiveIntervals();
+    // Calculates the intervals
+    calculateLiveIntervals();
+    // Prints LiveIntervals
+    printLiveIntervals();
+    // Next step is to actually distribute registers
+    return;
+  }
+
+  public class Pair {
+
+    public Integer opening;
+    public Integer closing;
+
+    public Pair(int opening) {
+      this.opening = opening;
+    }
+
+    public String toString() {
+      String openingString = "";
+      String closingString = "";
+      if (opening == null) {
+        openingString = "null";
+      } else {
+        openingString = opening.toString();
+      }
+      if (closing == null) {
+        closingString = "null";
+      } else {
+        closingString = closing.toString();
+      }
+      return "[" + openingString + "," + closingString + "]";
+    }
+  }
+
+  HashMap<String, ArrayList<Pair>> liveIntervals = new HashMap<>();
+
+  private void calculateLiveIntervals() {
+    for (Instruction instruction : ssa.allInstructions) {
+      for (String variable : instruction.InSet) {
+        ArrayList<Pair> PairList = liveIntervals.get(variable);
+        if (PairList.size() == 0) {
+          Pair newInterval = new Pair(instruction.my_num);
+          liveIntervals.get(variable).add(newInterval);
+        } else {
+          Pair mostRecentPair = PairList.get(PairList.size() - 1);
+          if (mostRecentPair.closing == null) {
+            // If the interval has not been closed, check if it closes now
+            if (!instruction.OutSet.contains(variable)) {
+              // If the outset doesn't contain this variable, it means it was used this line. So it closes
+              mostRecentPair.closing = instruction.my_num;
+            }
+          } else {
+            // There isn't currently a live interval - the most recent pair was a complete interval
+            // A new interval must be created
+            Pair newInterval = new Pair(instruction.my_num);
+            liveIntervals.get(variable).add(newInterval);
+          }
+        }
+      }
+    }
+  }
+
+  private void populateLiveIntervals() {
+    for (Instruction instruction : ssa.allInstructions) {
+      for (String variable : instruction.InSet) {
+        if (!liveIntervals.containsKey(variable)) {
+          // If this variable has not been added to the global list, add it
+          ArrayList<Pair> blankIntervalList = new ArrayList<Pair>();
+          liveIntervals.put(variable, blankIntervalList);
+        }
+      }
+    }
+  }
+
+  private void printLiveIntervals() {
+    for (String variable : liveIntervals.keySet()) {
+      System.out.println("Live Interval for variable \"" + variable + "\"");
+      System.out.println(liveIntervals.get(variable));
+    }
   }
 }
