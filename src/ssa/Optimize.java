@@ -30,6 +30,9 @@ public class Optimize {
       // for every instruction in SSA
       for (int i = instructionSet.size() - 1; i >= 0; i--) {
         Instruction currentInstruction = instructionSet.get(i);
+        if (currentInstruction.eliminated) {
+          continue;
+        }
         // First save the current in-set and out-set
         HashSet<String> originalInSet = currentInstruction.InSet;
         HashSet<String> originalOutSet = currentInstruction.OutSet;
@@ -98,7 +101,7 @@ public class Optimize {
       System.out.println("Block " + b);
     }
     for (Instruction instruction : instructionSet) {
-      if (instruction.inst == op.MOVE) {
+      if (!instruction.eliminated && instruction.inst == op.MOVE) {
         // Right is a variable that is being assigned to
         // If the outset does not contain a variable that is being defined,
         // Then it means that this definition is unused, so remove it
@@ -222,6 +225,7 @@ public class Optimize {
     visited.add(root);
     int k = -1;
     List<Instruction> fuList = new ArrayList<>();
+    HashSet<Instruction> ignore = new HashSet<>();
     for (Instruction i : root.instructions) {
       // If the instruction is not the mainEquiv or the equivList is empty then skip
       k++;
@@ -248,7 +252,10 @@ public class Optimize {
       }
       // So now that we have made sure that this is the biggest we can do then we replace all with new symbol
       // First get the list of instructions that will occur
-      instructionList(fuList, i);
+      if (ignore.contains(i)) {
+        continue;
+      }
+      instructionList(ignore, fuList, i);
       // Now that we have updated the list with the instructions then we add the delimiter
       Result res = new Result();
       res.kind = Result.VAR;
@@ -279,35 +286,48 @@ public class Optimize {
           find.instructions.add(f + 1, place);
           f++;
         }
-        Instruction rep = fuList.get(i - 1).usedAt;
+        Instruction rep = fuList.get(i - 1);
+        Instruction per = rep.usedAt;
         if (
-          rep.left != null &&
-          rep.left.kind == Result.INST &&
-          rep.left.inst == rep
+          per.left != null &&
+          per.left.kind == Result.INST &&
+          per.left.inst == rep
         ) {
-          rep.left.inst = null;
-          rep.left.kind = Result.VAR;
-          rep.left.var = thisInst.right.var;
+          per.left.inst = null;
+          per.left.kind = Result.VAR;
+          per.left.var = thisInst.right.var;
         } else {
-          rep.right.inst = null;
-          rep.right.kind = Result.VAR;
-          rep.right.var = thisInst.right.var;
+          per.right.inst = null;
+          per.right.kind = Result.VAR;
+          per.right.var = thisInst.right.var;
         }
         for (Instruction rr : fuList.get(i - 1).equivList) {
-          rep = rr.usedAt;
+          rep = rr;
+          per = rep.usedAt;
           if (
-            rep.left != null &&
-            rep.left.kind == Result.INST &&
-            rep.left.inst == rep
+            per.left != null &&
+            per.left.kind == Result.INST &&
+            per.left.inst == rep
           ) {
-            rep.left.inst = null;
-            rep.left.kind = Result.VAR;
-            rep.left.var = thisInst.right.var;
+            per.left.inst = null;
+            per.left.kind = Result.VAR;
+            per.left.var = thisInst.right.var;
           } else {
-            rep.right.inst = null;
-            rep.right.kind = Result.VAR;
-            rep.right.var = thisInst.right.var;
+            per.right.inst = null;
+            per.right.kind = Result.VAR;
+            per.right.var = thisInst.right.var;
           }
+        }
+        for (int jjj = i - 1; jjj >= 0; jjj--) {
+          if (fuList.get(jjj).inst == op.MOVE) {
+            break;
+          }
+          fuList.get(jjj).eliminated = true;
+          for (Instruction ki : fuList.get(jjj).equivList) {
+            ki.eliminated = true;
+            ki.equivList.clear();
+          }
+          fuList.get(jjj).equivList.clear();
         }
 
         single.clear(); // Clear instructions for op.MOVE
@@ -417,10 +437,6 @@ public class Optimize {
         jk.blockLoc = find;
         single.add(jk);
       }
-      thisInst.eliminated = true;
-      for (Instruction kInstruction : thisInst.equivList) {
-        kInstruction.eliminated = true;
-      }
       sing++;
     }
     for (Block e : root.edges) {
@@ -439,14 +455,26 @@ public class Optimize {
     }
   }
 
-  public void instructionList(List<Instruction> insts, Instruction root) {
+  public void instructionList(
+    HashSet<Instruction> ignore,
+    List<Instruction> insts,
+    Instruction root
+  ) {
     if (root.left != null && root.left.kind == Result.INST) {
-      instructionList(insts, root.left.inst);
+      instructionList(ignore, insts, root.left.inst);
     }
     if (root.right != null && root.right.kind == Result.INST) {
-      instructionList(insts, root.right.inst);
+      instructionList(ignore, insts, root.right.inst);
     }
+    ignoreAll(ignore, root);
     insts.add(root);
+  }
+
+  public void ignoreAll(HashSet<Instruction> ignore, Instruction root) {
+    if (root.usedAt != null) {
+      ignore.add(root.usedAt);
+      ignoreAll(ignore, root.usedAt);
+    }
   }
 
   public Block findBlock(
@@ -818,6 +846,96 @@ public class Optimize {
               changed = i.eliminated = true;
             }
             break;
+          case BLT:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value >= 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BLE:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value > 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BNE:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value == 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BEQ:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value != 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BGT:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value <= 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
+          case BGE:
+            if (i.left.kind == Result.CONST) {
+              i.inst = op.BRA;
+              Block curr = i.blockLoc;
+              if (i.left.value < 0) {
+                for (Block p : curr.edges) {
+                  if (p != i.right.proc) {
+                    i.right.proc = p;
+                    break;
+                  }
+                }
+              }
+              i.left = null;
+            }
+            break;
         }
         index++;
         if (i.eliminated) {
@@ -844,7 +962,7 @@ public class Optimize {
     // For now, we assume there's only one definition of a function
     ArrayList<String> functions = new ArrayList<>();
     for (Block b : ssa.roots) {
-      if (b.label != "main") {
+      if (!b.label.equals("main")) {
         functions.add(b.label);
       }
     }
@@ -861,7 +979,7 @@ public class Optimize {
     ArrayList<Block> blocksToRemove = new ArrayList<>();
     boolean change_made = false;
     for (Block b : ssa.blocks) {
-      if (functions.contains(b.label)) {
+      if (functions.contains(b.label) && !b.label.equals("main")) {
         change_made = true;
         blocksToRemove.add(b);
       }

@@ -363,6 +363,7 @@ public class Block {
     edges.add(block);
     edgeLabels.add(edgeLabel);
     edgeSet.add(block);
+    block.label = this.label;
     if (block.parents.isEmpty()) {
       block.phiBlock.put(this, block.phi1);
     } else {
