@@ -95,10 +95,14 @@ public class Optimize {
     } while (change_detected);
 
     boolean change_made = false;
-    // Get the instruction set of the main block
 
+    // Get the instruction set of the main block
+    ArrayList<Instruction> mainInstructions = new ArrayList<>();
     for (Block b : ssa.roots) {
-      System.out.println("Block " + b);
+      if (b.label == "main") {
+        // This is the main function block, lets remove the instructions from here
+        mainInstructions = (ArrayList<Instruction>) b.instructions;
+      }
     }
     for (Instruction instruction : instructionSet) {
       if (!instruction.eliminated && instruction.inst == op.MOVE) {
