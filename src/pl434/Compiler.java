@@ -894,13 +894,15 @@ public class Compiler {
         // For out, find the union of previous variables in the in set for each succeeding node of n
         // out[n] := ∪ {in[s] | s ε succ[n]}
         // outSet of a node = the union of all the inSets of n's successors
-        for (int j = instructionSet.size() - 1; j > i; j--) {
-          currentInstruction.OutSet.addAll(instructionSet.get(j).InSet);
+        // Successor is simply j + 1
+        if (!((i + 1) >= instructionSet.size())) {
+          currentInstruction.OutSet.addAll(instructionSet.get(i + 1).InSet);
         }
 
         // in[n] := use[n] ∪ (out[n] - def[n])
         // (out[n] - def[n])
         HashSet<String> temporaryOutSet = new HashSet<String>();
+
         temporaryOutSet.addAll(currentInstruction.OutSet);
         temporaryOutSet.removeAll(definedSet);
         // use[n]
@@ -993,6 +995,15 @@ public class Compiler {
             Pair newInterval = new Pair(instruction.my_num);
             liveIntervals.get(variable).add(newInterval);
           }
+        }
+      }
+
+      for (String variable : instruction.OutSet) {
+        if (!instruction.InSet.contains(variable)) {
+          // If a variable is not in the inset but in the outset, then it was defined on that instruction
+          // Therefore a new interval starts here, regardless if the last pair was closed
+          Pair newInterval = new Pair(instruction.my_num);
+          liveIntervals.get(variable).add(newInterval);
         }
       }
     }

@@ -30,7 +30,7 @@ public class Optimize {
       // for every instruction in SSA
       for (int i = instructionSet.size() - 1; i >= 0; i--) {
         Instruction currentInstruction = instructionSet.get(i);
-        if (currentInstruction.eliminated) {
+        if (currentInstruction.isEliminated()) {
           continue;
         }
         // First save the current in-set and out-set
@@ -62,20 +62,21 @@ public class Optimize {
             ) {
               usedSet.add(currentInstruction.right.var.name);
             }
-            // We can figure out what to do with phi later
             break;
         }
 
         // For out, find the union of previous variables in the in set for each succeeding node of n
         // out[n] := ∪ {in[s] | s ε succ[n]}
         // outSet of a node = the union of all the inSets of n's successors
-        for (int j = instructionSet.size() - 1; j > i; j--) {
-          currentInstruction.OutSet.addAll(instructionSet.get(j).InSet);
+        // Successor is simply j + 1
+        if (!((i + 1) >= instructionSet.size())) {
+          currentInstruction.OutSet.addAll(instructionSet.get(i + 1).InSet);
         }
 
         // in[n] := use[n] ∪ (out[n] - def[n])
         // (out[n] - def[n])
         HashSet<String> temporaryOutSet = new HashSet<String>();
+
         temporaryOutSet.addAll(currentInstruction.OutSet);
         temporaryOutSet.removeAll(definedSet);
         // use[n]
