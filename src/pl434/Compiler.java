@@ -844,4 +844,10 @@ public class Compiler {
     }
     return change;
   }
+
+  public int[] genCode() {
+    return null;
+  }
+
+  public void regAlloc(int numRegs) {}
 }
