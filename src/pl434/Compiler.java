@@ -875,8 +875,6 @@ public class Compiler {
   }
 
   public void initializeLiveness() {
-    // ssa.fixUpSSA(); // LOOK HERE LANCE! - Momo <3
-    // ssa.instantiateUsedAt();
     // Calculates all live sets
     calculateLiveness();
 
