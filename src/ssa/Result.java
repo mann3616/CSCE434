@@ -13,7 +13,7 @@ public class Result {
   static final int VAR = 1;
   static final int PROC = 2;
   static final int ADDY = 3;
-  static final int INST = 4;
+  public static final int INST = 4;
   static final int GDB = 5;
   public int kind;
   public Instruction inst;

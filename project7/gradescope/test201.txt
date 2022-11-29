@@ -4,12 +4,18 @@ main
 int a,b,c,d,e,f,g,h;
 
 {
-    let a = 7;
-    let b = 4;
-
+    let a = 5;
+    let a = (1 + a) * (2 + a);
     call printInt(a);
 
     let c = 15;
     call printInt(c);
+
+    let a = 16;
+    call printInt(a);
+
+    call printInt(c);
+
+    let a = 3;
 }
 .
