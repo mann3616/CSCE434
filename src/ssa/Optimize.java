@@ -362,7 +362,8 @@ public class Optimize {
           }
         }
         if (!itself) {
-          find = findBlock(new HashSet<>(), thisInst, thisInst.blockLoc);
+          //find = findBlock(new HashSet<>(), thisInst, thisInst.blockLoc);
+          find = findCommonDomBlock(thisInst);
           // Find best place to put it
           f = find.instructions.size() - 1;
           for (; f >= 0; f--) {
@@ -406,7 +407,14 @@ public class Optimize {
               f == 0
             ) {
               before = find.instructions.get(f);
-              f = (f == 0 ? -1 : f);
+              f =
+                (
+                  f == 0 &&
+                    find.instructions.get(f).inst != op.MOVE &&
+                    find.instructions.get(f).inst != op.PHI
+                    ? -1
+                    : f
+                );
               break;
             }
           }
@@ -495,33 +503,40 @@ public class Optimize {
     }
   }
 
-  public Block findBlock(
-    HashSet<Block> visited,
-    Instruction thisInst,
-    Block root
-  ) {
-    if (visited.contains(root)) {
-      return root;
-    }
-    visited.add(root);
-    if (thisInst.blockLoc.doms.contains(root)) {
-      boolean done = true;
-      for (Instruction bb : thisInst.equivList) {
-        if (!bb.blockLoc.doms.contains(root)) {
-          done = false;
+  public Block findCommonDomBlock(Instruction thisInst) {
+    HashSet<Block> bSet = new HashSet<>();
+    // Add all common Dom blocks to the HashSet
+    for (Block b : thisInst.blockLoc.doms) {
+      boolean good = true;
+      for (Instruction j : thisInst.availableExpr) {
+        if (!j.blockLoc.doms.contains(b)) {
+          good = false;
+          break;
         }
       }
-      if (done) {
-        return root;
+      if (good) {
+        bSet.add(b);
       }
     }
-    for (Block b : root.parents) {
-      Block a = findBlock(visited, thisInst, b);
-      if (a != null) {
-        return a;
+    // Find the Block is not dominated by any
+    for (Block b : bSet) {
+      boolean good = true;
+      for (Block j : bSet) {
+        if (b == j) {
+          continue;
+        } else if (!b.doms.contains(j)) {
+          good = false;
+          break;
+        }
+      }
+      if (good) {
+        return b;
       }
     }
-    return null;
+    for (Block b : bSet) {
+      return b; // Yes this is supposed to be here since I do not have way of returing default value
+    }
+    return thisInst.blockLoc;
   }
 
   //Calculates Available Expressions
@@ -549,24 +564,24 @@ public class Optimize {
       }
     }
     //Only for printing
-    if (visited.contains(root)) {
-      for (Instruction j : root.instructions) {
-        System.out.println(
-          (j.eliminated ? "elim - " : "") +
-          j.my_num +
-          (j.mainEquiv ? " isMainEquiv" : "")
-        );
-        for (Instruction k : j.availableExpr) {
-          System.out.println("  " + k);
-          for (Instruction q : k.equivList) {
-            System.out.println("    " + q);
-          }
-        }
-        if (j.availableExpr.isEmpty()) {
-          System.out.println("  EMPTY");
-        }
-      }
-    }
+    // if (visited.contains(root)) {
+    //   for (Instruction j : root.instructions) {
+    //     System.out.println(
+    //       (j.eliminated ? "elim - " : "") +
+    //       j.my_num +
+    //       (j.mainEquiv ? " isMainEquiv" : "")
+    //     );
+    //     for (Instruction k : j.availableExpr) {
+    //       System.out.println("  " + k);
+    //       for (Instruction q : k.equivList) {
+    //         System.out.println("    " + q);
+    //       }
+    //     }
+    //     if (j.availableExpr.isEmpty()) {
+    //       System.out.println("  EMPTY");
+    //     }
+    //   }
+    // }
   }
 
   public void calculateAvailability(Block root, Instruction last) {
@@ -1013,9 +1028,9 @@ public class Optimize {
           return false;
         }
       case MUL:
-        if (instruction.isArrayMul) {
-          return false;
-        }
+      // if (instruction.isArrayMul) {
+      //   return false;
+      // }
       case DIV:
       case SUB:
       case MOD:
@@ -1034,3 +1049,31 @@ public class Optimize {
     }
   }
 }
+// public Block findBlock(
+//   HashSet<Block> visited,
+//   Instruction thisInst,
+//   Block root
+// ) {
+//   if (visited.contains(root)) {
+//     return root;
+//   }
+//   visited.add(root);
+//   if (thisInst.blockLoc.doms.contains(root)) {
+//     boolean done = true;
+//     for (Instruction bb : thisInst.equivList) {
+//       if (!bb.blockLoc.doms.contains(root)) {
+//         done = false;
+//       }
+//     }
+//     if (done) {
+//       return root;
+//     }
+//   }
+//   for (Block b : root.parents) {
+//     Block a = findBlock(visited, thisInst, b);
+//     if (a != null) {
+//       return a;
+//     }
+//   }
+//   return null;
+// }

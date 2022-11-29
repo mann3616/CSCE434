@@ -559,7 +559,7 @@ public class TypeChecker implements NodeVisitor {
               found.builtinFunc = true;
             }
             break;
-          case "printLn":
+          case "println":
             if (argList.list.size() == 0) {
               found.builtinFunc = true;
             }

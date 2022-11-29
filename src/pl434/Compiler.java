@@ -1110,7 +1110,7 @@ public class Compiler {
           boolean holdingDeadVariable = instruction_number >= deathInstruction;
           if (holdingDeadVariable) {
             RegisterAlloc placement = new RegisterAlloc(
-              (Integer) instruction_number,
+              Integer.valueOf(instruction_number),
               variable
             );
             registerMap.get(registerNumber).add(placement);
