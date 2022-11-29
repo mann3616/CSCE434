@@ -736,4 +736,18 @@ public class SSA implements NodeVisitor {
       }
     }
   }
+
+  public void instantiateUsedAt() {
+    for (Block b : blocks) {
+      for (Instruction i : b.instructions) {
+        if (i.eliminated) continue;
+        if (i.left != null && i.left.kind == Result.INST) {
+          i.left.inst.usedAt = i;
+        }
+        if (i.right != null && i.right.kind == Result.INST) {
+          i.right.inst.usedAt = i;
+        }
+      }
+    }
+  }
 }

@@ -876,6 +876,8 @@ public class Compiler {
   }
 
   public void initializeLiveness() {
+    // ssa.fixUpSSA(); // LOOK HERE LANCE! - Momo <3
+    // ssa.instantiateUsedAt();
     // Calculates all live sets
     calculateLiveness();
 
@@ -895,6 +897,8 @@ public class Compiler {
   }
 
   public void regAlloc(int numRegs) {
+    // ssa.fixUpSSA(); // LOOK HERE LANCE! - Momo <3
+    // ssa.instantiateUsedAt();
     initializeLiveness();
     // Next step is to actually distribute registers
     // Initialize RegisterMap with each key being a register number
