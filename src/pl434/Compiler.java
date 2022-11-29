@@ -905,7 +905,7 @@ public class Compiler {
     allocateRegisters(numRegs);
 
     // Prints all the underlying notes
-    //  printLiveInfo();
+    printLiveInfo();
     printRegisterAllocation();
 
     // Result.printAllResults();
@@ -1160,7 +1160,10 @@ public class Compiler {
         .get(variable)
         .get(liveRanges.get(variable).size() - 1)
         .closing;
-      liveIntervals.put(variable, new Pair(left_boundary, right_boundary));
+      liveIntervals.put(
+        variable,
+        new VariableInfo(left_boundary, right_boundary)
+      );
     }
   }
 
@@ -1170,16 +1173,18 @@ public class Compiler {
     }
   }
 
-  public class Pair {
+  public class VariableInfo {
 
     public Integer opening;
     public Integer closing;
+    public Instruction instruction;
 
-    public Pair(int opening) {
+    public VariableInfo(int opening, Instruction instruction) {
       this.opening = opening;
+      this.instruction = instruction;
     }
 
-    public Pair(int opening, int closing) {
+    public VariableInfo(int opening, int closing) {
       this.opening = opening;
       this.closing = closing;
     }
@@ -1201,18 +1206,21 @@ public class Compiler {
     }
   }
 
-  HashMap<String, ArrayList<Pair>> liveRanges = new HashMap<>();
-  HashMap<String, Pair> liveIntervals = new HashMap<>();
+  HashMap<String, ArrayList<VariableInfo>> liveRanges = new HashMap<>();
+  HashMap<String, VariableInfo> liveIntervals = new HashMap<>();
 
   private void calculateliveRanges() {
     for (Instruction instruction : ssa.allInstructions) {
       for (String variable : instruction.InSet) {
-        ArrayList<Pair> PairList = liveRanges.get(variable);
+        ArrayList<VariableInfo> PairList = liveRanges.get(variable);
         if (PairList.size() == 0) {
-          Pair newInterval = new Pair(instruction.my_num);
+          VariableInfo newInterval = new VariableInfo(
+            instruction.my_num,
+            instruction
+          );
           liveRanges.get(variable).add(newInterval);
         } else {
-          Pair mostRecentPair = PairList.get(PairList.size() - 1);
+          VariableInfo mostRecentPair = PairList.get(PairList.size() - 1);
           if (mostRecentPair.closing == null) {
             // If the interval has not been closed, check if it closes now
             if (!instruction.OutSet.contains(variable)) {
@@ -1222,7 +1230,10 @@ public class Compiler {
           } else {
             // There isn't currently a live interval - the most recent pair was a complete interval
             // A new interval must be created
-            Pair newInterval = new Pair(instruction.my_num);
+            VariableInfo newInterval = new VariableInfo(
+              instruction.my_num,
+              instruction
+            );
             liveRanges.get(variable).add(newInterval);
           }
         }
@@ -1232,7 +1243,10 @@ public class Compiler {
         if (!instruction.InSet.contains(variable)) {
           // If a variable is not in the inset but in the outset, then it was defined on that instruction
           // Therefore a new interval starts here, regardless if the last pair was closed
-          Pair newInterval = new Pair(instruction.my_num);
+          VariableInfo newInterval = new VariableInfo(
+            instruction.my_num,
+            instruction
+          );
           liveRanges.get(variable).add(newInterval);
         }
       }
@@ -1244,7 +1258,7 @@ public class Compiler {
       for (String variable : instruction.InSet) {
         if (!liveRanges.containsKey(variable)) {
           // If this variable has not been added to the global list, add it
-          ArrayList<Pair> blankIntervalList = new ArrayList<Pair>();
+          ArrayList<VariableInfo> blankIntervalList = new ArrayList<VariableInfo>();
           liveRanges.put(variable, blankIntervalList);
         }
       }
