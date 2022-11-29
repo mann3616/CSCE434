@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.Stack;
 import org.apache.commons.cli.Options;
 import pl434.Token.Kind;
@@ -857,15 +856,15 @@ public class Compiler {
 
     // This class holds the instruction number of when a variable was assigned to a register
     Integer instruction_number;
-    String variable;
+    Result variable;
 
-    public RegisterAlloc(Integer instruction_number, String variable) {
+    public RegisterAlloc(Integer instruction_number, Result variable) {
       this.instruction_number = instruction_number;
       this.variable = variable;
     }
 
     public String toString() {
-      return instruction_number + ": " + variable;
+      return instruction_number + ": " + variable.var.name;
     }
   }
 
@@ -876,7 +875,7 @@ public class Compiler {
     printRegisterAllocation();
   }
 
-  public void regAlloc(int numRegs) {
+  public void initializeLiveness() {
     // Calculates all live sets
     calculateLiveness();
 
@@ -893,7 +892,10 @@ public class Compiler {
     // IE, a = [1,3],[6,11], [14,39] -> a = [1,39]
     initializeLiveIntervals();
     calculateLiveIntervals();
+  }
 
+  public void regAlloc(int numRegs) {
+    initializeLiveIntervals();
     // Next step is to actually distribute registers
     // Initialize RegisterMap with each key being a register number
     initializeRegisterMap(numRegs);
