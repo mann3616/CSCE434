@@ -64,6 +64,16 @@ public class Instruction {
   public HashSet<String> InSet = new HashSet<String>();
   public HashSet<String> OutSet = new HashSet<String>();
 
+  public Result getResult() {
+    if (usedAt == null) {
+      return null;
+    }
+    if (usedAt.right.kind == Result.INST && usedAt.right.inst == this) {
+      return usedAt.right;
+    }
+    return usedAt.left;
+  }
+
   public Instruction(op inst, ArrayList<Result> func_params) {
     this.func_params = func_params;
     this.inst = inst;

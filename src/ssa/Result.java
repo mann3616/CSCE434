@@ -1,5 +1,6 @@
 package ssa;
 
+import java.util.HashMap;
 import pl434.DLX;
 import pl434.Symbol;
 import types.FloatType;
@@ -25,6 +26,27 @@ public class Result {
 
   public int addy;
   public Symbol var;
+
+  public static HashMap<String, Result> allResults = new HashMap<String, Result>();
+  public static int num_no_names = 0;
+
+  public void storeResult() {
+    if (this.var != null && this.var.name != null) {
+      allResults.put(this.var.name, this);
+    } else {
+      num_no_names++;
+    }
+  }
+
+  public static void printAllResults() {
+    System.out.println("*************************");
+    for (String r : allResults.keySet()) {
+      System.out.println("Variable " + r);
+      System.out.println(allResults.get(r));
+    }
+    System.out.println("TOTAL OF " + num_no_names + " RESULTS WITH NO NAME");
+    System.out.println("*************************");
+  }
 
   @Override
   public String toString() {

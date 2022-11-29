@@ -116,6 +116,7 @@ public class SSA implements NodeVisitor {
     end.kind = Result.CONST;
     end.value = 0;
     end.type = new IntType();
+    end.storeResult();
     addInstruction(new Instruction(op.RET, null, end));
     addCurr();
     //removeEmpties();
@@ -335,6 +336,7 @@ public class SSA implements NodeVisitor {
     currRes = new Result();
     currRes.kind = Result.VAR;
     currRes.var = new Symbol(node.symbol(), this.assign);
+    currRes.storeResult();
   }
 
   @Override
@@ -361,6 +363,7 @@ public class SSA implements NodeVisitor {
         break;
     }
     currRes.type = new BoolType();
+    currRes.storeResult();
   }
 
   @Override
@@ -369,6 +372,7 @@ public class SSA implements NodeVisitor {
     currRes.kind = Result.CONST;
     currRes.value = Integer.parseInt(node.literal());
     currRes.type = new IntType();
+    currRes.storeResult();
   }
 
   @Override
@@ -377,6 +381,7 @@ public class SSA implements NodeVisitor {
     //currRes.value = DLX.fromFP32ToFP16(Float.parseFloat(node.literal()));
     currRes.kind = Result.CONST;
     currRes.type = new FloatType();
+    currRes.storeResult();
     currRes.fvalue = Float.parseFloat(node.literal());
   }
 
@@ -495,6 +500,7 @@ public class SSA implements NodeVisitor {
     Result this_func = new Result();
     this_func.kind = Result.VAR;
     this_func.var = node.function;
+    this_func.storeResult();
     params.add(this_func);
     addInstruction(new Instruction(op.CALL, params));
     // Set argumentList to previous args
@@ -529,11 +535,13 @@ public class SSA implements NodeVisitor {
       nxtMaxDim.value =
         ((ArrayType) node.symbol.type).dimVals().get(currDim + 1);
       addInstruction(new Instruction(op.MUL, currRes, nxtMaxDim));
+      nxtMaxDim.storeResult();
     } else {
       // MUL the addy by 4 to fit PC DLX format
       Result nxtMaxDim = new Result();
       nxtMaxDim.kind = Result.CONST;
       nxtMaxDim.value = 4;
+      nxtMaxDim.storeResult();
       addInstruction(new Instruction(op.MUL, currRes, nxtMaxDim));
       // currBlock.instructions.get(currBlock.instructions.size() - 1).isArrayMul =
       //   true;
@@ -548,6 +556,7 @@ public class SSA implements NodeVisitor {
       Result gdb = new Result();
       gdb.kind = Result.GDB;
       addInstruction(new Instruction(op.ADD, gdb, leftRes));
+      gdb.storeResult();
 
       // Doing ADDA instruction using saved mResult and GDB inst
       addInstruction(new Instruction(op.ADDA, currRes, mResult));
@@ -569,6 +578,7 @@ public class SSA implements NodeVisitor {
       currRes.type = currRes.inst.right.type;
     }
     currBlock.addInstruction(inst);
+    currRes.storeResult();
     // We're now saving all instructions in order ,,, I think
     allInstructions.add(inst);
   }
@@ -586,6 +596,7 @@ public class SSA implements NodeVisitor {
     currRes.kind = Result.PROC;
     currRes.value = currBlock.my_num;
     currBlock = new Block(this);
+    currRes.storeResult();
   }
 
   public String asDotGraph() {
@@ -662,6 +673,7 @@ public class SSA implements NodeVisitor {
         block.addInstruction(new Instruction(op.BRA, right));
         break;
     }
+    right.storeResult();
   }
 
   public void setDefaultLatest() {

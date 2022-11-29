@@ -868,11 +868,10 @@ public class Compiler {
     }
   }
 
-  public void regAllocDebug() {
+  public void printLiveInfo() {
     // After calculate liveness, all instructions have insets and outsets
     printLiveness();
     printLiveIntervals();
-    printRegisterAllocation();
   }
 
   public void initializeLiveness() {
@@ -904,7 +903,11 @@ public class Compiler {
     allocateRegisters(numRegs);
 
     // Prints all the underlying notes
-    regAllocDebug();
+    //  printLiveInfo();
+    printRegisterAllocation();
+
+    // Result.printAllResults();
+
     return;
   }
 
@@ -1035,6 +1038,7 @@ public class Compiler {
       System.out.println("InSet: " + instruction.InSet);
       System.out.println("OutSet: " + instruction.OutSet);
     }
+    System.out.println();
   }
 
   private void printRegisterAllocation() {
@@ -1076,22 +1080,23 @@ public class Compiler {
   }
 
   private void allocateRegisters(int numRegs) {
-    // Fill registerMap now
-    // Opening and Closing are key
+    // We begin with the earliest opening variables
     ArrayList<String> declarations = findDeclarationOrder();
 
+    // Fill registerMap here
     for (String variable : declarations) {
       // We will always start from the left most register
-      boolean successfully_allocated = true;
+      boolean successfully_allocated = false;
       for (int registerNumber = 0; registerNumber < numRegs; registerNumber++) {
         if (registerMap.get(registerNumber) == null) {
           // This register has not been used before, so we are clear to assign
           int instruction_number = liveIntervals.get(variable).opening;
-          ArrayList<RegisterAlloc> registerAllocList = new ArrayList<RegisterAlloc>();
-          registerAllocList.add(
+          ArrayList<RegisterAlloc> allocationHistory = new ArrayList<RegisterAlloc>();
+          allocationHistory.add(
             new RegisterAlloc(instruction_number, variable)
           );
-          registerMap.put((Integer) registerNumber, registerAllocList);
+          registerMap.put((Integer) registerNumber, allocationHistory);
+          successfully_allocated = true;
           break;
         } else {
           // The register has been used before
@@ -1111,6 +1116,7 @@ public class Compiler {
               variable
             );
             registerMap.get(registerNumber).add(placement);
+            successfully_allocated = true;
             break;
           }
         }
@@ -1121,6 +1127,11 @@ public class Compiler {
         System.out.println(
           "It was not possible to find room for variable " + variable
         );
+        // Here we spill
+        // Evict something from memory
+        // Is there a good heuristic for this?
+        // Find element with closest closing to this one's opening
+        // Evict that one
         continue;
       }
     }

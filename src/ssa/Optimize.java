@@ -264,6 +264,7 @@ public class Optimize {
       Result res = new Result();
       res.kind = Result.VAR;
       res.var = new Symbol(subSymbol, true);
+      res.storeResult();
       fuList.add(new Instruction(op.MOVE, null, res)); // Set left to null until after forLoop
     }
     // I should now have a fullList of things that need to be created and made
@@ -282,6 +283,7 @@ public class Optimize {
         thisInst.left.kind = Result.INST;
         thisInst.left.inst = single.get(single.size() - 1);
         thisInst.right.var.instruction = thisInst;
+        thisInst.left.storeResult();
         single.add(thisInst);
         for (Instruction place : single) {
           int prev = find.instructions.get(f + 1).my_num;
@@ -423,6 +425,7 @@ public class Optimize {
       if (right.kind == Result.PROC) {
         right.proc = thisInst.right.proc;
       }
+      right.storeResult();
       Result left = null;
       if (thisInst.left != null) {
         left = new Result();
@@ -441,6 +444,7 @@ public class Optimize {
         Instruction jk = new Instruction(thisInst.inst, left, right);
         jk.blockLoc = find;
         single.add(jk);
+        left.storeResult();
       } else {
         if (right.kind != Result.INST) {
           instBehind++;

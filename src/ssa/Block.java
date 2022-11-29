@@ -99,9 +99,11 @@ public class Block {
       c.getValue().right = new Result();
       c.getValue().right.kind = Result.VAR;
       c.getValue().right.var = phi1.get(c.getKey());
+      c.getValue().right.storeResult();
       c.getValue().left = new Result();
       c.getValue().left.var = phi2.get(c.getKey());
       c.getValue().left.kind = Result.VAR;
+      c.getValue().left.storeResult();
       int index_num =
         (
           c.getValue().left.var.getVersion() >
@@ -115,6 +117,7 @@ public class Block {
       c.getValue().third.var = new Symbol(c.getKey(), true);
       c.getValue().third.var.my_assign = index_num;
       c.getValue().third.var.instruction = c.getValue();
+      c.getValue().third.storeResult();
       // Need to visit EVERY block
       if (
         c.getValue().third.var.my_assign > this.latest.get(c.getKey()).my_assign
