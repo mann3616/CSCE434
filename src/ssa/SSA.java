@@ -93,6 +93,7 @@ public class SSA implements NodeVisitor {
   public void visit(FunctionDeclaration node) {
     currBlock.label = node.function.name;
     roots.add(currBlock);
+    currBlock.function = node.function;
     node.body().accept(this);
     addCurr();
   }

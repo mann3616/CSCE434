@@ -11,10 +11,8 @@ public class SymbolTable {
   // TODO: Create Symbol Table structure
   Stack<HashMap<String, Symbol>> stack = new Stack<>();
   HashMap<String, ArrayList<Symbol>> st = new HashMap<>();
-  int addy;
 
   public SymbolTable() {
-    addy = 0;
     //throw new RuntimeException("Create Symbol Table and initialize predefined functions");
   }
 

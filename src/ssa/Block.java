@@ -21,6 +21,7 @@ public class Block {
   public static int block_num = 1;
   public int my_num;
   public String label;
+  public Symbol function = null;
   public List<Instruction> instructions;
   boolean hasBreak;
   boolean endIfNode = false;
@@ -376,6 +377,9 @@ public class Block {
     edgeLabels.add(edgeLabel);
     edgeSet.add(block);
     block.label = this.label;
+    if (function != null) {
+      block.function = function;
+    }
     if (block.parents.isEmpty()) {
       block.phiBlock.put(this, block.phi1);
     } else {

@@ -852,22 +852,6 @@ public class Compiler {
 
   HashMap<Integer, ArrayList<RegisterAlloc>> registerMap = new HashMap<Integer, ArrayList<RegisterAlloc>>();
 
-  public class RegisterAlloc {
-
-    // This class holds the instruction number of when a variable was assigned to a register
-    Integer instruction_number;
-    String variable;
-
-    public RegisterAlloc(Integer instruction_number, String variable) {
-      this.instruction_number = instruction_number;
-      this.variable = variable;
-    }
-
-    public String toString() {
-      return instruction_number + ": " + variable;
-    }
-  }
-
   public void printLiveInfo() {
     // After calculate liveness, all instructions have insets and outsets
     printLiveness();
@@ -1168,39 +1152,6 @@ public class Compiler {
   private void initializeRegisterMap(int numRegs) {
     for (int i = 0; i < numRegs; i++) {
       registerMap.put(i, null);
-    }
-  }
-
-  public class VariableInfo {
-
-    public Integer opening;
-    public Integer closing;
-    public Instruction instruction;
-
-    public VariableInfo(int opening, Instruction instruction) {
-      this.opening = opening;
-      this.instruction = instruction;
-    }
-
-    public VariableInfo(int opening, int closing) {
-      this.opening = opening;
-      this.closing = closing;
-    }
-
-    public String toString() {
-      String openingString = "";
-      String closingString = "";
-      if (opening == null) {
-        openingString = "null";
-      } else {
-        openingString = opening.toString();
-      }
-      if (closing == null) {
-        closingString = "null";
-      } else {
-        closingString = closing.toString();
-      }
-      return "[" + openingString + "," + closingString + "]";
     }
   }
 
