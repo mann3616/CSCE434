@@ -4,19 +4,18 @@ main
 int a,b,c,d,e,f,g,h;
 
 {
-    let a = 7;
-    let b = a + 2;
-    let c = a + b;
-    let d = c + b;
-    let b = c + b;
-    let a = a + b;
-    let e = c + d;
-    let f = c + d;
-    let g = a + b;
-    let h = e + f;
+    let a = 5;
+    let a = (1 + a) * (2 + a);
+    call printInt(a);
 
-    //g and h are live
-    call printInt(g); // 57 
-    call printInt(h); // 82 
+    let c = 15;
+    call printInt(c);
+
+    let a = 16;
+    call printInt(a);
+
+    call printInt(c);
+
+    let a = 3;
 }
 .

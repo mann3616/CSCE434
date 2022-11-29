@@ -13,5 +13,4 @@ int a, b, c, d;
     call printInt(a); // 0
     call printInt(b); // 0
     call printInt(c); // 0
-    call printInt(d); // 1
 }.
