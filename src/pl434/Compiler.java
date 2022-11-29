@@ -851,6 +851,59 @@ public class Compiler {
     return null;
   }
 
+  HashMap<Integer, ArrayList<RegisterAlloc>> registerMap = new HashMap<Integer, ArrayList<RegisterAlloc>>();
+
+  public class RegisterAlloc {
+
+    // This class holds the instruction number of when a variable was assigned to a register
+    Integer instruction_number;
+    String variable;
+
+    public RegisterAlloc(Integer instruction_number, String variable) {
+      this.instruction_number = instruction_number;
+      this.variable = variable;
+    }
+
+    public String toString() {
+      return instruction_number + ": " + variable;
+    }
+  }
+
+  public void regAllocDebug() {
+    // After calculate liveness, all instructions have insets and outsets
+    printLiveness();
+    printLiveIntervals();
+    printRegisterAllocation();
+  }
+
+  public void regAlloc(int numRegs) {
+    // Calculates all live sets
+    calculateLiveness();
+
+    // Populates the variable hashmap to get all variables
+    populateliveRanges();
+
+    // Calculates the intervals
+    calculateliveRanges();
+
+    // Prints liveRanges
+    // printliveRanges();
+
+    // HashMap<String, ArrayList<Pair>> liveRanges contains liveRanges, convert to liveInterval
+    // IE, a = [1,3],[6,11], [14,39] -> a = [1,39]
+    initializeLiveIntervals();
+    calculateLiveIntervals();
+
+    // Next step is to actually distribute registers
+    // Initialize RegisterMap with each key being a register number
+    initializeRegisterMap(numRegs);
+    allocateRegisters(numRegs);
+
+    // Prints all the underlying notes
+    regAllocDebug();
+    return;
+  }
+
   // Creates live in and live out sets for all instructions
   private void calculateLiveness() {
     ArrayList<Instruction> instructionSet = ssa.allInstructions;
@@ -978,59 +1031,6 @@ public class Compiler {
       System.out.println("InSet: " + instruction.InSet);
       System.out.println("OutSet: " + instruction.OutSet);
     }
-  }
-
-  HashMap<Integer, ArrayList<RegisterAlloc>> registerMap = new HashMap<Integer, ArrayList<RegisterAlloc>>();
-
-  public class RegisterAlloc {
-
-    // This class holds the instruction number of when a variable was assigned to a register
-    Integer instruction_number;
-    String variable;
-
-    public RegisterAlloc(Integer instruction_number, String variable) {
-      this.instruction_number = instruction_number;
-      this.variable = variable;
-    }
-
-    public String toString() {
-      return instruction_number + ": " + variable;
-    }
-  }
-
-  public void regAllocDebug() {
-    // After calculate liveness, all instructions have insets and outsets
-    printLiveness();
-    printLiveIntervals();
-    printRegisterAllocation();
-  }
-
-  public void regAlloc(int numRegs) {
-    // Calculates all live sets
-    calculateLiveness();
-
-    // Populates the variable hashmap to get all variables
-    populateliveRanges();
-
-    // Calculates the intervals
-    calculateliveRanges();
-
-    // Prints liveRanges
-    // printliveRanges();
-
-    // HashMap<String, ArrayList<Pair>> liveRanges contains liveRanges, convert to liveInterval
-    // IE, a = [1,3],[6,11], [14,39] -> a = [1,39]
-    initializeLiveIntervals();
-    calculateLiveIntervals();
-
-    // Next step is to actually distribute registers
-    // Initialize RegisterMap with each key being a register number
-    initializeRegisterMap(numRegs);
-    allocateRegisters(numRegs);
-
-    // Prints all the underlying notes
-    // regAllocDebug();
-    return;
   }
 
   private void printRegisterAllocation() {
