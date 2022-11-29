@@ -24,7 +24,8 @@ public class SSA implements NodeVisitor {
   Result currRes;
   HashMap<Integer, Block> hmblocks = new HashMap<>();
   List<Block> blocks;
-  List<Block> roots;
+  public List<Block> roots;
+  public Block MAIN;
   HashMap<Symbol, Symbol> allSymbols = new HashMap<>();
   ArrayList<Result> params;
   Stack<Result> indices;
@@ -342,6 +343,8 @@ public class SSA implements NodeVisitor {
     node.expression.accept(this);
     if (node.expression.getClass().equals(ArrayIndex.class)) {
       addInstruction(new Instruction(op.LOAD, currRes));
+    } else {
+      currRes.type = currRes.var.type;
     }
   }
 
@@ -374,6 +377,7 @@ public class SSA implements NodeVisitor {
     //currRes.value = DLX.fromFP32ToFP16(Float.parseFloat(node.literal()));
     currRes.kind = Result.CONST;
     currRes.type = new FloatType();
+    currRes.fvalue = Float.parseFloat(node.literal());
   }
 
   @Override
@@ -476,7 +480,7 @@ public class SSA implements NodeVisitor {
         case "printBool":
           addInstruction(new Instruction(op.WRITE, params.get(0)));
           break;
-        case "printLn":
+        case "println":
           addInstruction(new Instruction(op.WRITENL));
           break;
         case "readInt":
@@ -531,8 +535,8 @@ public class SSA implements NodeVisitor {
       nxtMaxDim.kind = Result.CONST;
       nxtMaxDim.value = 4;
       addInstruction(new Instruction(op.MUL, currRes, nxtMaxDim));
-      currBlock.instructions.get(currBlock.instructions.size() - 1).isArrayMul =
-        true;
+      // currBlock.instructions.get(currBlock.instructions.size() - 1).isArrayMul =
+      //   true;
       Result mResult = currRes;
 
       // Get left result (should be a variable) and set it as kind addy since we are getting the address of this result
@@ -561,6 +565,9 @@ public class SSA implements NodeVisitor {
     currRes = new Result();
     currRes.kind = Result.INST;
     currRes.inst = inst;
+    if (currRes.inst.right != null) {
+      currRes.type = currRes.inst.right.type;
+    }
     currBlock.addInstruction(inst);
     // We're now saving all instructions in order ,,, I think
     allInstructions.add(inst);
@@ -689,5 +696,44 @@ public class SSA implements NodeVisitor {
     removeEmpties();
     //Remove all empty blocks
     blocks.removeIf(o -> o.instructions.isEmpty());
+  }
+
+  public void flipAllBreaks() {
+    for (Block b : blocks) {
+      if (b.instructions.isEmpty()) {
+        continue;
+      }
+      Instruction brake = b.instructions.get(b.instructions.size() - 1);
+      boolean cont = false;
+      switch (brake.inst) {
+        case BNE:
+          brake.inst = op.BEQ;
+          break;
+        case BEQ:
+          brake.inst = op.BNE;
+          break;
+        case BGT:
+          brake.inst = op.BLE;
+          break;
+        case BGE:
+          brake.inst = op.BLT;
+          break;
+        case BLT:
+          brake.inst = op.BGE;
+          break;
+        case BLE:
+          brake.inst = op.BGT;
+          break;
+        default:
+          cont = true;
+      }
+      if (cont) continue;
+      for (Block c : b.edges) {
+        if (brake.right.proc != c) {
+          brake.right.proc = c;
+          break;
+        }
+      }
+    }
   }
 }

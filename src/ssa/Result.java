@@ -9,18 +9,19 @@ import types.Type;
 
 public class Result {
 
-  static final int CONST = 0;
-  static final int VAR = 1;
-  static final int PROC = 2;
-  static final int ADDY = 3;
-  static final int INST = 4;
-  static final int GDB = 5;
+  public static final int CONST = 0;
+  public static final int VAR = 1;
+  public static final int PROC = 2;
+  public static final int ADDY = 3;
+  public static final int INST = 4;
+  public static final int GDB = 5;
   public int kind;
   public Instruction inst;
   public Block proc;
   public int regno;
   public int value;
   public Type type = new IntType();
+  public float fvalue;
 
   public int addy;
   public Symbol var;
@@ -32,7 +33,7 @@ public class Result {
         return "(" + inst.my_num + ")";
       case CONST:
         if (type.getClass().equals(FloatType.class)) {
-          //return DLX.toFP32FromFP16(value) + "";
+          return fvalue + "";
         }
         return value + "";
       case PROC:

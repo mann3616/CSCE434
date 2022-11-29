@@ -1,8 +1,10 @@
 package ssa;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import pl434.Symbol;
 
 public class Instruction {
@@ -40,15 +42,17 @@ public class Instruction {
   public static int instruction_num = 0;
   boolean eliminated = false;
   public Instruction usedAt = null;
+  public Result refResult = null;
   Block blockLoc = null;
   public int my_num;
   public Result left, right, third; // TODO: third is for the third Result that needs to be printed out
+  HashMap<Block, Result> phiBtoR = new HashMap<>();
   List<Symbol> doPhiOn;
   ArrayList<Result> func_params;
   List<Instruction> availableExpr = new ArrayList<>();
   HashSet<Instruction> equivList = new HashSet<>();
   boolean rootExpr = false;
-  boolean isArrayMul = false;
+  //boolean isArrayMul = false;
   boolean mainEquiv = true;
   public op inst;
 
@@ -209,5 +213,25 @@ public class Instruction {
       return elimString + my_num + " : " + inst.name() + " " + right;
     }
     return elimString + my_num + " : " + inst.name() + " " + left + " " + right;
+  }
+
+  public int getRegister() {
+    if (usedAt == null) {
+      return -1;
+    }
+    if (usedAt.right.kind == Result.INST && usedAt.right.inst == this) {
+      return usedAt.right.regno;
+    }
+    return usedAt.left.regno;
+  }
+
+  public Result getResult() {
+    if (usedAt == null) {
+      return null;
+    }
+    if (usedAt.right.kind == Result.INST && usedAt.right.inst == this) {
+      return usedAt.right;
+    }
+    return usedAt.left;
   }
 }

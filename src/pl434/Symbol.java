@@ -8,16 +8,19 @@ import types.*;
 public class Symbol {
 
   public String name;
-  public Block phiEdge = null; // Used in Block to make sure the correct phi is being replaced
   public Type type;
+  public int address = -1;
+  public int register = -1;
   public static int static_assign = 0;
   public int my_assign;
   public Instruction instruction;
   public boolean assign;
   public boolean builtinFunc;
+  public boolean loaded;
   public Symbol OG;
 
   public Symbol(String name, Type type) {
+    loaded = false;
     instruction = null;
     builtinFunc = false;
     assign = false;
@@ -116,8 +119,40 @@ public class Symbol {
     return instruction.my_num;
   }
 
+  public int getAddress() {
+    return OG.address;
+  }
+
+  public int getRegister() {
+    if (OG.register == -1) {
+      throw new NoRegisterAssigned(
+        "No register assigned to var <" + name + "> in version #" + getVersion()
+      );
+    }
+    return OG.register;
+  }
+
+  public boolean isLoaded() {
+    return OG.loaded;
+  }
+
+  public void load() {
+    OG.loaded = true;
+  }
+
+  public void unload() {
+    OG.loaded = false;
+  }
+
   @Override
   public String toString() {
     return name + (instruction == null ? "_-1" : "_" + instruction.my_num);
+  }
+}
+
+class NoRegisterAssigned extends RuntimeException {
+
+  public NoRegisterAssigned(String ex) {
+    super(ex);
   }
 }

@@ -50,6 +50,8 @@ public class Block {
   public List<Instruction> assigns = new ArrayList<>();
   HashMap<Symbol, Symbol> latest = new HashMap<>();
 
+  //Memory Allocation Info
+
   public Block(SSA ssa) {
     this.ssa = ssa;
     isJoinNode = false;
@@ -126,6 +128,13 @@ public class Block {
         if (!visited.contains(re)) {
           renumBlock(true, re, c.getValue(), null);
           visited.add(re);
+        }
+      }
+      for (Entry<Block, HashMap<Symbol, Symbol>> e : phiBlock.entrySet()) {
+        if (e.getValue() == phi2) {
+          c.getValue().phiBtoR.put(e.getKey(), c.getValue().left);
+        } else if (e.getValue() == phi1) {
+          c.getValue().phiBtoR.put(e.getKey(), c.getValue().right);
         }
       }
       instructions.add(0, c.getValue());
