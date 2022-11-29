@@ -695,7 +695,7 @@ public class SSA implements NodeVisitor {
         if (!i.eliminated) continue;
         for (Block fixer : blocks) {
           for (Instruction ii : fixer.instructions) {
-            if (i.my_num <= ii.my_num) continue;
+            if (i.my_num > ii.my_num) continue;
             ii.my_num--;
           }
         }

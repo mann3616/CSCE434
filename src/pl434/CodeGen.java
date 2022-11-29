@@ -1,10 +1,10 @@
 package pl434;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Stack;
+import pl434.Compiler.RegisterAlloc;
 import ssa.*;
 import types.*;
 
@@ -16,20 +16,24 @@ public class CodeGen {
   static final int FP = 28;
   static final int SP = 29;
   ArrayList<Instruction> inOrder = new ArrayList<>();
-  HashMap<Block, Integer> blockAddy = new HashMap<>();
+  HashMap<Block, Integer> blockPC = new HashMap<>();
+  RegisterAlloc regAll;
 
   int count = 0;
   static final int GLB = 30;
 
   public CodeGen(SSA ssa) {
     this.ssa = ssa;
-    ssa.fixUpSSA();
     ssa.flipAllBreaks();
   }
 
   public int[] generateCode() {
     Block main = ssa.MAIN;
     generateFromBlock(main);
+    for (Block b : ssa.roots) {
+      if (b == main) continue;
+      generateFromBlock(b);
+    }
     int[] instConvert = new int[dlx_inst.size()];
     int x = 0;
     for (Integer i : dlx_inst) {
@@ -61,7 +65,7 @@ public class CodeGen {
   }
 
   public void generateInOrder(Block block) {
-    blockAddy.put(block, inOrder.size());
+    blockPC.put(block, inOrder.size());
     for (Instruction i : block.instructions) {
       inOrder.add(i);
     }
@@ -80,36 +84,36 @@ public class CodeGen {
           break;
         case BGE:
           dlx_inst.add(
-            DLX.assemble(DLX.BGE, i.getRegister(), blockAddy.get(i.right.proc))
+            DLX.assemble(DLX.BGE, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BGT:
           dlx_inst.add(
-            DLX.assemble(DLX.BGT, i.getRegister(), blockAddy.get(i.right.proc))
+            DLX.assemble(DLX.BGT, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BLE:
           dlx_inst.add(
-            DLX.assemble(DLX.BLE, i.getRegister(), blockAddy.get(i.right.proc))
+            DLX.assemble(DLX.BLE, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BLT:
           dlx_inst.add(
-            DLX.assemble(DLX.BLT, i.getRegister(), blockAddy.get(i.right.proc))
+            DLX.assemble(DLX.BLT, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BNE:
           dlx_inst.add(
-            DLX.assemble(DLX.BNE, i.getRegister(), blockAddy.get(i.right.proc))
+            DLX.assemble(DLX.BNE, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BEQ:
           dlx_inst.add(
-            DLX.assemble(DLX.BEQ, i.getRegister(), blockAddy.get(i.right.proc))
+            DLX.assemble(DLX.BEQ, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BRA:
-          dlx_inst.add(DLX.assemble(DLX.BSR, blockAddy.get(i.right.proc)));
+          dlx_inst.add(DLX.assemble(DLX.BSR, blockPC.get(i.right.proc)));
           break;
         default:
           generateSimpleInstruction(i);

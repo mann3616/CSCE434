@@ -238,14 +238,4 @@ public class Instruction {
     }
     return usedAt.left.regno;
   }
-
-  public Result getResult() {
-    if (usedAt == null) {
-      return null;
-    }
-    if (usedAt.right.kind == Result.INST && usedAt.right.inst == this) {
-      return usedAt.right;
-    }
-    return usedAt.left;
-  }
 }
