@@ -856,15 +856,15 @@ public class Compiler {
 
     // This class holds the instruction number of when a variable was assigned to a register
     Integer instruction_number;
-    Result variable;
+    String variable;
 
-    public RegisterAlloc(Integer instruction_number, Result variable) {
+    public RegisterAlloc(Integer instruction_number, String variable) {
       this.instruction_number = instruction_number;
       this.variable = variable;
     }
 
     public String toString() {
-      return instruction_number + ": " + variable.var.name;
+      return instruction_number + ": " + variable;
     }
   }
 
@@ -895,7 +895,7 @@ public class Compiler {
   }
 
   public void regAlloc(int numRegs) {
-    initializeLiveIntervals();
+    initializeLiveness();
     // Next step is to actually distribute registers
     // Initialize RegisterMap with each key being a register number
     initializeRegisterMap(numRegs);

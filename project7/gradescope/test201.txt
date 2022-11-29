@@ -5,7 +5,7 @@ int a,b,c,d,e,f,g,h;
 
 {
     let a = 5;
-    let a = (1 + a) * (2 + a);
+    let a = (1 + a) * (2 + a) * (2 + a) * (2 + a) * (2 + a) * (2 + a);
     call printInt(a);
 
     let c = 15;
