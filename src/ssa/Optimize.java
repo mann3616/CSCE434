@@ -188,17 +188,7 @@ public class Optimize {
     for (Block b : ssa.blocks) {
       b.visited.clear();
     }
-    for (Block b : ssa.blocks) {
-      for (Instruction i : b.instructions) {
-        if (i.eliminated) continue;
-        if (i.left != null && i.left.kind == Result.INST) {
-          i.left.inst.usedAt = i;
-        }
-        if (i.right != null && i.right.kind == Result.INST) {
-          i.right.inst.usedAt = i;
-        }
-      }
-    }
+    ssa.instantiateUsedAt();
     // Do Find Best Place
     // Clean up
     for (Block b : ssa.roots) {
