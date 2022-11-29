@@ -40,7 +40,7 @@ public class Instruction {
   }
 
   public static int instruction_num = 0;
-  boolean eliminated = false;
+  public boolean eliminated = false;
   public Instruction usedAt = null;
   public Result refResult = null;
   Block blockLoc = null;
@@ -55,6 +55,10 @@ public class Instruction {
   //boolean isArrayMul = false;
   boolean mainEquiv = true;
   public op inst;
+
+  public boolean isEliminated() {
+    return eliminated;
+  }
 
   // Used for calculating in and out sets
   public HashSet<String> InSet = new HashSet<String>();

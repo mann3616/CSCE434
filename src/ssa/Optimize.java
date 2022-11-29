@@ -30,7 +30,7 @@ public class Optimize {
       // for every instruction in SSA
       for (int i = instructionSet.size() - 1; i >= 0; i--) {
         Instruction currentInstruction = instructionSet.get(i);
-        if (currentInstruction.eliminated) {
+        if (currentInstruction.isEliminated()) {
           continue;
         }
         // First save the current in-set and out-set
@@ -62,20 +62,21 @@ public class Optimize {
             ) {
               usedSet.add(currentInstruction.right.var.name);
             }
-            // We can figure out what to do with phi later
             break;
         }
 
         // For out, find the union of previous variables in the in set for each succeeding node of n
         // out[n] := ∪ {in[s] | s ε succ[n]}
         // outSet of a node = the union of all the inSets of n's successors
-        for (int j = instructionSet.size() - 1; j > i; j--) {
-          currentInstruction.OutSet.addAll(instructionSet.get(j).InSet);
+        // Successor is simply j + 1
+        if (!((i + 1) >= instructionSet.size())) {
+          currentInstruction.OutSet.addAll(instructionSet.get(i + 1).InSet);
         }
 
         // in[n] := use[n] ∪ (out[n] - def[n])
         // (out[n] - def[n])
         HashSet<String> temporaryOutSet = new HashSet<String>();
+
         temporaryOutSet.addAll(currentInstruction.OutSet);
         temporaryOutSet.removeAll(definedSet);
         // use[n]
@@ -95,7 +96,21 @@ public class Optimize {
     } while (change_detected);
 
     boolean change_made = false;
+
+    // Get the instruction set of the main block
+    ArrayList<Instruction> mainInstructions = new ArrayList<>();
+    for (Block b : ssa.roots) {
+      if (b.label == "main") {
+        // This is the main function block, lets remove the instructions from here
+        mainInstructions = (ArrayList<Instruction>) b.instructions;
+      }
+    }
+
     for (Instruction instruction : instructionSet) {
+      System.out.println(instruction);
+      System.out.println("InSet: " + instruction.InSet);
+      System.out.println("OutSet: " + instruction.OutSet);
+      System.out.println("-----------------------------------");
       if (!instruction.eliminated && instruction.inst == op.MOVE) {
         // Right is a variable that is being assigned to
         // If the outset does not contain a variable that is being defined,
@@ -107,6 +122,10 @@ public class Optimize {
       }
     }
     // Next, do block checking
+
+    // We can delete code blocks by checking what's used in mainInstructions
+    // If a function isn't called in main, then it is considered dead.
+
     return change_made;
   }
 

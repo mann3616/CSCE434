@@ -3,6 +3,7 @@ package pl434;
 import ast.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Stack;
@@ -849,5 +850,397 @@ public class Compiler {
     return null;
   }
 
-  public void regAlloc(int numRegs) {}
+  HashMap<Integer, ArrayList<RegisterAlloc>> registerMap = new HashMap<Integer, ArrayList<RegisterAlloc>>();
+
+  public class RegisterAlloc {
+
+    // This class holds the instruction number of when a variable was assigned to a register
+    Integer instruction_number;
+    Result variable;
+
+    public RegisterAlloc(Integer instruction_number, Result variable) {
+      this.instruction_number = instruction_number;
+      this.variable = variable;
+    }
+
+    public String toString() {
+      return instruction_number + ": " + variable.var.name;
+    }
+  }
+
+  public void regAllocDebug() {
+    // After calculate liveness, all instructions have insets and outsets
+    printLiveness();
+    printLiveIntervals();
+    printRegisterAllocation();
+  }
+
+  public void initializeLiveness() {
+    // Calculates all live sets
+    calculateLiveness();
+
+    // Populates the variable hashmap to get all variables
+    populateliveRanges();
+
+    // Calculates the intervals
+    calculateliveRanges();
+
+    // Prints liveRanges
+    // printliveRanges();
+
+    // HashMap<String, ArrayList<Pair>> liveRanges contains liveRanges, convert to liveInterval
+    // IE, a = [1,3],[6,11], [14,39] -> a = [1,39]
+    initializeLiveIntervals();
+    calculateLiveIntervals();
+  }
+
+  public void regAlloc(int numRegs) {
+    initializeLiveIntervals();
+    // Next step is to actually distribute registers
+    // Initialize RegisterMap with each key being a register number
+    initializeRegisterMap(numRegs);
+    allocateRegisters(numRegs);
+
+    // Prints all the underlying notes
+    regAllocDebug();
+    return;
+  }
+
+  // Creates live in and live out sets for all instructions
+  private void calculateLiveness() {
+    ArrayList<Instruction> instructionSet = ssa.allInstructions;
+    boolean change_detected;
+    do {
+      change_detected = false;
+      // Traverse backwards
+      // for every instruction in SSA
+      for (int i = instructionSet.size() - 1; i >= 0; i--) {
+        Instruction currentInstruction = instructionSet.get(i);
+        if (currentInstruction.isEliminated()) {
+          continue;
+        }
+        // First save the current in-set and out-set
+        HashSet<String> originalInSet = currentInstruction.InSet;
+        HashSet<String> originalOutSet = currentInstruction.OutSet;
+
+        HashSet<String> definedSet = new HashSet<>();
+        HashSet<String> usedSet = new HashSet<>();
+        // MOV e f means move value of e into f
+        switch (currentInstruction.inst) {
+          case MOVE:
+            if (currentInstruction.left.isVariable()) {
+              usedSet.add(currentInstruction.left.var.name);
+            } else if (currentInstruction.left.kind == Result.INST) {
+              usedSet.add("(" + currentInstruction.left.inst.my_num + ")");
+            }
+            if (currentInstruction.right.isVariable()) {
+              definedSet.add(currentInstruction.right.var.name);
+            } else {
+              // If the 'right' in a MOV operation is not a variable, then we know that we're saving the instruction
+              definedSet.add("(" + currentInstruction.my_num + ")");
+            }
+            break;
+          default:
+            if (currentInstruction.left != null) {
+              if (currentInstruction.left.isVariable()) {
+                usedSet.add(currentInstruction.left.var.name);
+              } else {
+                if (currentInstruction.left.kind == Result.INST) {
+                  usedSet.add("(" + currentInstruction.left.inst.my_num + ")");
+                }
+              }
+            }
+            if (currentInstruction.right != null) {
+              if (currentInstruction.right.isVariable()) {
+                usedSet.add(currentInstruction.right.var.name);
+              } else {
+                if (currentInstruction.right.kind == Result.INST) {
+                  usedSet.add("(" + currentInstruction.right.inst.my_num + ")");
+                }
+              }
+            }
+
+            if (
+              currentInstruction.left != null &&
+              !currentInstruction.left.isVariable() &&
+              currentInstruction.right != null &&
+              !currentInstruction.right.isVariable()
+            ) {
+              // This is the following case:
+              // 1: ADD 3 4
+              // No variables, but the result must be saved in a register.
+              // So we can add '1' to the outset
+              // Remember, variables can't start with numbers so this is valid
+              definedSet.add("(" + currentInstruction.my_num + ")");
+            } else if (
+              currentInstruction.left != null &&
+              !currentInstruction.left.isVariable() &&
+              currentInstruction.right != null &&
+              currentInstruction.right.isVariable()
+            ) {
+              // This is the following case:
+              // 1: ADD 3 a_1
+              definedSet.add("(" + currentInstruction.my_num + ")");
+            } else if (
+              currentInstruction.left != null &&
+              currentInstruction.left.isVariable() &&
+              currentInstruction.right != null &&
+              !currentInstruction.right.isVariable()
+            ) {
+              // This is the following case:
+              // 1: ADD a_1 3
+              definedSet.add("(" + currentInstruction.my_num + ")");
+            }
+
+            break;
+        }
+
+        // For out, find the union of previous variables in the in set for each succeeding node of n
+        // out[n] := ∪ {in[s] | s ε succ[n]}
+        // outSet of a node = the union of all the inSets of n's successors
+        // Successor is simply j + 1
+        if (!((i + 1) >= instructionSet.size())) {
+          currentInstruction.OutSet.addAll(instructionSet.get(i + 1).InSet);
+        }
+
+        // in[n] := use[n] ∪ (out[n] - def[n])
+        // (out[n] - def[n])
+        HashSet<String> temporaryOutSet = new HashSet<String>();
+
+        temporaryOutSet.addAll(currentInstruction.OutSet);
+        temporaryOutSet.removeAll(definedSet);
+        // use[n]
+        usedSet.addAll(temporaryOutSet);
+        currentInstruction.InSet = usedSet;
+
+        boolean inSetChanged =
+          (!originalInSet.equals(currentInstruction.InSet));
+        boolean outSetChanged =
+          (!originalOutSet.equals(currentInstruction.OutSet));
+        if (inSetChanged || outSetChanged) {
+          // This only needs to trigger once to repeat the loop
+          change_detected = true;
+        }
+      }
+      // Iterate, until IN and OUT set are constants for last two consecutive iterations.
+    } while (change_detected);
+  }
+
+  private void printLiveness() {
+    for (Instruction instruction : ssa.allInstructions) {
+      System.out.println("-----------------------------------");
+      System.out.println(instruction);
+      System.out.println("InSet: " + instruction.InSet);
+      System.out.println("OutSet: " + instruction.OutSet);
+    }
+  }
+
+  private void printRegisterAllocation() {
+    System.out.println();
+    for (Integer Register : registerMap.keySet()) {
+      System.out.println("Allocation History for Register #" + Register + ":");
+      if (registerMap.get(Register) != null) {
+        for (RegisterAlloc regAllocation : registerMap.get(Register)) {
+          System.out.println(regAllocation);
+        }
+        System.out.println("----------------------");
+      }
+    }
+    System.out.println();
+  }
+
+  public ArrayList<String> findDeclarationOrder() {
+    ArrayList<String> declarations = new ArrayList<>();
+    // Iterate through all variables, and one by one remove the one with the lowest "opening"
+    HashSet<String> availableVariables = new HashSet<String>(
+      liveIntervals.keySet()
+    );
+    while (availableVariables.size() != 0) {
+      String lowest_variable = availableVariables.iterator().next();
+      int lowest_opening = liveIntervals.get(lowest_variable).opening;
+      for (String variable : availableVariables) {
+        // If this variable has the most low opening, add to declarations, remove from available variables
+        int opening = liveIntervals.get(variable).opening;
+        if (opening < lowest_opening) {
+          lowest_opening = opening;
+          lowest_variable = variable;
+        }
+      }
+      declarations.add(lowest_variable);
+      availableVariables.remove(lowest_variable);
+    }
+
+    return declarations;
+  }
+
+  private void allocateRegisters(int numRegs) {
+    // Fill registerMap now
+    // Opening and Closing are key
+    ArrayList<String> declarations = findDeclarationOrder();
+
+    for (String variable : declarations) {
+      // We will always start from the left most register
+      boolean successfully_allocated = true;
+      for (int registerNumber = 0; registerNumber < numRegs; registerNumber++) {
+        if (registerMap.get(registerNumber) == null) {
+          // This register has not been used before, so we are clear to assign
+          int instruction_number = liveIntervals.get(variable).opening;
+          ArrayList<RegisterAlloc> registerAllocList = new ArrayList<RegisterAlloc>();
+          registerAllocList.add(
+            new RegisterAlloc(instruction_number, variable)
+          );
+          registerMap.put((Integer) registerNumber, registerAllocList);
+          break;
+        } else {
+          // The register has been used before
+          // Check if it is available
+          int instruction_number = liveIntervals.get(variable).opening;
+          String currentlyStoredVariable = registerMap
+            .get(registerNumber)
+            .get(registerMap.get(registerNumber).size() - 1)
+            .variable;
+          int deathInstruction = liveIntervals.get(currentlyStoredVariable)
+            .closing;
+          // The current register is holding a dead variable, so we can replace it
+          boolean holdingDeadVariable = instruction_number >= deathInstruction;
+          if (holdingDeadVariable) {
+            RegisterAlloc placement = new RegisterAlloc(
+              Integer.valueOf(instruction_number),
+              variable
+            );
+            registerMap.get(registerNumber).add(placement);
+            break;
+          }
+        }
+      }
+
+      if (!successfully_allocated) {
+        System.out.println("We must spill!");
+        System.out.println(
+          "It was not possible to find room for variable " + variable
+        );
+        continue;
+      }
+    }
+  }
+
+  private void printLiveIntervals() {
+    for (String variable : liveIntervals.keySet()) {
+      System.out.println("Live Interval for variable \"" + variable + "\"");
+      System.out.println(liveIntervals.get(variable));
+    }
+    System.out.println();
+  }
+
+  private void initializeLiveIntervals() {
+    for (String variable : liveRanges.keySet()) {
+      liveIntervals.put(variable, null);
+    }
+  }
+
+  private void calculateLiveIntervals() {
+    for (String variable : liveRanges.keySet()) {
+      int left_boundary = liveRanges.get(variable).get(0).opening;
+      int right_boundary = liveRanges
+        .get(variable)
+        .get(liveRanges.get(variable).size() - 1)
+        .closing;
+      liveIntervals.put(variable, new Pair(left_boundary, right_boundary));
+    }
+  }
+
+  private void initializeRegisterMap(int numRegs) {
+    for (int i = 0; i < numRegs; i++) {
+      registerMap.put(i, null);
+    }
+  }
+
+  public class Pair {
+
+    public Integer opening;
+    public Integer closing;
+
+    public Pair(int opening) {
+      this.opening = opening;
+    }
+
+    public Pair(int opening, int closing) {
+      this.opening = opening;
+      this.closing = closing;
+    }
+
+    public String toString() {
+      String openingString = "";
+      String closingString = "";
+      if (opening == null) {
+        openingString = "null";
+      } else {
+        openingString = opening.toString();
+      }
+      if (closing == null) {
+        closingString = "null";
+      } else {
+        closingString = closing.toString();
+      }
+      return "[" + openingString + "," + closingString + "]";
+    }
+  }
+
+  HashMap<String, ArrayList<Pair>> liveRanges = new HashMap<>();
+  HashMap<String, Pair> liveIntervals = new HashMap<>();
+
+  private void calculateliveRanges() {
+    for (Instruction instruction : ssa.allInstructions) {
+      for (String variable : instruction.InSet) {
+        ArrayList<Pair> PairList = liveRanges.get(variable);
+        if (PairList.size() == 0) {
+          Pair newInterval = new Pair(instruction.my_num);
+          liveRanges.get(variable).add(newInterval);
+        } else {
+          Pair mostRecentPair = PairList.get(PairList.size() - 1);
+          if (mostRecentPair.closing == null) {
+            // If the interval has not been closed, check if it closes now
+            if (!instruction.OutSet.contains(variable)) {
+              // If the outset doesn't contain this variable, it means it was used this line. So it closes
+              mostRecentPair.closing = instruction.my_num;
+            }
+          } else {
+            // There isn't currently a live interval - the most recent pair was a complete interval
+            // A new interval must be created
+            Pair newInterval = new Pair(instruction.my_num);
+            liveRanges.get(variable).add(newInterval);
+          }
+        }
+      }
+
+      for (String variable : instruction.OutSet) {
+        if (!instruction.InSet.contains(variable)) {
+          // If a variable is not in the inset but in the outset, then it was defined on that instruction
+          // Therefore a new interval starts here, regardless if the last pair was closed
+          Pair newInterval = new Pair(instruction.my_num);
+          liveRanges.get(variable).add(newInterval);
+        }
+      }
+    }
+  }
+
+  private void populateliveRanges() {
+    for (Instruction instruction : ssa.allInstructions) {
+      for (String variable : instruction.InSet) {
+        if (!liveRanges.containsKey(variable)) {
+          // If this variable has not been added to the global list, add it
+          ArrayList<Pair> blankIntervalList = new ArrayList<Pair>();
+          liveRanges.put(variable, blankIntervalList);
+        }
+      }
+    }
+  }
+
+  private void printliveRanges() {
+    for (String variable : liveRanges.keySet()) {
+      System.out.println("Live Ranges for variable \"" + variable + "\"");
+      System.out.println(liveRanges.get(variable));
+    }
+    System.out.println();
+  }
 }
