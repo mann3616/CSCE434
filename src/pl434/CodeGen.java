@@ -353,7 +353,7 @@ public class CodeGen {
     FuncType funcType = (FuncType) funcSymbol.type;
     // Locals ...
     if (funcType.params().getList().size() > 0) {
-      add(DLX.assemble(DLX.ADDI, 31, -4 * funcType.params().getList().size()));
+      add(DLX.assemble(DLX.ADDI, 31, -4 * funcSymbol.global_counter)); // Change this
     }
     // Remove params
     for (Result r : call.func_params) {
@@ -364,17 +364,21 @@ public class CodeGen {
   }
 
   public void saveRegisters(HashSet<Integer> registersIn) {
+    // Need to differentiate STORE push and LOAD pop
     for (int regToSave : registersIn) {
       Result reg = new Result();
       reg.kind = Result.REG;
       reg.regno = regToSave;
-      inOrder.add(new Instruction(op.STORE, reg, stack));
+      inOrder.add(new Instruction(op.STORE, reg, stack)); //  Have SP under right to understand this is a push operation
     }
   }
 
   public void loadRegisters(HashSet<Integer> registersIn) {
     for (int regToSave : registersIn) {
-      add(DLX.assemble(DLX.PSH, regToSave, 31, 4));
+      Result reg = new Result();
+      reg.kind = Result.REG;
+      reg.regno = regToSave;
+      inOrder.add(new Instruction(op.LOAD, reg, stack));
     }
   }
 
