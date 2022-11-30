@@ -67,6 +67,12 @@ public class Instruction {
   public HashSet<String> OutSet = new HashSet<String>();
 
   public Result getResult() {
+    if (inst == op.MOVE) {
+      return right;
+    }
+    if (inst == op.PHI) {
+      return third;
+    }
     if (usedAt == null) {
       return null;
     }
@@ -232,12 +238,9 @@ public class Instruction {
   }
 
   public int getRegister() {
-    if (usedAt == null) {
+    if (getResult() == null) {
       return -1;
     }
-    if (usedAt.right.kind == Result.INST && usedAt.right.inst == this) {
-      return usedAt.right.regno;
-    }
-    return usedAt.left.regno;
+    return getResult().regno;
   }
 }

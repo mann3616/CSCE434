@@ -16,6 +16,7 @@ public class Result {
   public static final int ADDY = 3;
   public static final int INST = 4;
   public static final int GDB = 5;
+  public static int pointer_address = 10000;
   public int kind;
   public Instruction inst;
   public Block proc;
@@ -24,11 +25,12 @@ public class Result {
   public Type type = new IntType();
   public float fvalue;
 
-  public int addy;
+  public int addy = -1;
   public Symbol var;
 
   public static HashMap<String, Result> allResults = new HashMap<String, Result>();
   public static int num_no_names = 0;
+  public int result_count = 0; // How many times this Result is used
 
   public void storeResult() {
     if (this.var != null && this.var.name != null) {

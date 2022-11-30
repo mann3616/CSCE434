@@ -880,6 +880,7 @@ public class Compiler {
   public void regAlloc(int numRegs) {
     ssa.fixUpSSA(); // LOOK HERE LANCE! - Momo <3
     ssa.instantiateUsedAt();
+    ssa.countUpResults();
     initializeLiveness();
     // Next step is to actually distribute registers
     // Initialize RegisterMap with each key being a register number
@@ -1094,11 +1095,6 @@ public class Compiler {
             .variable;
           int deathInstruction = liveIntervals.get(currentlyStoredVariable)
             .closing;
-          Instruction killInstruction = liveIntervals.get(
-            currentlyStoredVariable
-          )
-            .instruction; // Get the instruction
-          Instruction vaInstruction = liveIntervals.get(variable).instruction; // Get the instruction
 
           // The current register is holding a dead variable, so we can replace it
           boolean holdingDeadVariable = instruction_number >= deathInstruction;
@@ -1110,32 +1106,50 @@ public class Compiler {
             registerMap.get(registerNumber).add(placement);
             successfully_allocated = true;
             break;
-          } else { // If the instruction is not dead then we need to store first - TEMPORARY cuz im just storing what I am on and loading it later
-            vaInstruction.storeThese.add(killInstruction.getResult()); // Place under store
-            successfully_allocated = true;
           }
         }
+      }
 
-        if (!successfully_allocated) {
-          System.out.println("We must spill!");
-          System.out.println(
-            "It was not possible to find room for variable " + variable
-          );
-          // Here we spill
-          // Evict something from memory
-          // Is there a good heuristic for this?
-          // Find element with closest closing to this one's opening
-          // Evict that one
-          // ------------- Momo sample code for eviction due to spilling --------------//
-          // String evictInstructionName = "";
-          // Instruction evictInstruction = liveIntervals.get(evictInstructionName)
-          //   .instruction;
-          // Instruction vaInstruction = liveIntervals.get(variable).instruction;
-          // vaInstruction.storeThese.add(evictInstruction.getResult());
-          // findNextPlaceToLoad(evictInstructionName);
-
-          continue;
+      if (!successfully_allocated) {
+        System.out.println("We must spill!");
+        System.out.println(
+          "It was not possible to find room for variable " + variable
+        );
+        // Here we spill
+        // Evict something from memory
+        // Is there a good heuristic for this?
+        // Find element with closest closing to this one's opening -- my code does the least used var
+        // Evict that one
+        // ------------- Momo code for eviction due to spilling --------------//
+        // Get Instruction
+        int instruction_num = liveIntervals.get(variable).opening;
+        Instruction thisInstruction = liveIntervals.get(variable).instruction;
+        // Get result that best matches
+        Result loadResult = null;
+        int min = 100000;
+        for (
+          int registerNumber = 0;
+          registerNumber < numRegs;
+          registerNumber++
+        ) {
+          String vars = registerMap
+            .get(registerNumber)
+            .get(registerMap.get(registerNumber).size() - 1)
+            .variable;
+          Instruction check = liveIntervals.get(vars).instruction; // MOVE is
+          if (
+            liveIntervals.get(vars).closing > instruction_num &&
+            !vars.equals(variable) &&
+            !instructionContainsResult(thisInstruction, check.getResult()) &&
+            min > check.getResult().result_count
+          ) {
+            min = check.getResult().result_count;
+            loadResult = check.getResult();
+          }
         }
+        thisInstruction.storeThese.add(loadResult); // Place under store
+
+        continue;
       }
     }
   }
@@ -1239,5 +1253,24 @@ public class Compiler {
       System.out.println(liveRanges.get(variable));
     }
     System.out.println();
+  }
+
+  public boolean instructionContainsResult(
+    Instruction instruction,
+    Result result
+  ) {
+    if (instruction.left != null && instruction.left == result) {
+      return true;
+    }
+    if (instruction.right != null && instruction.right == result) {
+      return true;
+    }
+    if (
+      instruction.func_params != null &&
+      instruction.func_params.contains(result)
+    ) {
+      return true;
+    }
+    return false;
   }
 }

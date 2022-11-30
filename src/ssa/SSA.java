@@ -789,4 +789,26 @@ public class SSA implements NodeVisitor {
       inOrderInstruction(b, visited);
     }
   }
+
+  public void countUpResults() {
+    for (Block b : blocks) {
+      for (Instruction j : b.instructions) {
+        if (j.inst == op.CALL) {
+          for (int x = 0; x < j.func_params.size() - 1; x++) {
+            j.func_params.get(x).result_count++;
+          }
+        } else {
+          if (j.left != null) {
+            j.left.result_count++;
+          }
+          if (j.right != null) {
+            j.right.result_count++;
+          }
+          if (j.third != null) {
+            j.third.result_count++;
+          }
+        }
+      }
+    }
+  }
 }
