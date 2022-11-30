@@ -763,4 +763,30 @@ public class SSA implements NodeVisitor {
       }
     }
   }
+
+  public HashMap<Block, List<Instruction>> getAllBlocks() {
+    HashMap<Block, List<Instruction>> blockToInsMap = new HashMap<>();
+    for (Block b : roots) {
+      List<Block> visited = new ArrayList<>();
+      inOrderInstruction(b, visited);
+      List<Instruction> instructions = new ArrayList<>();
+      for (Block c : visited) {
+        for (Instruction i : c.instructions) {
+          instructions.add(i);
+        }
+      }
+      blockToInsMap.put(b, instructions);
+    }
+    return blockToInsMap;
+  }
+
+  public void inOrderInstruction(Block root, List<Block> visited) {
+    if (visited.contains(root)) {
+      return;
+    }
+    visited.add(root);
+    for (Block b : root.edges) {
+      inOrderInstruction(b, visited);
+    }
+  }
 }

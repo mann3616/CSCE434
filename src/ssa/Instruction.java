@@ -48,9 +48,11 @@ public class Instruction {
   public Result left, right, third; // TODO: third is for the third Result that needs to be printed out
   HashMap<Block, Result> phiBtoR = new HashMap<>();
   List<Symbol> doPhiOn;
-  ArrayList<Result> func_params;
+  public ArrayList<Result> func_params;
   List<Instruction> availableExpr = new ArrayList<>();
   HashSet<Instruction> equivList = new HashSet<>();
+  public HashSet<Result> storeThese = new HashSet<>();
+  public HashSet<Result> loadThese = new HashSet<>();
   boolean rootExpr = false;
   //boolean isArrayMul = false;
   boolean mainEquiv = true;

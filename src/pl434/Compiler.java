@@ -1079,6 +1079,8 @@ public class Compiler {
           allocationHistory.add(
             new RegisterAlloc(instruction_number, variable)
           );
+          Instruction k = ssa.allInstructions.get(instruction_number);
+          k.getResult().regno = registerNumber;
           registerMap.put((Integer) registerNumber, allocationHistory);
           successfully_allocated = true;
           break;
@@ -1092,6 +1094,12 @@ public class Compiler {
             .variable;
           int deathInstruction = liveIntervals.get(currentlyStoredVariable)
             .closing;
+          Instruction killInstruction = liveIntervals.get(
+            currentlyStoredVariable
+          )
+            .instruction; // Get the instruction
+          Instruction vaInstruction = liveIntervals.get(variable).instruction; // Get the instruction
+
           // The current register is holding a dead variable, so we can replace it
           boolean holdingDeadVariable = instruction_number >= deathInstruction;
           if (holdingDeadVariable) {
@@ -1102,21 +1110,32 @@ public class Compiler {
             registerMap.get(registerNumber).add(placement);
             successfully_allocated = true;
             break;
+          } else { // If the instruction is not dead then we need to store first - TEMPORARY cuz im just storing what I am on and loading it later
+            vaInstruction.storeThese.add(killInstruction.getResult()); // Place under store
+            successfully_allocated = true;
           }
         }
-      }
 
-      if (!successfully_allocated) {
-        System.out.println("We must spill!");
-        System.out.println(
-          "It was not possible to find room for variable " + variable
-        );
-        // Here we spill
-        // Evict something from memory
-        // Is there a good heuristic for this?
-        // Find element with closest closing to this one's opening
-        // Evict that one
-        continue;
+        if (!successfully_allocated) {
+          System.out.println("We must spill!");
+          System.out.println(
+            "It was not possible to find room for variable " + variable
+          );
+          // Here we spill
+          // Evict something from memory
+          // Is there a good heuristic for this?
+          // Find element with closest closing to this one's opening
+          // Evict that one
+          // ------------- Momo sample code for eviction due to spilling --------------//
+          // String evictInstructionName = "";
+          // Instruction evictInstruction = liveIntervals.get(evictInstructionName)
+          //   .instruction;
+          // Instruction vaInstruction = liveIntervals.get(variable).instruction;
+          // vaInstruction.storeThese.add(evictInstruction.getResult());
+          // findNextPlaceToLoad(evictInstructionName);
+
+          continue;
+        }
       }
     }
   }

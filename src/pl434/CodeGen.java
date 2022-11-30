@@ -16,7 +16,9 @@ public class CodeGen {
   static final int SP = 29;
   ArrayList<Instruction> inOrder = new ArrayList<>();
   HashMap<Block, Integer> blockPC = new HashMap<>();
+  HashSet<Result> inStorage = new HashSet<>();
   RegisterAlloc regAll;
+  int mem_alloc = 10000;
 
   int count = 0;
   static final int GLB = 30;
@@ -72,10 +74,37 @@ public class CodeGen {
 
   public void generateInstructions() {
     for (Instruction i : inOrder) {
+      if (!i.storeThese.isEmpty()) {
+        for (Result r : i.storeThese) {
+          dlx_inst.add(DLX.assemble(DLX.STW, r.regno, 31, r.addy * -4));
+        }
+        inStorage.addAll(i.storeThese);
+      }
+      if (i.left != null && inStorage.contains(i.left)) {
+        dlx_inst.add(DLX.assemble(DLX.LDW, i.left.regno, 31, i.left.addy * -4));
+      }
+      if (i.right != null && inStorage.contains(i.right)) {
+        dlx_inst.add(
+          DLX.assemble(DLX.LDW, i.right.regno, 31, i.right.addy * -4)
+        );
+      }
+      if (!i.func_params.isEmpty()) {
+        for (int j = 0; j < i.func_params.size() - 1; j++) {
+          if (inStorage.contains(j)) {
+            dlx_inst.add(
+              DLX.assemble(
+                DLX.LDW,
+                i.func_params.get(j).regno,
+                31,
+                i.func_params.get(j).addy * -4
+              )
+            );
+          }
+        }
+      }
       switch (i.inst) {
         case CALL:
-          HashSet<Integer> registersUsed = new HashSet<>();
-          functionCall(registersUsed);
+          functionCall(i);
           break;
         case STORE:
         case LOAD:
@@ -282,10 +311,26 @@ public class CodeGen {
     }
   }
 
-  public void functionCall(HashSet<Integer> registersIn) {
+  public void functionCall(Instruction call) {
     // Saving Registers
+    HashSet<Integer> registersIn = new HashSet<>();
     saveRegisters(registersIn);
-    // Add return value slot +
+    // Add params + Return address because func_params is a list that ends in the function Symbol
+    Symbol funcSymbol = call.func_params.get(call.func_params.size() - 1).var;
+    FuncType funcType = (FuncType) funcSymbol.type;
+    for (Result r : call.func_params) {
+      dlx_inst.add(DLX.assemble(DLX.PSH, r.regno, 31, -4));
+    }
+    // Locals ...
+    if (funcType.params().getList().size() > 0) {
+      dlx_inst.add(
+        DLX.assemble(DLX.ADDI, 31, -4 * funcType.params().getList().size())
+      );
+    }
+    // Remove params
+    for (Result r : call.func_params) {
+      dlx_inst.add(DLX.assemble(DLX.POP, r.regno, 31, 4));
+    }
     // Loading Registers
     loadRegisters(registersIn);
   }
