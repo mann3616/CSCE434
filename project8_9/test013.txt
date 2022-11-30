@@ -1,0 +1,24 @@
+// Matthew Tran
+// tests global variables
+
+main
+
+int a, b;
+
+function f() : int {
+    return a + b + a*b;
+};
+
+{
+    let a = 5;
+    let b = 8;
+    call printInt(call f());
+    call println();
+    let a = 3;
+    let b = a;
+    call printInt(call f());
+    call println();
+    let b = call readInt();
+    call printInt(call f());
+    call println();
+}.

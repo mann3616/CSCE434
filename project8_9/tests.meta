@@ -1,0 +1,11 @@
+test010, dce, 2
+test011, max, 10
+test012, max, 5
+test013, max, 5
+test014, max, 5
+test015, cpp, 5
+test017, dce, 5
+test000, cp cse cf dce, 10
+test005, max, 10
+test007, cp cf cpp as dce max, 5
+test009, max, 5

@@ -1,0 +1,27 @@
+// Max Smith
+// Repeated recursive function call; summation over a loop
+
+main
+
+int x, sum;
+
+function foo (int n) : int
+{
+    if (n == 0) then
+        return 1;
+    else
+        return n * call foo(n - 1);
+    fi;
+};
+
+{
+    let x = call readInt();
+    let sum = 0;
+
+    while (x > 0) do
+        let sum += call foo(x);
+        let x--;
+    od;
+
+    call printInt(sum);
+}.

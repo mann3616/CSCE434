@@ -1,0 +1,49 @@
+// Vinesh Ravuri
+// Approximate the roots of the function 2x + 1
+
+main
+
+int max_itr, current_itr;
+float x, next_x, tolerance;
+
+function f (float x_val) : float {
+    float value;
+
+    let value = (x_val * 2.0) + 1.0;
+    return value;
+};
+
+function abs(float x_val) : float {
+    float abs_x;
+
+    let abs_x = x_val;
+
+    if (x_val < 0.0) then
+        let abs_x = -1.0 * x_val;
+    fi;
+
+    return abs_x;
+};
+
+function df(float x_val) : float {
+    float value;
+
+    let value = 2.0;
+    return value;
+};
+
+{
+    let tolerance = 0.01;
+    let max_itr = 1000;
+    let current_itr = 0;
+    let x = 0.2;
+    let next_x = x;
+
+    while ((call abs(call f(x)) > tolerance) and (current_itr < max_itr)) do
+        let current_itr += 1;
+        let next_x = x - (call f(x) / call df(x));
+        let x = next_x;
+    od;
+
+    call printFloat(x);
+}.

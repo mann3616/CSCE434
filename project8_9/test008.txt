@@ -1,0 +1,25 @@
+// Nested loops
+main
+
+int n1, n2;
+int[10][10] a;
+
+function init_and_print (int x, int y) : void
+{
+    int i,j;
+    let i = 0;
+    while(i < x) do
+        let j = 0;
+        repeat
+            let a[i][j] = i+j;
+            call printInt(a[i][j]);
+            let j++;
+        until (j >= y);
+        let i++;
+    od;
+    return;
+};
+
+{
+    call init_and_print(10, 10);
+}.

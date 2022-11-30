@@ -1,0 +1,40 @@
+// Emmanuel Gonzalez
+// Arrays in Function
+main
+int[4][3] x;
+int[12] y;
+int j, c;
+
+function arrayAccept(int[] j) : void {
+  int k, o;
+  
+  let k = 0;
+  while(k< 4) do
+    let o = 0;
+    while(o < 3) do
+      let x[k][o] = k*o;
+      let o++;
+    od;
+    let k++;
+  od;
+  let k = 0;
+  while(k <12) do 
+    call printInt(j[k] * y[k]);
+    call println();
+    call printInt(x[k/3][k%3]);
+    call println();
+    let k++;
+  od;
+
+};
+
+
+{
+  let j = 2;
+  let c = 0;
+  while(c < 12) do
+    let y[c] = j^c;
+    let c++;
+  od;
+  call arrayAccept(y);
+}.

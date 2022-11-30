@@ -1,0 +1,30 @@
+// Max of n input numbers
+
+main
+
+int input, myvar;
+
+function maxFromInput (int n) : int
+{
+    int max, i, curr;
+
+    let max = 0;
+    let i = 0;
+
+    while (i < n) do
+        let curr = call readInt();
+        if (curr > max) then
+            let max = curr;
+        fi;
+        let i++;
+    od;
+    return max;
+};
+
+{
+    let input = call readInt();
+    let myvar = call maxFromInput(input);
+
+    call printInt(myvar);
+    call println();
+}.

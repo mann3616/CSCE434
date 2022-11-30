@@ -1,0 +1,22 @@
+// Carlos Luna
+// tests register spilling, only have 5 registers so not enough for all the variables
+// No: only 1 register is enough - There is no spilling
+
+main
+
+int a, b, c, d, e, f, g, h, i;
+
+{
+    let a = call readInt();     // R1 = readInt()
+    let b = a + 1;              // R1 = R1 + 1
+    let c = b + 1;              // ditto
+    let d = c + 1;
+    let e = d + 1;
+    let f = e + 1;
+    let g = f + 1;
+    let h = g + 1;
+    let i = h + 1;              // R1 = R1 + 1
+
+    call printInt(i);           // print R1
+    call println();
+}.

@@ -1,0 +1,56 @@
+// nested ifs and #vars > #regs
+main
+
+int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o;
+
+{
+    let a = 1;
+    let b = 1;
+    let c = 2;
+    let d = 2;
+    let e = 6;
+    let f = 6;
+    let g = 7;
+    let h = 8;
+    let i = 9;
+    let j = 9;
+    let k = 9;
+    let l = 1;
+    let m = 12;
+    let n = 14;
+    let o = 15;
+    let a = call readInt();
+    if (a == b) then
+        if (d == c) then // comment
+            if (e == f) then
+                let g += g;
+                call printInt(g);
+            else
+                call printInt(h);
+            fi;
+        else
+            call printInt(i);
+        fi;
+    else
+        let j = call readInt();
+        call printInt(j);
+    fi;
+    call println();
+    if (i == k) then
+        if (l != m) then // comment
+            if (n != o) then
+                let h += h;
+                call printInt(h);
+            else
+                call printInt(g);
+            fi;
+        else
+            call printInt(i);
+        fi;
+    else
+        let o = call readInt();
+        call printInt(a);
+    fi;
+    call println();
+
+}.

@@ -1,0 +1,33 @@
+// Macy Drew
+// Repeat, nested if statements, num init to 0, dce (else stat)
+
+main
+
+int i, num, total;
+bool on;
+
+{
+
+    let i = 0;
+    let total = 0;
+    let on = false;
+
+    repeat
+	let on = call readBool();
+
+	if (true) then
+		if (on == true) then
+			let num = call readInt();
+			if (num > 0) then
+				let total += num;
+			fi;
+		fi;
+	else
+	    call printInt(2);
+	fi;
+
+	let i += 1;
+    until (i >= 5);
+
+    call printInt(total);
+}.

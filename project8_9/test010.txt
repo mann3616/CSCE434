@@ -1,0 +1,17 @@
+// Lance Abuan
+// Dead variable Y register alloc
+
+main
+int x, y, z;
+{
+    let x = 10;
+	let y = 1;
+	let z = 3;
+	
+	if (x > 5) then
+		call printInt(x);
+	fi;
+	
+	call printInt(z);
+
+}.

@@ -1,0 +1,23 @@
+// Repeat Statement
+main
+
+int i, n;
+bool flag;
+
+{
+
+    let n = call readInt();
+    let i = 1;
+    let flag = false;
+
+    if (n > 1) then
+        repeat
+            let i+=1;
+            if (n % i == 0) then
+                let flag = true;
+            fi;
+        until (i >= (n - 1));
+    fi;
+
+    call printBool((not flag));
+}.

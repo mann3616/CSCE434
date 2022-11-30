@@ -1,0 +1,48 @@
+main
+
+int num_elems;
+float[15] global_vals;
+
+function floatSumIter (float[] vals, int elems) : float
+{
+    int i;
+    float sum;
+
+    if (elems < 0) then
+        return -1.0;
+    fi;
+
+    let i = 0;
+    let sum = 0.0;
+    while (i < elems) do
+        let sum += vals[i];
+        let i++;
+    od;
+    return sum;
+};
+
+function floatSumRecur (float[] vals, int elems) : float
+{
+    if (elems < 0) then
+        return -1.0;
+    fi;
+
+    if (elems == 0) then
+        return 0.0;
+    fi;
+
+    return vals[elems - 1] + call floatSumRecur(vals, elems - 1);
+};
+
+{
+    let num_elems = 0;
+    while (num_elems < 15) do
+        let global_vals[num_elems] = call readFloat();
+        let num_elems++;
+    od;
+    call printFloat(call floatSumIter(global_vals, num_elems));
+    call println();
+
+    call printFloat(call floatSumRecur(global_vals, num_elems));
+    call println();
+}.

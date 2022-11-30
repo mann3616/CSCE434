@@ -1,0 +1,21 @@
+// Emory Fields
+// testing comparison & boolean operators
+main
+int x, y; 
+bool i, j;
+{ 
+    let x = call readInt(); // 5
+    let y = call readInt(); // 10
+    let i = call readBool(); // true 
+    let j = call readBool(); // false 
+
+
+    call printBool(x == y); 
+    call printBool(x != y); 
+    call printBool(x < y);  
+    call printBool(x <= y); 
+    call printBool(x > y);  
+    call printBool(x >= y); 
+    call printBool(not i);  
+    call printBool(not j);  
+}.
