@@ -5,9 +5,10 @@ import java.util.ArrayList;
 public class ArrayType extends Type {
 
   int dims;
-  ArrayList<Integer> dimVals;
+  public ArrayList<Integer> dimVals;
   Type type;
   public int currDim;
+
   public ArrayType(Type type, int dims, ArrayList<Integer> dimVals) {
     this.dims = dims;
     this.dimVals = dimVals;
@@ -31,12 +32,13 @@ public class ArrayType extends Type {
   public Type type() {
     return this.type;
   }
+
   @Override
-  public String toString(){
+  public String toString() {
     String param = type.toString();
     int i = 0;
-    while(i<dims){
-      param+= "[" + (dimVals.size()>i? dimVals.get(i) : "") + "]";
+    while (i < dims) {
+      param += "[" + (dimVals.size() > i ? dimVals.get(i) : "") + "]";
       i++;
     }
     return param;

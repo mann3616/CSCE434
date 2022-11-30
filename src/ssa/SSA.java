@@ -32,6 +32,7 @@ public class SSA implements NodeVisitor {
   boolean assign;
   int currDim;
   Optimize opt;
+  public int global = 1;
 
   public ArrayList<Instruction> allInstructions = new ArrayList<>();
 
@@ -87,14 +88,29 @@ public class SSA implements NodeVisitor {
   }
 
   @Override
-  public void visit(VariableDeclaration node) {}
+  public void visit(VariableDeclaration node) {
+    node.symbol.address = global;
+    if (node.symbol.type.getClass().equals(ArrayType.class)) {
+      int mul = 1;
+      for (int i : ((ArrayType) node.symbol.type).dimVals) {
+        mul *= i;
+      }
+      global += mul;
+    } else {
+      global++;
+    }
+  }
 
   @Override
   public void visit(FunctionDeclaration node) {
     currBlock.label = node.function.name;
     roots.add(currBlock);
     currBlock.function = node.function;
+    int hold = global;
+    global = 1;
     node.body().accept(this);
+    node.function.global_counter = global;
+    global = hold;
     addCurr();
   }
 
@@ -787,6 +803,28 @@ public class SSA implements NodeVisitor {
     visited.add(root);
     for (Block b : root.edges) {
       inOrderInstruction(b, visited);
+    }
+  }
+
+  public void countUpResults() {
+    for (Block b : blocks) {
+      for (Instruction j : b.instructions) {
+        if (j.inst == op.CALL) {
+          for (int x = 0; x < j.func_params.size() - 1; x++) {
+            j.func_params.get(x).result_count++;
+          }
+        } else {
+          if (j.left != null) {
+            j.left.result_count++;
+          }
+          if (j.right != null) {
+            j.right.result_count++;
+          }
+          if (j.third != null) {
+            j.third.result_count++;
+          }
+        }
+      }
     }
   }
 }

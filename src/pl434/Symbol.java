@@ -18,6 +18,7 @@ public class Symbol {
   public boolean builtinFunc;
   public boolean loaded;
   public Symbol OG;
+  public int global_counter = -1; // Only for function
 
   public Symbol(String name, Type type) {
     loaded = false;

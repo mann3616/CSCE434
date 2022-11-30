@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Stack;
 import ssa.*;
+import ssa.Instruction.op;
 import types.*;
 
 public class CodeGen {
@@ -14,23 +15,45 @@ public class CodeGen {
   ArrayList<Integer> dlx_inst = new ArrayList<>();
   static final int FP = 28;
   static final int SP = 29;
+  Result gdb = new Result();
+  Result frame = new Result();
+  Result stack = new Result();
+  Result reg0 = new Result();
   ArrayList<Instruction> inOrder = new ArrayList<>();
   HashMap<Block, Integer> blockPC = new HashMap<>();
   HashSet<Result> inStorage = new HashSet<>();
   RegisterAlloc regAll;
-  int mem_alloc = 10000;
+  public static int pointer_address = 1;
+  Result global = new Result();
+  // Need Memory allocation of addresses
 
+  int global_count;
   int count = 0;
-  static final int GLB = 30;
+  static final int GLB = 30; // Set to max address of 10000
+  static final int PC = 31; // Saves PC
 
   public CodeGen(SSA ssa) {
+    gdb.kind = Result.GDB;
+    frame.kind = Result.REG;
+    stack.kind = Result.REG;
+    reg0.kind = Result.REG;
+    global.kind = Result.CONST;
+    global.value = ssa.global;
+    global_count = ssa.global;
+    reg0.regno = 0;
+    frame.regno = 28;
+    stack.regno = 29;
     this.ssa = ssa;
     ssa.flipAllBreaks();
   }
 
   public int[] generateCode() {
     Block main = ssa.MAIN;
-    generateFromBlock(main);
+    //generateFromBlock(main);
+    add(DLX.assemble(DLX.ADDI, SP, GLB, ssa.global * -4));
+    add(DLX.assemble(DLX.ADD, FP, SP, 0)); // Frame and stack pointer is all set-up
+
+    generateFromBlockDFS(main, new HashSet<>());
     for (Block b : ssa.roots) {
       if (b == main) continue;
       generateFromBlock(b);
@@ -65,43 +88,57 @@ public class CodeGen {
     }
   }
 
+  public void generateFromBlockDFS(Block root, HashSet<Block> visited) {
+    if (visited.contains(root)) {
+      return;
+    }
+    visited.add(root);
+    generateInOrder(root);
+    for (Block b : root.edges) {
+      generateFromBlockDFS(b, visited);
+    }
+  }
+
   public void generateInOrder(Block block) {
-    blockPC.put(block, inOrder.size());
+    blockPC.put(block, inOrder.size() + 2); // +2 because that is the amount of instructions added before hand
     for (Instruction i : block.instructions) {
+      // Adding store and load instructiosn required prior
+      if (!i.storeThese.isEmpty()) {
+        for (Result r : i.storeThese) {
+          if (r.addy == -1) {
+            r.addy = pointer_address++ * -4;
+          }
+          inOrder.add(new Instruction(op.STORE, r));
+        }
+        inStorage.addAll(i.storeThese);
+      }
+      // Load Items that must be loaded
+      if (i.left != null && inStorage.contains(i.left)) {
+        inOrder.add(new Instruction(op.LOAD, i.left));
+        inStorage.remove(i.left);
+      }
+      if (i.right != null && inStorage.contains(i.right)) {
+        inOrder.add(new Instruction(op.LOAD, i.right));
+        inStorage.remove(i.right);
+      }
+      // Load items in func_call
+      if (i.inst == op.CALL) {
+        for (Result r : i.func_params) {
+          // Load parameter if stored
+          if (inStorage.contains(r)) {
+            inOrder.add(new Instruction(op.LOAD, r));
+            inStorage.remove(r);
+          }
+        }
+        functionCall(i);
+      }
       inOrder.add(i);
     }
   }
 
   public void generateInstructions() {
     for (Instruction i : inOrder) {
-      if (!i.storeThese.isEmpty()) {
-        for (Result r : i.storeThese) {
-          dlx_inst.add(DLX.assemble(DLX.STW, r.regno, 31, r.addy * -4));
-        }
-        inStorage.addAll(i.storeThese);
-      }
-      if (i.left != null && inStorage.contains(i.left)) {
-        dlx_inst.add(DLX.assemble(DLX.LDW, i.left.regno, 31, i.left.addy * -4));
-      }
-      if (i.right != null && inStorage.contains(i.right)) {
-        dlx_inst.add(
-          DLX.assemble(DLX.LDW, i.right.regno, 31, i.right.addy * -4)
-        );
-      }
-      if (!i.func_params.isEmpty()) {
-        for (int j = 0; j < i.func_params.size() - 1; j++) {
-          if (inStorage.contains(j)) {
-            dlx_inst.add(
-              DLX.assemble(
-                DLX.LDW,
-                i.func_params.get(j).regno,
-                31,
-                i.func_params.get(j).addy * -4
-              )
-            );
-          }
-        }
-      }
+      // Store items to free up regs
       switch (i.inst) {
         case CALL:
           functionCall(i);
@@ -111,45 +148,43 @@ public class CodeGen {
         case PHI:
         // Use this to figure out which block we originated from and use the corresponding register from there
         case MOVE:
-          count--;
           break;
         case BGE:
-          dlx_inst.add(
+          add(
             DLX.assemble(DLX.BGE, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BGT:
-          dlx_inst.add(
+          add(
             DLX.assemble(DLX.BGT, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BLE:
-          dlx_inst.add(
+          add(
             DLX.assemble(DLX.BLE, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BLT:
-          dlx_inst.add(
+          add(
             DLX.assemble(DLX.BLT, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BNE:
-          dlx_inst.add(
+          add(
             DLX.assemble(DLX.BNE, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BEQ:
-          dlx_inst.add(
+          add(
             DLX.assemble(DLX.BEQ, i.getRegister(), blockPC.get(i.right.proc))
           );
           break;
         case BRA:
-          dlx_inst.add(DLX.assemble(DLX.BSR, blockPC.get(i.right.proc)));
+          add(DLX.assemble(DLX.BSR, blockPC.get(i.right.proc)));
           break;
         default:
           generateSimpleInstruction(i);
       }
-      count++;
     }
   }
 
@@ -184,16 +219,14 @@ public class CodeGen {
         makeDLXAssembly(DLX.MOD, inst);
         break;
       case NEG: // Dont need to check for constant because optimization should fold
-        dlx_inst.add(
-          DLX.assemble(DLX.XORI, inst.getRegister(), inst.right.regno)
-        );
+        add(DLX.assemble(DLX.XORI, inst.getRegister(), inst.right.regno));
         break;
       case READ:
-        dlx_inst.add(read(inst));
+        add(read(inst));
         break;
       case WRITE:
       case WRITENL:
-        dlx_inst.add(write(inst));
+        add(write(inst));
         break;
     }
   }
@@ -281,7 +314,7 @@ public class CodeGen {
         notCon = inst.left;
       case FCL:
       case F:
-        dlx_inst.add(
+        add(
           DLX.assemble(
             (op == DLX.CMP ? op - 1 : op) + offset,
             inst.getRegister(),
@@ -299,7 +332,7 @@ public class CodeGen {
       case ICL:
       case I:
       case B:
-        dlx_inst.add(
+        add(
           DLX.assemble(
             op + offset,
             inst.getRegister(),
@@ -318,32 +351,39 @@ public class CodeGen {
     // Add params + Return address because func_params is a list that ends in the function Symbol
     Symbol funcSymbol = call.func_params.get(call.func_params.size() - 1).var;
     FuncType funcType = (FuncType) funcSymbol.type;
-    for (Result r : call.func_params) {
-      dlx_inst.add(DLX.assemble(DLX.PSH, r.regno, 31, -4));
-    }
     // Locals ...
     if (funcType.params().getList().size() > 0) {
-      dlx_inst.add(
-        DLX.assemble(DLX.ADDI, 31, -4 * funcType.params().getList().size())
-      );
+      add(DLX.assemble(DLX.ADDI, 31, -4 * funcSymbol.global_counter)); // Change this
     }
     // Remove params
     for (Result r : call.func_params) {
-      dlx_inst.add(DLX.assemble(DLX.POP, r.regno, 31, 4));
+      add(DLX.assemble(DLX.POP, r.regno, 31, 4));
     }
     // Loading Registers
     loadRegisters(registersIn);
   }
 
   public void saveRegisters(HashSet<Integer> registersIn) {
+    // Need to differentiate STORE push and LOAD pop
     for (int regToSave : registersIn) {
-      dlx_inst.add(DLX.assemble(DLX.PSH, regToSave, 31, -4));
+      Result reg = new Result();
+      reg.kind = Result.REG;
+      reg.regno = regToSave;
+      inOrder.add(new Instruction(op.STORE, reg, stack)); //  Have SP under right to understand this is a push operation
     }
   }
 
   public void loadRegisters(HashSet<Integer> registersIn) {
     for (int regToSave : registersIn) {
-      dlx_inst.add(DLX.assemble(DLX.PSH, regToSave, 31, 4));
+      Result reg = new Result();
+      reg.kind = Result.REG;
+      reg.regno = regToSave;
+      inOrder.add(new Instruction(op.LOAD, reg, stack));
     }
+  }
+
+  public void add(int dlxinst) {
+    dlx_inst.add(dlxinst);
+    count++;
   }
 }
