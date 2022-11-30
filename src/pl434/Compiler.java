@@ -949,6 +949,12 @@ public class Compiler {
               definedSet.add("(" + currentInstruction.my_num + ")");
             }
             break;
+          case CALL:
+            System.out.println(
+              "called func on instruction " + currentInstruction.my_num
+            );
+            definedSet.add("(" + currentInstruction.my_num + ")");
+            break;
           default:
             if (currentInstruction.left != null) {
               if (currentInstruction.left.isVariable()) {
@@ -1110,7 +1116,7 @@ public class Compiler {
             new RegisterAlloc(instruction_number, variable)
           );
           Instruction k = ssa.allInstructions.get(instruction_number);
-          k.getResult().regno = registerNumber;
+          //k.getResult().regno = registerNumber;
           registerMap.put((Integer) registerNumber, allocationHistory);
           successfully_allocated = true;
           break;
@@ -1141,7 +1147,7 @@ public class Compiler {
             successfully_allocated = true;
             break;
           } else { // If the instruction is not dead then we need to store first - TEMPORARY cuz im just storing what I am on and loading it later
-            vaInstruction.storeThese.add(killInstruction.getResult()); // Place under store
+            //vaInstruction.storeThese.add(killInstruction.getResult()); // Place under store
             successfully_allocated = true;
           }
         }
@@ -1283,5 +1289,25 @@ public class Compiler {
       System.out.println(liveRanges.get(variable));
     }
     System.out.println();
+  }
+
+  private List<Integer> occupiedRegisters(Block b, int instruction_num) {
+    List<Integer> occupied = new ArrayList<Integer>();
+    HashMap<String, VariableInfo> liveIntervals = allLiveIntervals.get(b);
+    HashMap<Integer, ArrayList<RegisterAlloc>> registerMap = allRegisterMaps.get(
+      b
+    );
+
+    for (Integer register : registerMap.keySet()) {
+      RegisterAlloc mostRecentUse = registerMap
+        .get(register)
+        .get(registerMap.get(register).size() - 1);
+      int death_turn = liveIntervals.get(registerMap).closing;
+      if (instruction_num < death_turn) {
+        // This register is currently occupied during instruction #instruction_num
+        occupied.add(register);
+      }
+    }
+    return occupied;
   }
 }

@@ -3,12 +3,12 @@
 main
 int a,b,c,d,e,f,g,h;
 
-function foo () : void {
+function foo () : int {
 
     int xd,b,c;
 
     let xd = 5;
-    call printInt(xd);
+    return xd;
 };
 
 {
@@ -25,5 +25,7 @@ function foo () : void {
     call printInt(c);
 
     let a = 3;
+
+    call printInt(call foo());
 }
 .
