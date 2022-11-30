@@ -43,7 +43,7 @@ public class Instruction {
   public boolean eliminated = false;
   public Instruction usedAt = null;
   public Result refResult = null;
-  Block blockLoc = null;
+  public Block blockLoc = null;
   public int my_num;
   public Result left, right, third; // TODO: third is for the third Result that needs to be printed out
   HashMap<Block, Result> phiBtoR = new HashMap<>();

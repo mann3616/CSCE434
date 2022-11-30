@@ -1142,9 +1142,6 @@ public class Compiler {
             registerMap.get(registerNumber).add(placement);
             successfully_allocated = true;
             break;
-          } else { // If the instruction is not dead then we need to store first - TEMPORARY cuz im just storing what I am on and loading it later
-            vaInstruction.storeThese.add(killInstruction.getResult()); // Place under store
-            successfully_allocated = true;
           }
         }
       }
@@ -1307,5 +1304,22 @@ public class Compiler {
       System.out.println(liveRanges.get(variable));
     }
     System.out.println();
+  }
+
+  public boolean instructionContainsResult(Instruction i, Result r) {
+    if (i.left != null && i.left.regno == r.regno) {
+      return true;
+    }
+    if (i.right != null && i.right.regno == r.regno) {
+      return true;
+    }
+    if (i.func_params != null) {
+      for (Result rr : i.func_params) {
+        if (r.regno == rr.regno) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

@@ -106,11 +106,16 @@ public class SSA implements NodeVisitor {
     currBlock.label = node.function.name;
     roots.add(currBlock);
     currBlock.function = node.function;
+    currBlock.function.func_block = currBlock;
     int hold = global;
     global = 1;
     node.body().accept(this);
     node.function.global_counter = global;
     global = hold;
+    // Result end = new Result();
+    // end.kind = Result.REG;
+    // end.regno = 0;
+    // addInstruction(new Instruction(op.RET, null, end));
     addCurr();
   }
 
@@ -130,9 +135,9 @@ public class SSA implements NodeVisitor {
     roots.add(currBlock);
     node.mainStatementSequence().accept(this);
     Result end = new Result();
-    end.kind = Result.CONST;
-    end.value = 0;
+    end.kind = Result.REG;
     end.type = new IntType();
+    end.regno = 0;
     end.storeResult();
     addInstruction(new Instruction(op.RET, null, end));
     addCurr();
@@ -518,6 +523,7 @@ public class SSA implements NodeVisitor {
     this_func.kind = Result.VAR;
     this_func.var = node.function;
     this_func.storeResult();
+    this_func.regno = 1;
     params.add(this_func);
     addInstruction(new Instruction(op.CALL, params));
     // Set argumentList to previous args

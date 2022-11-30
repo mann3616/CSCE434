@@ -19,6 +19,7 @@ public class CodeGen {
   Result frame = new Result();
   Result stack = new Result();
   Result reg0 = new Result();
+  Result pc = new Result();
   ArrayList<Instruction> inOrder = new ArrayList<>();
   HashMap<Block, Integer> blockPC = new HashMap<>();
   HashSet<Result> inStorage = new HashSet<>();
@@ -33,6 +34,8 @@ public class CodeGen {
   static final int PC = 31; // Saves PC
 
   public CodeGen(SSA ssa) {
+    pc.kind = Result.REG;
+    pc.regno = 31;
     gdb.kind = Result.GDB;
     frame.kind = Result.REG;
     stack.kind = Result.REG;
@@ -109,16 +112,19 @@ public class CodeGen {
             r.addy = pointer_address++ * -4;
           }
           inOrder.add(new Instruction(op.STORE, r));
+          inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
         }
         inStorage.addAll(i.storeThese);
       }
       // Load Items that must be loaded
       if (i.left != null && inStorage.contains(i.left)) {
         inOrder.add(new Instruction(op.LOAD, i.left));
+        inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
         inStorage.remove(i.left);
       }
       if (i.right != null && inStorage.contains(i.right)) {
         inOrder.add(new Instruction(op.LOAD, i.right));
+        inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
         inStorage.remove(i.right);
       }
       // Load items in func_call
@@ -127,12 +133,15 @@ public class CodeGen {
           // Load parameter if stored
           if (inStorage.contains(r)) {
             inOrder.add(new Instruction(op.LOAD, r));
+            inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
             inStorage.remove(r);
           }
         }
-        functionCall(i);
+        functionCall(i); // Add all save Reg and Load reg instructions with SP + FP
       }
-      inOrder.add(i);
+      if (i.inst != op.PHI && i.inst != op.MOVE) {
+        inOrder.add(i);
+      }
     }
   }
 
@@ -140,47 +149,83 @@ public class CodeGen {
     for (Instruction i : inOrder) {
       // Store items to free up regs
       switch (i.inst) {
-        case CALL:
-          functionCall(i);
-          break;
         case STORE:
+          if (i.right == stack) {
+            add(DLX.assemble(DLX.PSH, i.left.regno, i.right.regno, -4));
+          }
+          break;
         case LOAD:
-        case PHI:
-        // Use this to figure out which block we originated from and use the corresponding register from there
-        case MOVE:
+          if (i.right == stack) {
+            add(DLX.assemble(DLX.POP, i.left.regno, i.right.regno, -4));
+          }
           break;
         case BGE:
           add(
-            DLX.assemble(DLX.BGE, i.getRegister(), blockPC.get(i.right.proc))
+            DLX.assemble(
+              DLX.BGE,
+              i.right.regno,
+              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+            )
           );
           break;
         case BGT:
           add(
-            DLX.assemble(DLX.BGT, i.getRegister(), blockPC.get(i.right.proc))
+            DLX.assemble(
+              DLX.BGT,
+              i.right.regno,
+              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+            )
           );
           break;
         case BLE:
           add(
-            DLX.assemble(DLX.BLE, i.getRegister(), blockPC.get(i.right.proc))
+            DLX.assemble(
+              DLX.BLE,
+              i.right.regno,
+              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+            )
           );
           break;
         case BLT:
           add(
-            DLX.assemble(DLX.BLT, i.getRegister(), blockPC.get(i.right.proc))
+            DLX.assemble(
+              DLX.BLT,
+              i.right.regno,
+              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+            )
           );
           break;
         case BNE:
           add(
-            DLX.assemble(DLX.BNE, i.getRegister(), blockPC.get(i.right.proc))
+            DLX.assemble(
+              DLX.BNE,
+              i.right.regno,
+              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+            )
           );
           break;
         case BEQ:
           add(
-            DLX.assemble(DLX.BEQ, i.getRegister(), blockPC.get(i.right.proc))
+            DLX.assemble(
+              DLX.BEQ,
+              i.right.regno,
+              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+            )
           );
           break;
+        case CALL:
+          add(DLX.assemble(DLX.JSR, blockPC.get(i.right.proc) * 4));
+          break;
+        case RET:
+          add(DLX.assemble(DLX.STW, i.right.regno, FP, 4)); // STW return value into FP + 1
+          break;
         case BRA:
-          add(DLX.assemble(DLX.BSR, blockPC.get(i.right.proc)));
+          add(
+            DLX.assemble(
+              DLX.BSR,
+              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+            )
+          );
           break;
         default:
           generateSimpleInstruction(i);
@@ -347,38 +392,73 @@ public class CodeGen {
   public void functionCall(Instruction call) {
     // Saving Registers
     HashSet<Integer> registersIn = new HashSet<>();
-    saveRegisters(registersIn);
-    // Add params + Return address because func_params is a list that ends in the function Symbol
+    saveRegisters(registersIn, call.blockLoc);
+
     Symbol funcSymbol = call.func_params.get(call.func_params.size() - 1).var;
-    FuncType funcType = (FuncType) funcSymbol.type;
-    // Locals ...
-    if (funcType.params().getList().size() > 0) {
-      add(DLX.assemble(DLX.ADDI, 31, -4 * funcSymbol.global_counter)); // Change this
-    }
-    // Remove params
+    // Add params + Return address because func_params is a list that ends in the function Symbol
     for (Result r : call.func_params) {
-      add(DLX.assemble(DLX.POP, r.regno, 31, 4));
+      inOrder.add(new Instruction(op.STORE, r, stack));
+      inOrder.get(inOrder.size() - 1).blockLoc = call.blockLoc;
     }
+    // Save PC from last
+    inOrder.add(new Instruction(op.STORE, pc, stack));
+    inOrder.get(inOrder.size() - 1).blockLoc = call.blockLoc;
+    // Save Frame Pointer
+    inOrder.add(new Instruction(op.STORE, frame, stack));
+    inOrder.get(inOrder.size() - 1).blockLoc = call.blockLoc;
+
+    // Locals
+    Result funcGlobal = new Result();
+    funcGlobal.kind = Result.CONST;
+    funcGlobal.value = funcSymbol.global_counter * -4;
+    inOrder.add(new Instruction(op.ADD, frame, funcGlobal)); // Update FP to nxt frame
+    inOrder.get(inOrder.size() - 1).blockLoc = call.blockLoc;
+    // Global Symbols + Parameter are FP + addy*4 // Deal with this later lol
+    // Local Symbols are FP - addy*4
+    // Change his register implementation prolly
+    Result skipTo = new Result();
+    skipTo.kind = Result.PROC;
+    skipTo.proc = funcSymbol.func_block;
+    inOrder.add(new Instruction(op.BRA, skipTo)); // Skip to function
+    inOrder.get(inOrder.size() - 1).blockLoc = call.blockLoc;
+
+    // Load Return value into return register
+    inOrder.add(
+      new Instruction(
+        op.LOAD,
+        call.func_params.get(call.func_params.size() - 1),
+        stack
+      )
+    );
+    inOrder.get(inOrder.size() - 1).blockLoc = call.blockLoc;
+
+    inOrder.add(new Instruction(op.LOAD, frame, stack)); // Load frame from stack
+    inOrder.get(inOrder.size() - 1).blockLoc = call.blockLoc;
+    inOrder.add(new Instruction(op.LOAD, pc, stack)); // Load pc from stack
+    inOrder.get(inOrder.size() - 1).blockLoc = call.blockLoc;
+
     // Loading Registers
-    loadRegisters(registersIn);
+    loadRegisters(registersIn, call.blockLoc);
   }
 
-  public void saveRegisters(HashSet<Integer> registersIn) {
+  public void saveRegisters(HashSet<Integer> registersIn, Block bloc) {
     // Need to differentiate STORE push and LOAD pop
     for (int regToSave : registersIn) {
       Result reg = new Result();
       reg.kind = Result.REG;
       reg.regno = regToSave;
       inOrder.add(new Instruction(op.STORE, reg, stack)); //  Have SP under right to understand this is a push operation
+      inOrder.get(inOrder.size() - 1).blockLoc = bloc;
     }
   }
 
-  public void loadRegisters(HashSet<Integer> registersIn) {
+  public void loadRegisters(HashSet<Integer> registersIn, Block bloc) {
     for (int regToSave : registersIn) {
       Result reg = new Result();
       reg.kind = Result.REG;
       reg.regno = regToSave;
       inOrder.add(new Instruction(op.LOAD, reg, stack));
+      inOrder.get(inOrder.size() - 1).blockLoc = bloc;
     }
   }
 

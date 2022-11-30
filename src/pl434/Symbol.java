@@ -19,6 +19,7 @@ public class Symbol {
   public boolean loaded;
   public Symbol OG;
   public int global_counter = -1; // Only for function
+  public Block func_block;
 
   public Symbol(String name, Type type) {
     loaded = false;
