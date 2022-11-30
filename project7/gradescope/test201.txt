@@ -3,6 +3,14 @@
 main
 int a,b,c,d,e,f,g,h;
 
+function foo () : void {
+
+    int xd,b,c;
+
+    let xd = 5;
+    call printInt(xd);
+};
+
 {
     let a = 5;
     let a = (1 + a) * (2 + a) * (2 + a) * (2 + a) * (2 + a) * (2 + a);

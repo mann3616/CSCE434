@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Stack;
 import org.apache.commons.cli.Options;
+import pl434.RegisterAlloc;
 import pl434.Token.Kind;
+import pl434.VariableInfo;
 import ssa.*;
 import types.*;
 
@@ -850,55 +852,73 @@ public class Compiler {
     return null;
   }
 
-  HashMap<Integer, ArrayList<RegisterAlloc>> registerMap = new HashMap<Integer, ArrayList<RegisterAlloc>>();
+  HashMap<Block, HashMap<Integer, ArrayList<RegisterAlloc>>> allRegisterMaps = new HashMap<Block, HashMap<Integer, ArrayList<RegisterAlloc>>>();
+  HashMap<Block, HashMap<String, ArrayList<VariableInfo>>> allLiveRanges = new HashMap<Block, HashMap<String, ArrayList<VariableInfo>>>();
+  HashMap<Block, HashMap<String, VariableInfo>> allLiveIntervals = new HashMap<>();
 
-  public void printLiveInfo() {
+  public void printLiveInfo(Block block) {
     // After calculate liveness, all instructions have insets and outsets
-    printLiveness();
-    printLiveIntervals();
+    printLiveness(block);
+    printLiveIntervals(allLiveIntervals.get(block));
   }
 
-  public void initializeLiveness() {
+  public void initializeLiveness(Block block) {
     // Calculates all live sets
-    calculateLiveness();
+    calculateLiveness(block);
 
     // Populates the variable hashmap to get all variables
-    populateliveRanges();
+    allLiveRanges.put(block, new HashMap<String, ArrayList<VariableInfo>>());
+    populateliveRanges(allLiveRanges.get(block), block);
 
     // Calculates the intervals
-    calculateliveRanges();
+    calculateliveRanges(allLiveRanges.get(block), block);
 
     // Prints liveRanges
-    // printliveRanges();
+    // printliveRanges(allLiveRanges.get(block));
 
     // HashMap<String, ArrayList<Pair>> liveRanges contains liveRanges, convert to liveInterval
     // IE, a = [1,3],[6,11], [14,39] -> a = [1,39]
-    initializeLiveIntervals();
-    calculateLiveIntervals();
+    allLiveIntervals.put(block, new HashMap<String, VariableInfo>());
+    initializeLiveIntervals(
+      allLiveIntervals.get(block),
+      allLiveRanges.get(block)
+    );
+    calculateLiveIntervals(
+      allLiveIntervals.get(block),
+      allLiveRanges.get(block)
+    );
   }
 
   public void regAlloc(int numRegs) {
     ssa.fixUpSSA(); // LOOK HERE LANCE! - Momo <3
     ssa.instantiateUsedAt();
     ssa.countUpResults();
-    initializeLiveness();
-    // Next step is to actually distribute registers
-    // Initialize RegisterMap with each key being a register number
-    initializeRegisterMap(numRegs);
-    allocateRegisters(numRegs);
+    for (Block block : ssa.roots) {
+      initializeLiveness(block);
+      // Next step is to actually distribute registers
+      // Initialize RegisterMap with each key being a register number
+      initializeRegisterMap(block, numRegs);
+      allocateRegisters(
+        block,
+        numRegs,
+        allRegisterMaps.get(block),
+        allLiveIntervals.get(block)
+      );
 
-    // Prints all the underlying notes
-    printLiveInfo();
-    printRegisterAllocation();
-
+      // Prints all the underlying notes
+      printLiveInfo(block);
+      printRegisterAllocation(allRegisterMaps.get(block));
+    }
     // Result.printAllResults();
 
     return;
   }
 
   // Creates live in and live out sets for all instructions
-  private void calculateLiveness() {
-    ArrayList<Instruction> instructionSet = ssa.allInstructions;
+  private void calculateLiveness(Block block) {
+    ArrayList<Instruction> instructionSet = new ArrayList<Instruction>(
+      block.instructions
+    );
     boolean change_detected;
     do {
       change_detected = false;
@@ -1016,8 +1036,8 @@ public class Compiler {
     } while (change_detected);
   }
 
-  private void printLiveness() {
-    for (Instruction instruction : ssa.allInstructions) {
+  private void printLiveness(Block block) {
+    for (Instruction instruction : block.instructions) {
       System.out.println("-----------------------------------");
       System.out.println(instruction);
       System.out.println("InSet: " + instruction.InSet);
@@ -1026,7 +1046,9 @@ public class Compiler {
     System.out.println();
   }
 
-  private void printRegisterAllocation() {
+  private void printRegisterAllocation(
+    HashMap<Integer, ArrayList<RegisterAlloc>> registerMap
+  ) {
     System.out.println();
     for (Integer Register : registerMap.keySet()) {
       System.out.println("Allocation History for Register #" + Register + ":");
@@ -1040,7 +1062,9 @@ public class Compiler {
     System.out.println();
   }
 
-  public ArrayList<String> findDeclarationOrder() {
+  public ArrayList<String> findDeclarationOrder(
+    HashMap<String, VariableInfo> liveIntervals
+  ) {
     ArrayList<String> declarations = new ArrayList<>();
     // Iterate through all variables, and one by one remove the one with the lowest "opening"
     HashSet<String> availableVariables = new HashSet<String>(
@@ -1064,10 +1088,16 @@ public class Compiler {
     return declarations;
   }
 
-  private void allocateRegisters(int numRegs) {
+  private void allocateRegisters(
+    Block block,
+    int numRegs,
+    HashMap<Integer, ArrayList<RegisterAlloc>> registerMap,
+    HashMap<String, VariableInfo> liveIntervals
+  ) {
     // We begin with the earliest opening variables
-    ArrayList<String> declarations = findDeclarationOrder();
-
+    ArrayList<String> declarations = findDeclarationOrder(
+      allLiveIntervals.get(block)
+    );
     // Fill registerMap here
     for (String variable : declarations) {
       // We will always start from the left most register
@@ -1154,7 +1184,7 @@ public class Compiler {
     }
   }
 
-  private void printLiveIntervals() {
+  private void printLiveIntervals(HashMap<String, VariableInfo> liveIntervals) {
     for (String variable : liveIntervals.keySet()) {
       System.out.println("Live Interval for variable \"" + variable + "\"");
       System.out.println(liveIntervals.get(variable));
@@ -1162,13 +1192,19 @@ public class Compiler {
     System.out.println();
   }
 
-  private void initializeLiveIntervals() {
+  private void initializeLiveIntervals(
+    HashMap<String, VariableInfo> liveIntervals,
+    HashMap<String, ArrayList<VariableInfo>> liveRanges
+  ) {
     for (String variable : liveRanges.keySet()) {
       liveIntervals.put(variable, null);
     }
   }
 
-  private void calculateLiveIntervals() {
+  private void calculateLiveIntervals(
+    HashMap<String, VariableInfo> liveIntervals,
+    HashMap<String, ArrayList<VariableInfo>> liveRanges
+  ) {
     for (String variable : liveRanges.keySet()) {
       int left_boundary = liveRanges.get(variable).get(0).opening;
       int right_boundary = liveRanges
@@ -1182,17 +1218,21 @@ public class Compiler {
     }
   }
 
-  private void initializeRegisterMap(int numRegs) {
+  private void initializeRegisterMap(Block block, int numRegs) {
+    allRegisterMaps.put(
+      block,
+      new HashMap<Integer, ArrayList<RegisterAlloc>>()
+    );
     for (int i = 0; i < numRegs; i++) {
-      registerMap.put(i, null);
+      allRegisterMaps.get(block).put(i, null);
     }
   }
 
-  HashMap<String, ArrayList<VariableInfo>> liveRanges = new HashMap<>();
-  HashMap<String, VariableInfo> liveIntervals = new HashMap<>();
-
-  private void calculateliveRanges() {
-    for (Instruction instruction : ssa.allInstructions) {
+  private void calculateliveRanges(
+    HashMap<String, ArrayList<VariableInfo>> liveRanges,
+    Block b
+  ) {
+    for (Instruction instruction : b.instructions) {
       for (String variable : instruction.InSet) {
         ArrayList<VariableInfo> PairList = liveRanges.get(variable);
         if (PairList.size() == 0) {
@@ -1235,8 +1275,11 @@ public class Compiler {
     }
   }
 
-  private void populateliveRanges() {
-    for (Instruction instruction : ssa.allInstructions) {
+  private void populateliveRanges(
+    HashMap<String, ArrayList<VariableInfo>> liveRanges,
+    Block b
+  ) {
+    for (Instruction instruction : b.instructions) {
       for (String variable : instruction.InSet) {
         if (!liveRanges.containsKey(variable)) {
           // If this variable has not been added to the global list, add it
@@ -1247,7 +1290,9 @@ public class Compiler {
     }
   }
 
-  private void printliveRanges() {
+  private void printliveRanges(
+    HashMap<String, ArrayList<VariableInfo>> liveRanges
+  ) {
     for (String variable : liveRanges.keySet()) {
       System.out.println("Live Ranges for variable \"" + variable + "\"");
       System.out.println(liveRanges.get(variable));
