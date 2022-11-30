@@ -16,18 +16,33 @@ public class CodeGen {
   static final int FP = 28;
   static final int SP = 29;
   Result gdb = new Result();
+  Result frame = new Result();
+  Result stack = new Result();
+  Result reg0 = new Result();
   ArrayList<Instruction> inOrder = new ArrayList<>();
   HashMap<Block, Integer> blockPC = new HashMap<>();
   HashSet<Result> inStorage = new HashSet<>();
   RegisterAlloc regAll;
   public static int pointer_address = 1;
+  Result global = new Result();
   // Need Memory allocation of addresses
 
+  int global_count;
   int count = 0;
-  static final int GLB = 30;
+  static final int GLB = 30; // Set to max address of 10000
+  static final int PC = 31; // Saves PC
 
   public CodeGen(SSA ssa) {
     gdb.kind = Result.GDB;
+    frame.kind = Result.REG;
+    stack.kind = Result.REG;
+    reg0.kind = Result.REG;
+    global.kind = Result.CONST;
+    global.value = ssa.global;
+    global_count = ssa.global;
+    reg0.regno = 0;
+    frame.regno = 28;
+    stack.regno = 29;
     this.ssa = ssa;
     ssa.flipAllBreaks();
   }
@@ -35,6 +50,9 @@ public class CodeGen {
   public int[] generateCode() {
     Block main = ssa.MAIN;
     //generateFromBlock(main);
+    add(DLX.assemble(DLX.ADDI, SP, GLB, ssa.global * -4));
+    add(DLX.assemble(DLX.ADD, FP, SP, 0)); // Frame and stack pointer is all set-up
+
     generateFromBlockDFS(main, new HashSet<>());
     for (Block b : ssa.roots) {
       if (b == main) continue;
@@ -82,8 +100,9 @@ public class CodeGen {
   }
 
   public void generateInOrder(Block block) {
-    blockPC.put(block, inOrder.size());
+    blockPC.put(block, inOrder.size() + 2); // +2 because that is the amount of instructions added before hand
     for (Instruction i : block.instructions) {
+      // Adding store and load instructiosn required prior
       if (!i.storeThese.isEmpty()) {
         for (Result r : i.storeThese) {
           if (r.addy == -1) {
@@ -111,6 +130,7 @@ public class CodeGen {
             inStorage.remove(r);
           }
         }
+        functionCall(i);
       }
       inOrder.add(i);
     }
@@ -345,7 +365,10 @@ public class CodeGen {
 
   public void saveRegisters(HashSet<Integer> registersIn) {
     for (int regToSave : registersIn) {
-      add(DLX.assemble(DLX.PSH, regToSave, 31, -4));
+      Result reg = new Result();
+      reg.kind = Result.REG;
+      reg.regno = regToSave;
+      inOrder.add(new Instruction(op.STORE, reg, stack));
     }
   }
 

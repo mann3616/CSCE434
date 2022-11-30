@@ -16,6 +16,7 @@ public class Result {
   public static final int ADDY = 3;
   public static final int INST = 4;
   public static final int GDB = 5;
+  public static final int REG = 6;
   public static int pointer_address = 10000;
   public int kind;
   public Instruction inst;
