@@ -1015,6 +1015,13 @@ public class Compiler {
               // This is the following case:
               // 1: ADD a_1 3
               definedSet.add("(" + currentInstruction.my_num + ")");
+            } else if (
+              currentInstruction.left != null &&
+              currentInstruction.left.isVariable() &&
+              currentInstruction.right != null &&
+              currentInstruction.right.isVariable()
+            ) {
+              definedSet.add("(" + currentInstruction.my_num + ")");
             }
 
             break;
@@ -1036,7 +1043,6 @@ public class Compiler {
         temporaryOutSet.removeAll(definedSet);
         // use[n]
         usedSet.addAll(temporaryOutSet);
-        currentInstruction.InSet = usedSet;
 
         boolean inSetChanged =
           (!originalInSet.equals(currentInstruction.InSet));
