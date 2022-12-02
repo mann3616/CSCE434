@@ -1043,6 +1043,7 @@ public class Compiler {
         temporaryOutSet.removeAll(definedSet);
         // use[n]
         usedSet.addAll(temporaryOutSet);
+        currentInstruction.InSet = usedSet;
 
         boolean inSetChanged =
           (!originalInSet.equals(currentInstruction.InSet));

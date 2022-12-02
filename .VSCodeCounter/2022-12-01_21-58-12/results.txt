@@ -1,0 +1,94 @@
+Date : 2022-12-01 21:58:12
+Directory : c:\Users\lance\OneDrive\Documents\GitHub\CSCE434
+Total : 65 files,  8188 codes, 857 comments, 959 blanks, all 10004 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Java     |         65 |      8,188 |        857 |        959 |     10,004 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                              | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                 |         65 |      8,188 |        857 |        959 |     10,004 |
+| src                                                                               |         65 |      8,188 |        857 |        959 |     10,004 |
+| src\ast                                                                           |         38 |      1,258 |        101 |        317 |      1,676 |
+| src\pl434                                                                         |         11 |      3,552 |        404 |        377 |      4,333 |
+| src\ssa                                                                           |          6 |      2,418 |        281 |        164 |      2,863 |
+| src\types                                                                         |         10 |        960 |         71 |        101 |      1,132 |
++-----------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                          | language | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\AST.java                 | Java     |         20 |          4 |          7 |         31 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\ASTNonTerminal.java      | Java     |         38 |          2 |         14 |         54 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Addition.java            | Java     |         24 |          2 |          7 |         33 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\AddressOf.java           | Java     |         16 |          2 |          7 |         25 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\ArgumentList.java        | Java     |         27 |          3 |          9 |         39 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\ArrayIndex.java          | Java     |         23 |          2 |          3 |         28 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Assignment.java          | Java     |         25 |          2 |          7 |         34 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\BoolLiteral.java         | Java     |         15 |          2 |          6 |         23 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Computation.java         | Java     |         38 |          0 |         10 |         48 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Declaration.java         | Java     |          2 |          0 |          2 |          4 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\DeclarationList.java     | Java     |         24 |          3 |          9 |         36 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Dereference.java         | Java     |         13 |          2 |          6 |         21 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Division.java            | Java     |         24 |          2 |          7 |         33 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Expression.java          | Java     |          2 |          0 |          2 |          4 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\FloatLiteral.java        | Java     |         15 |          2 |          6 |         23 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\FunctionBody.java        | Java     |         25 |          2 |          7 |         34 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\FunctionCall.java        | Java     |         42 |          0 |          9 |         51 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\FunctionDeclaration.java | Java     |         26 |          2 |          8 |         36 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\IfStatement.java         | Java     |         30 |          2 |          8 |         40 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\IntegerLiteral.java      | Java     |         15 |          2 |          6 |         23 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\LogicalAnd.java          | Java     |         24 |          2 |          7 |         33 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\LogicalNot.java          | Java     |         15 |          2 |          6 |         23 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\LogicalOr.java           | Java     |         24 |          2 |          7 |         33 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Modulo.java              | Java     |         24 |          2 |          7 |         33 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Multiplication.java      | Java     |         24 |          2 |          7 |         33 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Node.java                | Java     |        241 |          1 |         12 |        254 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\NodeVisitor.java         | Java     |         33 |         21 |         31 |         85 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Power.java               | Java     |         19 |          2 |          7 |         28 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\PrettyPrinter.java       | Java     |        237 |         16 |         35 |        288 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Relation.java            | Java     |         32 |          2 |          9 |         43 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\RepeatStatement.java     | Java     |         25 |          2 |          7 |         34 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\ReturnStatement.java     | Java     |         21 |          2 |          8 |         31 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Statement.java           | Java     |          2 |          0 |          2 |          4 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\StatementSequence.java   | Java     |         24 |          3 |          9 |         36 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Subtraction.java         | Java     |         24 |          2 |          7 |         33 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\VariableDeclaration.java | Java     |         16 |          2 |          7 |         25 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\Visitable.java           | Java     |          4 |          0 |          2 |          6 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ast\WhileStatement.java      | Java     |         25 |          2 |          7 |         34 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\CodeGen.java           | Java     |        464 |         18 |         30 |        512 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\Compiler.java          | Java     |      1,126 |        102 |        117 |      1,345 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\CompilerTester.java    | Java     |        211 |          7 |         24 |        242 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\DLX.java               | Java     |        968 |         76 |         63 |      1,107 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\NonTerminal.java       | Java     |        285 |         31 |         46 |        362 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\RegisterAlloc.java     | Java     |         12 |          1 |          5 |         18 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\Scanner.java           | Java     |         80 |        140 |          9 |        229 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\Symbol.java            | Java     |        138 |          4 |         19 |        161 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\SymbolTable.java       | Java     |         98 |          5 |         18 |        121 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\Token.java             | Java     |        140 |         20 |         39 |        199 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\pl434\VariableInfo.java      | Java     |         30 |          0 |          7 |         37 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ssa\Block.java               | Java     |        387 |         45 |         19 |        451 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ssa\DominatorTree.java       | Java     |        140 |         13 |         15 |        168 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ssa\Instruction.java         | Java     |        230 |          3 |         15 |        248 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ssa\Optimize.java            | Java     |        879 |        152 |         39 |      1,070 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ssa\Result.java              | Java     |         76 |          0 |         10 |         86 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\ssa\SSA.java                 | Java     |        706 |         68 |         66 |        840 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\ArrayType.java         | Java     |         37 |          0 |         10 |         47 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\BoolType.java          | Java     |          6 |          0 |          3 |          9 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\ErrorType.java         | Java     |         13 |          0 |          5 |         18 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\FloatType.java         | Java     |          6 |          0 |          3 |          9 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\FuncType.java          | Java     |         17 |          0 |          7 |         24 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\IntType.java           | Java     |          6 |          0 |          3 |          9 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\Type.java              | Java     |        224 |          5 |         17 |        246 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\TypeChecker.java       | Java     |        614 |         65 |         40 |        719 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\TypeList.java          | Java     |         31 |          1 |         10 |         42 |
+| c:\Users\lance\OneDrive\Documents\GitHub\CSCE434\src\types\VoidType.java          | Java     |          6 |          0 |          3 |          9 |
+| Total                                                                             |          |      8,188 |        857 |        959 |     10,004 |
++-----------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
