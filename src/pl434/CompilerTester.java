@@ -196,7 +196,7 @@ public class CompilerTester {
     // Saving unopt because it asked for it
     String unoptimized_dotgraph = dotgraph_text;
     try {
-      dotgraph_text = c.optimization(optArguments, options);
+      dotgraph_text = c.optimization(optArguments, cmd);
       System.out.println(dotgraph_text);
     } catch (Exception e) {
       e.printStackTrace();

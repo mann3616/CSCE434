@@ -56,6 +56,7 @@ public class Instruction {
   boolean rootExpr = false;
   //boolean isArrayMul = false;
   boolean mainEquiv = true;
+  public int regno = -1;
   public op inst;
 
   public boolean isEliminated() {
@@ -241,6 +242,6 @@ public class Instruction {
     if (getResult() == null) {
       return -1;
     }
-    return getResult().regno;
+    return regno;
   }
 }

@@ -25,7 +25,7 @@ public class SSA implements NodeVisitor {
   HashMap<Integer, Block> hmblocks = new HashMap<>();
   List<Block> blocks;
   public List<Block> roots;
-  public Block MAIN;
+  public Block main;
   HashMap<Symbol, Symbol> allSymbols = new HashMap<>();
   ArrayList<Result> params;
   Stack<Result> indices;
@@ -112,10 +112,12 @@ public class SSA implements NodeVisitor {
     node.body().accept(this);
     node.function.global_counter = global;
     global = hold;
-    // Result end = new Result();
-    // end.kind = Result.REG;
-    // end.regno = 0;
-    // addInstruction(new Instruction(op.RET, null, end));
+    Result end = new Result();
+    end.kind = Result.CONST;
+    end.value = 0;
+    end.endFunc = true;
+    end.storeResult();
+    addInstruction(new Instruction(op.RET, null, end));
     addCurr();
   }
 
@@ -132,12 +134,13 @@ public class SSA implements NodeVisitor {
     node.variables().accept(this);
     node.functions().accept(this);
     currBlock.label = "main";
+    main = currBlock;
     roots.add(currBlock);
     node.mainStatementSequence().accept(this);
     Result end = new Result();
-    end.kind = Result.REG;
-    end.type = new IntType();
-    end.regno = 0;
+    end.kind = Result.CONST;
+    end.value = 0;
+    end.endFunc = true;
     end.storeResult();
     addInstruction(new Instruction(op.RET, null, end));
     addCurr();
@@ -523,7 +526,7 @@ public class SSA implements NodeVisitor {
     this_func.kind = Result.VAR;
     this_func.var = node.function;
     this_func.storeResult();
-    this_func.regno = 1;
+    this_func.var.regno = 1;
     params.add(this_func);
     addInstruction(new Instruction(op.CALL, params));
     // Set argumentList to previous args

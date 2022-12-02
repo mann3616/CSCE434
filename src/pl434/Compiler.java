@@ -2,16 +2,19 @@ package pl434;
 
 import ast.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Stack;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import pl434.RegisterAlloc;
 import pl434.Token.Kind;
 import pl434.VariableInfo;
 import ssa.*;
+import ssa.Instruction.op;
 import types.*;
 
 public class Compiler {
@@ -758,9 +761,14 @@ public class Compiler {
     return ssa;
   }
 
-  public String optimization(List<String> optArguments, Options options) {
+  public String optimization(List<String> optArguments, CommandLine cmd) {
     optimize = new Optimize(ssa);
     // Not sure why it wants the Options object in here
+    String[] optArgs = cmd.getOptionValues("opt");
+    optArguments =
+      (optArgs != null && optArgs.length != 0)
+        ? Arrays.asList(optArgs)
+        : new ArrayList<String>();
     boolean maxSelected = optArguments.contains("max");
     boolean maxOptSelected = optArguments.contains("maxOpt");
 
@@ -849,7 +857,8 @@ public class Compiler {
   }
 
   public int[] genCode() {
-    return null;
+    CodeGen gen = new CodeGen(ssa);
+    return gen.generateCode();
   }
 
   HashMap<Block, HashMap<Integer, ArrayList<RegisterAlloc>>> allRegisterMaps = new HashMap<Block, HashMap<Integer, ArrayList<RegisterAlloc>>>();
@@ -1116,10 +1125,11 @@ public class Compiler {
           allocationHistory.add(
             new RegisterAlloc(instruction_number, variable)
           );
-          Instruction k = ssa.allInstructions.get(instruction_number);
           //k.getResult().regno = registerNumber;
           registerMap.put((Integer) registerNumber, allocationHistory);
           successfully_allocated = true;
+          Instruction thisInstruction = liveIntervals.get(variable).instruction;
+          thisInstruction.regno = registerNumber;
           break;
         } else {
           // The register has been used before
@@ -1141,6 +1151,9 @@ public class Compiler {
             );
             registerMap.get(registerNumber).add(placement);
             successfully_allocated = true;
+            Instruction thisInstruction = liveIntervals.get(variable)
+              .instruction;
+            thisInstruction.regno = registerNumber;
             break;
           }
         }
@@ -1217,10 +1230,10 @@ public class Compiler {
         .get(variable)
         .get(liveRanges.get(variable).size() - 1)
         .closing;
-      liveIntervals.put(
-        variable,
-        new VariableInfo(left_boundary, right_boundary)
-      );
+      Instruction b = liveRanges.get(variable).get(0).instruction;
+      VariableInfo i = new VariableInfo(left_boundary, b);
+      i.closing = right_boundary;
+      liveIntervals.put(variable, i);
     }
   }
 
@@ -1307,15 +1320,15 @@ public class Compiler {
   }
 
   public boolean instructionContainsResult(Instruction i, Result r) {
-    if (i.left != null && i.left.regno == r.regno) {
+    if (i.left != null && i.left.inst.regno == r.inst.regno) {
       return true;
     }
-    if (i.right != null && i.right.regno == r.regno) {
+    if (i.right != null && i.right.inst.regno == r.inst.regno) {
       return true;
     }
     if (i.func_params != null) {
       for (Result rr : i.func_params) {
-        if (r.regno == rr.regno) {
+        if (r.inst.regno == rr.inst.regno) {
           return true;
         }
       }

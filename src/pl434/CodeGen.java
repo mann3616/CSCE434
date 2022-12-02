@@ -35,7 +35,8 @@ public class CodeGen {
 
   public CodeGen(SSA ssa) {
     pc.kind = Result.REG;
-    pc.regno = 31;
+    pc.inst = new Instruction(op.RET);
+    pc.inst.regno = 31;
     gdb.kind = Result.GDB;
     frame.kind = Result.REG;
     stack.kind = Result.REG;
@@ -43,15 +44,18 @@ public class CodeGen {
     global.kind = Result.CONST;
     global.value = ssa.global;
     global_count = ssa.global;
-    reg0.regno = 0;
-    frame.regno = 28;
-    stack.regno = 29;
+    reg0.inst = new Instruction(op.RET);
+    reg0.inst.regno = 0;
+    frame.inst = new Instruction(op.RET);
+    frame.inst.regno = 28;
+    stack.inst = new Instruction(op.RET);
+    stack.inst.regno = 29;
     this.ssa = ssa;
     ssa.flipAllBreaks();
   }
 
   public int[] generateCode() {
-    Block main = ssa.MAIN;
+    Block main = ssa.main;
     //generateFromBlock(main);
     add(DLX.assemble(DLX.ADDI, SP, GLB, ssa.global * -4));
     add(DLX.assemble(DLX.ADD, FP, SP, 0)); // Frame and stack pointer is all set-up
@@ -61,6 +65,7 @@ public class CodeGen {
       if (b == main) continue;
       generateFromBlock(b);
     }
+    generateInstructions();
     int[] instConvert = new int[dlx_inst.size()];
     int x = 0;
     for (Integer i : dlx_inst) {
@@ -108,22 +113,19 @@ public class CodeGen {
       // Adding store and load instructiosn required prior
       if (!i.storeThese.isEmpty()) {
         for (Result r : i.storeThese) {
-          if (r.addy == -1) {
-            r.addy = pointer_address++ * -4;
-          }
-          inOrder.add(new Instruction(op.STORE, r));
+          inOrder.add(new Instruction(op.STORE, r, stack));
           inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
         }
         inStorage.addAll(i.storeThese);
       }
       // Load Items that must be loaded
       if (i.left != null && inStorage.contains(i.left)) {
-        inOrder.add(new Instruction(op.LOAD, i.left));
+        inOrder.add(new Instruction(op.LOAD, i.left, stack));
         inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
         inStorage.remove(i.left);
       }
       if (i.right != null && inStorage.contains(i.right)) {
-        inOrder.add(new Instruction(op.LOAD, i.right));
+        inOrder.add(new Instruction(op.LOAD, i.right, stack));
         inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
         inStorage.remove(i.right);
       }
@@ -132,7 +134,7 @@ public class CodeGen {
         for (Result r : i.func_params) {
           // Load parameter if stored
           if (inStorage.contains(r)) {
-            inOrder.add(new Instruction(op.LOAD, r));
+            inOrder.add(new Instruction(op.LOAD, r, stack));
             inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
             inStorage.remove(r);
           }
@@ -151,19 +153,33 @@ public class CodeGen {
       switch (i.inst) {
         case STORE:
           if (i.right == stack) {
-            add(DLX.assemble(DLX.PSH, i.left.regno, i.right.regno, -4));
+            add(
+              DLX.assemble(
+                DLX.PSH,
+                i.left.inst.regno + 2,
+                i.right.inst.regno,
+                -4
+              )
+            );
           }
           break;
         case LOAD:
           if (i.right == stack) {
-            add(DLX.assemble(DLX.POP, i.left.regno, i.right.regno, -4));
+            add(
+              DLX.assemble(
+                DLX.POP,
+                i.left.inst.regno + 2,
+                i.right.inst.regno,
+                -4
+              )
+            );
           }
           break;
         case BGE:
           add(
             DLX.assemble(
               DLX.BGE,
-              i.right.regno,
+              i.right.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -172,7 +188,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BGT,
-              i.right.regno,
+              i.right.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -181,7 +197,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BLE,
-              i.right.regno,
+              i.right.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -190,7 +206,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BLT,
-              i.right.regno,
+              i.right.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -199,7 +215,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BNE,
-              i.right.regno,
+              i.right.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -208,7 +224,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BEQ,
-              i.right.regno,
+              i.right.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -217,7 +233,11 @@ public class CodeGen {
           add(DLX.assemble(DLX.JSR, blockPC.get(i.right.proc) * 4));
           break;
         case RET:
-          add(DLX.assemble(DLX.STW, i.right.regno, FP, 4)); // STW return value into FP + 1
+          if (i.right.endFunc) {
+            add(DLX.assemble(DLX.RET, i.right.value));
+          } else {
+            add(DLX.assemble(DLX.STW, i.right.inst.regno + 2, FP, 4)); // STW return value into FP + 1
+          }
           break;
         case BRA:
           add(
@@ -264,7 +284,7 @@ public class CodeGen {
         makeDLXAssembly(DLX.MOD, inst);
         break;
       case NEG: // Dont need to check for constant because optimization should fold
-        add(DLX.assemble(DLX.XORI, inst.getRegister(), inst.right.regno));
+        add(DLX.assemble(DLX.XORI, inst.regno, inst.right.inst.regno + 2));
         break;
       case READ:
         add(read(inst));
@@ -292,11 +312,23 @@ public class CodeGen {
     if (inst.right == null) {
       return DLX.assemble(DLX.WRL);
     } else if (inst.right.type.getClass().equals(FloatType.class)) {
-      return DLX.assemble(DLX.WRF, inst.right.regno);
+      if (inst.right.kind == Result.INST) {
+        return DLX.assemble(DLX.WRF, inst.right.inst.regno + 2);
+      } else {
+        return DLX.assemble(DLX.WRF, inst.right.value);
+      }
     } else if (inst.right.type.getClass().equals(IntType.class)) {
-      return DLX.assemble(DLX.WRI, inst.right.regno);
+      if (inst.right.kind == Result.INST) {
+        return DLX.assemble(DLX.WRI, inst.right.inst.regno + 2);
+      } else {
+        return DLX.assemble(DLX.WRI, inst.right.value);
+      }
     } else if (inst.right.type.getClass().equals(BoolType.class)) {
-      return DLX.assemble(DLX.WRB, inst.right.regno);
+      if (inst.right.kind == Result.INST) {
+        return DLX.assemble(DLX.WRB, inst.right.inst.regno + 2);
+      } else {
+        return DLX.assemble(DLX.WRB, inst.right.value);
+      }
     }
     System.out.println("No Type Listed for WRITE");
     return -1;
@@ -352,39 +384,46 @@ public class CodeGen {
     int offset = genTypeCTX(inst);
     Result conRes = inst.left;
     Result notCon = inst.right;
+    if (conRes.kind == Result.INST) {
+      conRes.value = conRes.inst.regno + 2;
+    } else if (conRes.kind == Result.VAR) {
+      conRes.value = conRes.var.instruction.regno + 2;
+    }
+
+    if (notCon.kind == Result.INST) {
+      notCon.value = notCon.inst.regno + 2;
+    } else if (notCon.kind == Result.VAR) {
+      notCon.value = notCon.var.instruction.regno + 2;
+    }
+
     switch (offset) {
       case FCR:
         offset--;
-        conRes = inst.right;
-        notCon = inst.left;
+        Result hold = notCon;
+        notCon = conRes;
+        conRes = hold;
       case FCL:
       case F:
         add(
           DLX.assemble(
             (op == DLX.CMP ? op - 1 : op) + offset,
-            inst.getRegister(),
-            conRes.regno,
-            notCon.regno
+            inst.regno,
+            conRes.value,
+            notCon.value
           )
         );
         break;
       case ICR:
       case BCR:
         offset--;
-        conRes = inst.right;
-        notCon = inst.left;
+        Result hold1 = notCon;
+        notCon = conRes;
+        conRes = hold1;
       case BCL:
       case ICL:
       case I:
       case B:
-        add(
-          DLX.assemble(
-            op + offset,
-            inst.getRegister(),
-            notCon.regno,
-            conRes.value
-          )
-        );
+        add(DLX.assemble(op + offset, inst.regno, conRes.value, notCon.value));
         break;
     }
   }
@@ -446,7 +485,8 @@ public class CodeGen {
     for (int regToSave : registersIn) {
       Result reg = new Result();
       reg.kind = Result.REG;
-      reg.regno = regToSave;
+      reg.inst = new Instruction(op.RET);
+      reg.inst.regno = regToSave + 2;
       inOrder.add(new Instruction(op.STORE, reg, stack)); //  Have SP under right to understand this is a push operation
       inOrder.get(inOrder.size() - 1).blockLoc = bloc;
     }
@@ -456,7 +496,9 @@ public class CodeGen {
     for (int regToSave : registersIn) {
       Result reg = new Result();
       reg.kind = Result.REG;
-      reg.regno = regToSave;
+      reg.inst = new Instruction(op.RET);
+      reg.inst.regno = regToSave + 2;
+
       inOrder.add(new Instruction(op.LOAD, reg, stack));
       inOrder.get(inOrder.size() - 1).blockLoc = bloc;
     }

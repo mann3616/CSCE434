@@ -21,12 +21,11 @@ public class Result {
   public int kind;
   public Instruction inst;
   public Block proc;
-  public int regno;
   public int value;
   public Type type = new IntType();
+  public boolean endFunc = false;
   public float fvalue;
 
-  public int addy = -1;
   public Symbol var;
 
   public static HashMap<String, Result> allResults = new HashMap<String, Result>();

@@ -10,7 +10,7 @@ public class Symbol {
   public String name;
   public Type type;
   public int address = -1;
-  public int register = -1;
+  public int regno = -1;
   public static int static_assign = 0;
   public int my_assign;
   public Instruction instruction;
@@ -126,12 +126,12 @@ public class Symbol {
   }
 
   public int getRegister() {
-    if (OG.register == -1) {
+    if (OG.regno == -1) {
       throw new NoRegisterAssigned(
         "No register assigned to var <" + name + "> in version #" + getVersion()
       );
     }
-    return OG.register;
+    return OG.regno;
   }
 
   public boolean isLoaded() {
