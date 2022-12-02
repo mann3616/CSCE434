@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import pl434.Symbol;
+import types.*;
 
 public class Instruction {
 
@@ -40,7 +40,7 @@ public class Instruction {
   }
 
   public int kind = 0;
-
+  public Type readType = new IntType();
   public static int instruction_num = 0;
   public boolean eliminated = false;
   public Instruction usedAt = null;

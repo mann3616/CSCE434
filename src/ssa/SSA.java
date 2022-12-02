@@ -54,6 +54,16 @@ public class SSA implements NodeVisitor {
     }
   }
 
+  public void buildPhiEasy() {
+    for (Block b : roots) {
+      ArrayList<Block> bb = inOrderBlock(b);
+      for (Block bbb : bb) {
+        bbb.findPhiVars();
+        bbb.createPhiInst();
+      }
+    }
+  }
+
   public void findInnerByDomFront(HashSet<Block> visited, Block curr) {
     if (visited.contains(curr)) {
       return;
@@ -147,6 +157,7 @@ public class SSA implements NodeVisitor {
     //removeEmpties();
     DominatorTree tree = new DominatorTree(this);
     // Do we add the phi instructions now?
+    System.out.println(asDotGraph());
     Comparator c = new Comparator<Block>() {
       @Override
       public int compare(Block o1, Block o2) {
@@ -176,7 +187,8 @@ public class SSA implements NodeVisitor {
       tree.iterPhi(new HashSet<>(), b);
     }
     setDefaultLatest();
-    buildPhi();
+    // buildPhi();
+    buildPhiEasy();
     for (Block b : blocks) {
       b.visited.clear();
       for (Instruction i : b.instructions) {
@@ -504,6 +516,8 @@ public class SSA implements NodeVisitor {
     node.list().accept(this);
     // If it's a built in function then I use special commands WRITE, WRITENL, and READ
     if (node.function.builtinFunc) {
+      int i = 3;
+      Type f = null;
       switch (node.function.name) {
         case "printInt":
         case "printFloat":
@@ -514,10 +528,28 @@ public class SSA implements NodeVisitor {
           addInstruction(new Instruction(op.WRITENL));
           break;
         case "readInt":
+          i--;
         case "readFloat":
+          i--;
         case "readBool":
+          i--;
           addInstruction(new Instruction(op.READ));
           break;
+      }
+      switch (i) {
+        case 1:
+          f = new FloatType();
+          break;
+        case 2:
+          f = new BoolType();
+          break;
+        case 0:
+          f = new IntType();
+          break;
+      }
+      if (i != 0) {
+        currBlock.instructions.get(currBlock.instructions.size() - 1).readType =
+          f;
       }
       return;
     }
@@ -789,30 +821,15 @@ public class SSA implements NodeVisitor {
     }
   }
 
-  public HashMap<Block, List<Instruction>> getAllBlocks() {
-    HashMap<Block, List<Instruction>> blockToInsMap = new HashMap<>();
-    for (Block b : roots) {
-      List<Block> visited = new ArrayList<>();
-      inOrderInstruction(b, visited);
-      List<Instruction> instructions = new ArrayList<>();
-      for (Block c : visited) {
-        for (Instruction i : c.instructions) {
-          instructions.add(i);
-        }
+  public ArrayList<Instruction> getAllInstruction(Block b) {
+    ArrayList<Block> visited = inOrderBlock(b);
+    ArrayList<Instruction> instructions = new ArrayList<>();
+    for (Block c : visited) {
+      for (Instruction i : c.instructions) {
+        instructions.add(i);
       }
-      blockToInsMap.put(b, instructions);
     }
-    return blockToInsMap;
-  }
-
-  public void inOrderInstruction(Block root, List<Block> visited) {
-    if (visited.contains(root)) {
-      return;
-    }
-    visited.add(root);
-    for (Block b : root.edges) {
-      inOrderInstruction(b, visited);
-    }
+    return instructions;
   }
 
   public void countUpResults() {
@@ -855,5 +872,24 @@ public class SSA implements NodeVisitor {
     } else {
       res.get(change).add(r);
     }
+  }
+
+  public ArrayList<Block> inOrderBlock(Block root) {
+    ArrayList<Block> b = new ArrayList<>();
+    boolean begin = false;
+    for (Block c : blocks) {
+      if (c == root) {
+        begin = true;
+      }
+      if (!begin) continue;
+      if (root == main && c.label.equals("main")) {
+        b.add(c);
+      } else if (root != main && c.function == root.function) {
+        b.add(c);
+      } else {
+        begin = false;
+      }
+    }
+    return b;
   }
 }

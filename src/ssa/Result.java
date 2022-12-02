@@ -85,6 +85,10 @@ public class Result {
     return false;
   }
 
+  public boolean isInstruction() {
+    return this.kind == INST;
+  }
+
   public boolean compare(Result res) {
     if (res == this) return true;
     if (res.kind == VAR && kind == VAR && res.var.OG == var.OG) return true;

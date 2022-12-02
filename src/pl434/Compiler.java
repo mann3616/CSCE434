@@ -901,7 +901,7 @@ public class Compiler {
   public void regAlloc(int numRegs) {
     ssa.fixUpSSA(); // LOOK HERE LANCE! - Momo <3
     ssa.instantiateUsedAt();
-    System.out.println(ssa.asDotGraph());
+    //System.out.println(ssa.asDotGraph());
     ssa.countUpResults();
     for (Block block : ssa.roots) {
       initializeLiveness(block);
@@ -926,9 +926,7 @@ public class Compiler {
 
   // Creates live in and live out sets for all instructions
   private void calculateLiveness(Block block) {
-    ArrayList<Instruction> instructionSet = new ArrayList<Instruction>(
-      block.instructions
-    );
+    List<Instruction> instructionSet = ssa.getAllInstruction(block);
     boolean change_detected;
     do {
       change_detected = false;
@@ -1060,7 +1058,7 @@ public class Compiler {
   }
 
   private void printLiveness(Block block) {
-    for (Instruction instruction : block.instructions) {
+    for (Instruction instruction : ssa.getAllInstruction(block)) {
       System.out.println("-----------------------------------");
       System.out.println(instruction);
       System.out.println("InSet: " + instruction.InSet);
@@ -1290,7 +1288,7 @@ public class Compiler {
     HashMap<String, ArrayList<VariableInfo>> liveRanges,
     Block b
   ) {
-    for (Instruction instruction : b.instructions) {
+    for (Instruction instruction : ssa.getAllInstruction(b)) {
       for (String variable : instruction.InSet) {
         ArrayList<VariableInfo> PairList = liveRanges.get(variable);
         if (PairList.size() == 0) {
@@ -1337,7 +1335,7 @@ public class Compiler {
     HashMap<String, ArrayList<VariableInfo>> liveRanges,
     Block b
   ) {
-    for (Instruction instruction : b.instructions) {
+    for (Instruction instruction : ssa.getAllInstruction(b)) {
       for (String variable : instruction.InSet) {
         if (!liveRanges.containsKey(variable)) {
           // If this variable has not been added to the global list, add it

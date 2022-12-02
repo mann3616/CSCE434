@@ -15,10 +15,12 @@ public class CodeGen {
   ArrayList<Integer> dlx_inst = new ArrayList<>();
   static final int FP = 28;
   static final int SP = 29;
+  boolean solveRead = false;
   Result gdb = new Result();
   Result frame = new Result();
   Result stack = new Result();
   Result reg0 = new Result();
+  Result reg1 = new Result();
   Result pc = new Result();
   ArrayList<Instruction> inOrder = new ArrayList<>();
   HashMap<Block, Integer> blockPC = new HashMap<>();
@@ -46,6 +48,8 @@ public class CodeGen {
     global_count = ssa.global;
     reg0.inst = new Instruction(op.RET);
     reg0.inst.regno = 0;
+    reg1.inst = new Instruction(op.RET);
+    reg1.inst.regno = 1;
     frame.inst = new Instruction(op.RET);
     frame.inst.regno = 28;
     stack.inst = new Instruction(op.RET);
@@ -60,7 +64,7 @@ public class CodeGen {
     add(DLX.assemble(DLX.ADDI, SP, GLB, ssa.global * -4));
     add(DLX.assemble(DLX.ADD, FP, SP, 0)); // Frame and stack pointer is all set-up
 
-    generateFromBlockDFS(main, new HashSet<>());
+    generateFromBlock(main);
     for (Block b : ssa.roots) {
       if (b == main) continue;
       generateFromBlock(b);
@@ -76,34 +80,9 @@ public class CodeGen {
   }
 
   public void generateFromBlock(Block root) {
-    Stack<Block> bfs = new Stack<>();
-    HashSet<Block> visited = new HashSet<>();
-    bfs.push(root);
-    while (!bfs.isEmpty()) {
-      Stack<Block> bfsClone = new Stack<>();
-      while (!bfs.isEmpty()) {
-        Block block = bfs.pop();
-        if (visited.contains(block)) {
-          continue;
-        }
-        visited.add(block);
-        for (Block b : block.edges) {
-          bfsClone.push(b);
-        }
-        generateInOrder(block);
-      }
-      bfs.addAll(bfsClone);
-    }
-  }
-
-  public void generateFromBlockDFS(Block root, HashSet<Block> visited) {
-    if (visited.contains(root)) {
-      return;
-    }
-    visited.add(root);
-    generateInOrder(root);
-    for (Block b : root.edges) {
-      generateFromBlockDFS(b, visited);
+    ArrayList<Block> bb = ssa.inOrderBlock(root);
+    for (Block b : bb) {
+      generateInOrder(b);
     }
   }
 
@@ -146,7 +125,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BGE,
-              i.right.inst.regno + 2,
+              i.left.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -155,7 +134,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BGT,
-              i.right.inst.regno + 2,
+              i.left.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -164,7 +143,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BLE,
-              i.right.inst.regno + 2,
+              i.left.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -173,7 +152,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BLT,
-              i.right.inst.regno + 2,
+              i.left.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -182,7 +161,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BNE,
-              i.right.inst.regno + 2,
+              i.left.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -191,7 +170,7 @@ public class CodeGen {
           add(
             DLX.assemble(
               DLX.BEQ,
-              i.right.inst.regno + 2,
+              i.left.inst.regno + 2,
               blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
             )
           );
@@ -221,12 +200,12 @@ public class CodeGen {
   }
 
   public int read(Instruction inst) {
-    if (inst.right.type.getClass().equals(FloatType.class)) {
-      return DLX.assemble(DLX.RDF, inst.getRegister());
-    } else if (inst.right.type.getClass().equals(IntType.class)) {
-      return DLX.assemble(DLX.RDI, inst.getRegister());
-    } else if (inst.right.type.getClass().equals(BoolType.class)) {
-      return DLX.assemble(DLX.RDB, inst.getRegister());
+    if (inst.readType.getClass().equals(FloatType.class)) {
+      return DLX.assemble(DLX.RDF, inst.regno + 2);
+    } else if (inst.readType.getClass().equals(IntType.class)) {
+      return DLX.assemble(DLX.RDI, inst.regno + 2);
+    } else if (inst.readType.getClass().equals(BoolType.class)) {
+      return DLX.assemble(DLX.RDB, inst.regno + 2);
     }
     System.out.println("No Type Listed for READ");
     return -1;
@@ -335,9 +314,9 @@ public class CodeGen {
     } else if (notCon.kind == Result.REG) {
       notCon.value = notCon.inst.regno;
     }
-    System.out.println(inst + " " + (inst.regno + 2));
-    System.out.println("  " + notCon.value + " this is right");
-    System.out.println("  " + conRes.value + " this is left");
+    // System.out.println(inst + " " + (inst.regno + 2));
+    // System.out.println("  " + notCon.value + " this is right");
+    // System.out.println("  " + conRes.value + " this is left");
 
     switch (offset) {
       case FCR:
@@ -369,7 +348,7 @@ public class CodeGen {
         add(
           DLX.assemble(op + offset, inst.regno + 2, conRes.value, notCon.value)
         );
-        System.out.println(DLX.instrString(dlx_inst.get(dlx_inst.size() - 1)));
+        // System.out.println(DLX.instrString(dlx_inst.get(dlx_inst.size() - 1)));
         break;
     }
   }
@@ -489,10 +468,29 @@ public class CodeGen {
         }
         functionCall(i); // Add all save Reg and Load reg instructions with SP + FP
         break;
+      case WRITE:
+        // ii = new Instruction(op.ADD, reg0, i.right);
+        // ii.regno = i.right.regno;
+        if (i.right.kind == Result.CONST) {
+          inOrder.add(new Instruction(op.ADD, reg1, i.right));
+          inOrder.get(inOrder.size() - 1).regno = -1;
+          Result r = new Result();
+          r.kind = Result.INST;
+          r.inst = inOrder.get(inOrder.size() - 1);
+          i.right = r;
+        }
+        inOrder.add(i);
+      case READ:
+        break;
       case MOVE:
-        ii = new Instruction(op.ADD, reg0, i.left);
-        ii.regno = i.right.var.OG.regno;
-        inOrder.add(ii);
+        if (ii.left.kind == Result.INST && ii.left.inst.inst == op.READ) {
+          ii.left.inst.regno = ii.right.var.OG.regno;
+          inOrder.add(ii.left.inst);
+        } else {
+          ii = new Instruction(op.ADD, reg0, i.left);
+          ii.regno = i.right.var.OG.regno;
+          inOrder.add(ii);
+        }
         break;
       default:
         inOrder.add(ii);

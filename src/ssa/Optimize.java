@@ -107,10 +107,10 @@ public class Optimize {
     }
 
     for (Instruction instruction : instructionSet) {
-      System.out.println(instruction);
-      System.out.println("InSet: " + instruction.InSet);
-      System.out.println("OutSet: " + instruction.OutSet);
-      System.out.println("-----------------------------------");
+      // System.out.println(instruction);
+      // System.out.println("InSet: " + instruction.InSet);
+      // System.out.println("OutSet: " + instruction.OutSet);
+      // System.out.println("-----------------------------------");
       if (!instruction.eliminated && instruction.inst == op.MOVE) {
         // Right is a variable that is being assigned to
         // If the outset does not contain a variable that is being defined,
@@ -120,9 +120,16 @@ public class Optimize {
           instruction.eliminated = true;
         }
       }
+      instruction.InSet.clear();
+      instruction.OutSet.clear();
     }
     // Next, do block checking
-    System.out.println(ssa.asDotGraph());
+    // if (change_made) {
+    //   System.out.println("DEAD CODE");
+    //   System.out.println(ssa.asDotGraph());
+    // } else {
+    //   System.out.println("Done");
+    // }
     // We can delete code blocks by checking what's used in mainInstructions
     // If a function isn't called in main, then it is considered dead.
 
@@ -160,10 +167,10 @@ public class Optimize {
         }
       }
     }
-    if (true) {
-      System.out.println("COPY PROPOGATION");
-      System.out.println(ssa.asDotGraph());
-    }
+    // if (true) {
+    //   System.out.println("COPY PROPOGATION");
+    //   System.out.println(ssa.asDotGraph());
+    // }
     return changed;
   }
 
@@ -211,10 +218,10 @@ public class Optimize {
       }
       b.visited.clear();
     }
-    if (true) {
-      System.out.println("SUBEXPR ELIM");
-      System.out.println(ssa.asDotGraph());
-    }
+    // if (true) {
+    //   System.out.println("SUBEXPR ELIM");
+    //   System.out.println(ssa.asDotGraph());
+    // }
     return changed;
     // Make list of available expressions before an instruction is ran
     // Will be a hashmap of Instruction to List of instructions
@@ -766,15 +773,16 @@ public class Optimize {
         }
       }
     }
-    if (true) {
-      System.out.println("CONSTANT PROPOGATION");
-      System.out.println(ssa.asDotGraph());
-    }
+    // if (true) {
+    //   System.out.println("CONSTANT PROPOGATION");
+    //   System.out.println(ssa.asDotGraph());
+    // }
     return changed;
   }
 
   public boolean constant_folding() {
     // TODO: Deal with special arithmetic cases of 0 and 1
+    ssa.instantiateUsedAt();
     boolean changed = false;
     for (Block b : ssa.blocks) {
       int index = 0;
@@ -974,22 +982,46 @@ public class Optimize {
         }
         index++;
         if (i.eliminated) {
-          Instruction nxt = b.instructions.get(index);
-          if (nxt.left.kind == Result.INST && nxt.left.inst == i) {
+          Instruction nxt = i.usedAt;
+          if (nxt.inst == op.CALL) {
+            for (Result r : nxt.func_params) {
+              if (r.kind == Result.INST && r.inst == i) {
+                r.kind = Result.CONST;
+                r.value = new_val;
+              }
+            }
+          }
+          if (
+            nxt.left != null &&
+            nxt.left.kind == Result.INST &&
+            nxt.left.inst == i
+          ) {
             nxt.left.kind = Result.CONST;
             nxt.left.value = new_val;
           }
-          if (nxt.right.kind == Result.INST && nxt.right.inst == i) {
+          if (
+            nxt.right != null &&
+            nxt.right.kind == Result.INST &&
+            nxt.right.inst == i
+          ) {
             nxt.right.kind = Result.CONST;
             nxt.right.value = new_val;
+          }
+          if (
+            nxt.third != null &&
+            nxt.third.kind == Result.INST &&
+            nxt.third.inst == i
+          ) {
+            nxt.third.kind = Result.CONST;
+            nxt.third.value = new_val;
           }
         }
       }
     }
-    if (true) {
-      System.out.println("CONST FOLD");
-      System.out.println(ssa.asDotGraph());
-    }
+    // if (true) {
+    //   System.out.println("CONST FOLD");
+    //   System.out.println(ssa.asDotGraph());
+    // }
     return changed;
   }
 
@@ -1082,4 +1114,86 @@ public class Optimize {
 //     }
 //   }
 //   return null;
+// }
+// public boolean dead_code_elim() {
+//   HashMap<Symbol, HashMap<Integer, Integer>> hm = new HashMap<>();
+//   boolean changed = false;
+//   // Next, do block checking
+//   for (Block b : ssa.blocks) {
+//     for (Instruction i : b.instructions) {
+//       if (i.eliminated) continue;
+//       if (i.inst == op.CALL) {
+//         for (Result rr : i.func_params) {
+//           if (rr.kind == Result.VAR) {
+//             addToMap(hm, rr);
+//           }
+//         }
+//       }
+//       if (i.third != null && i.third.kind == Result.VAR) {
+//         addToMap(hm, i.third);
+//       }
+//       if (i.left != null && i.left.kind == Result.VAR) {
+//         addToMap(hm, i.left);
+//       }
+//       if (i.right != null && i.right.kind == Result.VAR) {
+//         addToMap(hm, i.right);
+//       }
+//     }
+//   }
+//   for (Block b : ssa.blocks) {
+//     for (Instruction i : b.instructions) {
+//       if (i.eliminated) continue;
+//       if (i.third != null && i.third.kind == Result.VAR) {
+//         if (toSmall(hm, i.third)) {
+//           changed = true;
+//           i.eliminated = true;
+//         }
+//       }
+//       if (i.left != null && i.left.kind == Result.VAR) {
+//         if (toSmall(hm, i.left)) {
+//           changed = true;
+//           i.eliminated = true;
+//         }
+//       }
+//       if (i.right != null && i.right.kind == Result.VAR) {
+//         if (toSmall(hm, i.right)) {
+//           changed = true;
+//           i.eliminated = true;
+//         }
+//       }
+//     }
+//   }
+//   if (changed) {
+//     System.out.println("DEAD CODE");
+//     System.out.println(ssa.asDotGraph());
+//   }
+//   // We can delete code blocks by checking what's used in mainInstructions
+//   // If a function isn't called in main, then it is considered dead.
+//   return changed;
+// }
+// public void addToMap(
+//   HashMap<Symbol, HashMap<Integer, Integer>> hm,
+//   Result r
+// ) {
+//   if (hm.containsKey(r.var.OG)) { // This variable has been found before
+//     if (hm.get(r.var.OG).containsKey(r.var.getVersion())) { // If this version already exists then + 1 the count
+//       hm
+//         .get(r.var.OG)
+//         .put(
+//           r.var.getVersion(),
+//           hm.get(r.var.OG).get(r.var.getVersion()) + 1
+//         );
+//     } else {
+//       hm.get(r.var.OG).put(r.var.getVersion(), 0);
+//     }
+//   } else {
+//     hm.put(r.var.OG, new HashMap<>());
+//     hm.get(r.var.OG).put(r.var.getVersion(), 0);
+//   }
+// }
+// public boolean toSmall(
+//   HashMap<Symbol, HashMap<Integer, Integer>> hm,
+//   Result r
+// ) {
+//   return hm.get(r.var.OG).get(r.var.getVersion()) == 0;
 // }

@@ -130,6 +130,7 @@ public class Block {
       // Finish renumbering blocks
       for (Block re : ssa.blocks) {
         if (!visited.contains(re)) {
+          re.parsVisited.clear();
           renumBlock(true, re, c.getValue(), null);
           visited.add(re);
         }
