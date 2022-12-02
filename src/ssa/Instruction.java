@@ -39,6 +39,8 @@ public class Instruction {
     BRA,
   }
 
+  public int kind = 0;
+
   public static int instruction_num = 0;
   public boolean eliminated = false;
   public Instruction usedAt = null;

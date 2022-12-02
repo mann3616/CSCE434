@@ -72,6 +72,8 @@ public class Result {
         return var.name;
       case GDB:
         return "GDB";
+      case REG:
+        return "R" + inst.regno;
     }
     return "Error(Could not format Result to any given type)";
   }
@@ -80,6 +82,14 @@ public class Result {
     if (this.kind == VAR) {
       return true;
     }
+    return false;
+  }
+
+  public boolean compare(Result res) {
+    if (res == this) return true;
+    if (res.kind == VAR && kind == VAR && res.var.OG == var.OG) return true;
+    if (res.kind == INST && kind == INST && res.inst == inst) return true;
+    if (res.kind == CONST && kind == CONST && res.value == value) return true;
     return false;
   }
 }

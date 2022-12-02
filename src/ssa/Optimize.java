@@ -122,7 +122,7 @@ public class Optimize {
       }
     }
     // Next, do block checking
-
+    System.out.println(ssa.asDotGraph());
     // We can delete code blocks by checking what's used in mainInstructions
     // If a function isn't called in main, then it is considered dead.
 
@@ -159,6 +159,10 @@ public class Optimize {
           }
         }
       }
+    }
+    if (true) {
+      System.out.println("COPY PROPOGATION");
+      System.out.println(ssa.asDotGraph());
     }
     return changed;
   }
@@ -206,6 +210,10 @@ public class Optimize {
         i.equivList.clear();
       }
       b.visited.clear();
+    }
+    if (true) {
+      System.out.println("SUBEXPR ELIM");
+      System.out.println(ssa.asDotGraph());
     }
     return changed;
     // Make list of available expressions before an instruction is ran
@@ -758,6 +766,10 @@ public class Optimize {
         }
       }
     }
+    if (true) {
+      System.out.println("CONSTANT PROPOGATION");
+      System.out.println(ssa.asDotGraph());
+    }
     return changed;
   }
 
@@ -973,6 +985,10 @@ public class Optimize {
           }
         }
       }
+    }
+    if (true) {
+      System.out.println("CONST FOLD");
+      System.out.println(ssa.asDotGraph());
     }
     return changed;
   }

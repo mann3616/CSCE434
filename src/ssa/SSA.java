@@ -816,24 +816,44 @@ public class SSA implements NodeVisitor {
   }
 
   public void countUpResults() {
+    ArrayList<ArrayList<Result>> res = new ArrayList<>();
     for (Block b : blocks) {
       for (Instruction j : b.instructions) {
         if (j.inst == op.CALL) {
           for (int x = 0; x < j.func_params.size() - 1; x++) {
-            j.func_params.get(x).result_count++;
+            addToRes(res, j.func_params.get(x));
           }
         } else {
           if (j.left != null) {
-            j.left.result_count++;
+            addToRes(res, j.left);
           }
           if (j.right != null) {
-            j.right.result_count++;
+            addToRes(res, j.right);
           }
           if (j.third != null) {
-            j.third.result_count++;
+            addToRes(res, j.third);
           }
         }
       }
+    }
+    for (ArrayList<Result> r : res) {
+      for (Result rr : r) {
+        rr.result_count = r.size();
+      }
+    }
+  }
+
+  public void addToRes(ArrayList<ArrayList<Result>> res, Result r) {
+    int change = 0;
+    for (ArrayList<Result> i : res) {
+      if (i.get(0).compare(r)) break;
+      change++;
+    }
+    if (change == res.size()) {
+      res.add(new ArrayList<>());
+      res.get(res.size() - 1).add(r);
+    } else {
+      res.get(change).add(r);
     }
   }
 }

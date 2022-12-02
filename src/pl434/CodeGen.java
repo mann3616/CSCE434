@@ -110,40 +110,7 @@ public class CodeGen {
   public void generateInOrder(Block block) {
     blockPC.put(block, inOrder.size() + 2); // +2 because that is the amount of instructions added before hand
     for (Instruction i : block.instructions) {
-      // Adding store and load instructiosn required prior
-      if (!i.storeThese.isEmpty()) {
-        for (Result r : i.storeThese) {
-          inOrder.add(new Instruction(op.STORE, r, stack));
-          inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
-        }
-        inStorage.addAll(i.storeThese);
-      }
-      // Load Items that must be loaded
-      if (i.left != null && inStorage.contains(i.left)) {
-        inOrder.add(new Instruction(op.LOAD, i.left, stack));
-        inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
-        inStorage.remove(i.left);
-      }
-      if (i.right != null && inStorage.contains(i.right)) {
-        inOrder.add(new Instruction(op.LOAD, i.right, stack));
-        inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
-        inStorage.remove(i.right);
-      }
-      // Load items in func_call
-      if (i.inst == op.CALL) {
-        for (Result r : i.func_params) {
-          // Load parameter if stored
-          if (inStorage.contains(r)) {
-            inOrder.add(new Instruction(op.LOAD, r, stack));
-            inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
-            inStorage.remove(r);
-          }
-        }
-        functionCall(i); // Add all save Reg and Load reg instructions with SP + FP
-      }
-      if (i.inst != op.PHI && i.inst != op.MOVE) {
-        inOrder.add(i);
-      }
+      genIOInstruction(i);
     }
   }
 
@@ -253,49 +220,6 @@ public class CodeGen {
     }
   }
 
-  public void generateSimpleInstruction(Instruction inst) {
-    switch (inst.inst) {
-      case OR:
-        makeDLXAssembly(DLX.OR, inst);
-        break;
-      case AND:
-        makeDLXAssembly(DLX.AND, inst);
-        break;
-      case ADD:
-      case ADDA:
-        makeDLXAssembly(DLX.ADD, inst);
-        break;
-      case CMP:
-        makeDLXAssembly(DLX.CMP, inst);
-        break;
-      case SUB:
-        makeDLXAssembly(DLX.SUB, inst);
-        break;
-      case MUL:
-        makeDLXAssembly(DLX.MUL, inst);
-        break;
-      case DIV:
-        makeDLXAssembly(DLX.DIV, inst);
-        break;
-      case POW:
-        makeDLXAssembly(DLX.POW, inst);
-        break;
-      case MOD:
-        makeDLXAssembly(DLX.MOD, inst);
-        break;
-      case NEG: // Dont need to check for constant because optimization should fold
-        add(DLX.assemble(DLX.XORI, inst.regno, inst.right.inst.regno + 2));
-        break;
-      case READ:
-        add(read(inst));
-        break;
-      case WRITE:
-      case WRITENL:
-        add(write(inst));
-        break;
-    }
-  }
-
   public int read(Instruction inst) {
     if (inst.right.type.getClass().equals(FloatType.class)) {
       return DLX.assemble(DLX.RDF, inst.getRegister());
@@ -314,20 +238,32 @@ public class CodeGen {
     } else if (inst.right.type.getClass().equals(FloatType.class)) {
       if (inst.right.kind == Result.INST) {
         return DLX.assemble(DLX.WRF, inst.right.inst.regno + 2);
+      } else if (inst.right.kind == Result.REG) {
+        return DLX.assemble(DLX.WRF, inst.right.inst.regno);
+      } else if (inst.right.kind == Result.VAR) {
+        return DLX.assemble(DLX.WRF, inst.right.var.OG.regno + 2);
       } else {
-        return DLX.assemble(DLX.WRF, inst.right.value);
+        return DLX.assemble(DLX.WRF, inst.right.inst.regno + 2);
       }
     } else if (inst.right.type.getClass().equals(IntType.class)) {
       if (inst.right.kind == Result.INST) {
         return DLX.assemble(DLX.WRI, inst.right.inst.regno + 2);
+      } else if (inst.right.kind == Result.REG) {
+        return DLX.assemble(DLX.WRI, inst.right.inst.regno);
+      } else if (inst.right.kind == Result.VAR) {
+        return DLX.assemble(DLX.WRI, inst.right.var.OG.regno + 2);
       } else {
-        return DLX.assemble(DLX.WRI, inst.right.value);
+        return DLX.assemble(DLX.WRI, inst.right.inst.regno + 2);
       }
     } else if (inst.right.type.getClass().equals(BoolType.class)) {
       if (inst.right.kind == Result.INST) {
         return DLX.assemble(DLX.WRB, inst.right.inst.regno + 2);
+      } else if (inst.right.kind == Result.REG) {
+        return DLX.assemble(DLX.WRB, inst.right.inst.regno);
+      } else if (inst.right.kind == Result.VAR) {
+        return DLX.assemble(DLX.WRB, inst.right.var.OG.regno + 2);
       } else {
-        return DLX.assemble(DLX.WRB, inst.right.value);
+        return DLX.assemble(DLX.WRB, inst.right.inst.regno + 2);
       }
     }
     System.out.println("No Type Listed for WRITE");
@@ -335,14 +271,14 @@ public class CodeGen {
   }
 
   static final int I = 0;
-  static final int ICL = 20;
-  static final int ICR = 21;
+  static final int ICR = 20;
+  static final int ICL = 21;
   static final int F = 7;
-  static final int FCL = 27;
-  static final int FCR = 28;
+  static final int FCR = 27;
+  static final int FCL = 28;
   static final int B = 13;
-  static final int BCL = 33;
-  static final int BCR = 34;
+  static final int BCR = 33;
+  static final int BCL = 34;
 
   public int genTypeCTX(Instruction inst) {
     if (
@@ -387,14 +323,21 @@ public class CodeGen {
     if (conRes.kind == Result.INST) {
       conRes.value = conRes.inst.regno + 2;
     } else if (conRes.kind == Result.VAR) {
-      conRes.value = conRes.var.instruction.regno + 2;
+      conRes.value = conRes.var.OG.regno + 2;
+    } else if (conRes.kind == Result.REG) {
+      conRes.value = conRes.inst.regno;
     }
 
     if (notCon.kind == Result.INST) {
       notCon.value = notCon.inst.regno + 2;
     } else if (notCon.kind == Result.VAR) {
-      notCon.value = notCon.var.instruction.regno + 2;
+      notCon.value = notCon.var.OG.regno + 2;
+    } else if (notCon.kind == Result.REG) {
+      notCon.value = notCon.inst.regno;
     }
+    System.out.println(inst + " " + (inst.regno + 2));
+    System.out.println("  " + notCon.value + " this is right");
+    System.out.println("  " + conRes.value + " this is left");
 
     switch (offset) {
       case FCR:
@@ -407,23 +350,26 @@ public class CodeGen {
         add(
           DLX.assemble(
             (op == DLX.CMP ? op - 1 : op) + offset,
-            inst.regno,
+            inst.regno + 2,
             conRes.value,
             notCon.value
           )
         );
         break;
-      case ICR:
-      case BCR:
+      case ICL:
+      case BCL:
         offset--;
         Result hold1 = notCon;
         notCon = conRes;
         conRes = hold1;
-      case BCL:
-      case ICL:
+      case BCR:
+      case ICR:
       case I:
       case B:
-        add(DLX.assemble(op + offset, inst.regno, conRes.value, notCon.value));
+        add(
+          DLX.assemble(op + offset, inst.regno + 2, conRes.value, notCon.value)
+        );
+        System.out.println(DLX.instrString(dlx_inst.get(dlx_inst.size() - 1)));
         break;
     }
   }
@@ -507,5 +453,92 @@ public class CodeGen {
   public void add(int dlxinst) {
     dlx_inst.add(dlxinst);
     count++;
+  }
+
+  public void genIOInstruction(Instruction i) {
+    // Adding store and load instructiosn required prior
+    if (!i.storeThese.isEmpty()) {
+      for (Result r : i.storeThese) {
+        inOrder.add(new Instruction(op.STORE, r, stack));
+        inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
+      }
+      inStorage.addAll(i.storeThese);
+    }
+    // Load Items that must be loaded
+    if (i.left != null && inStorage.contains(i.left)) {
+      inOrder.add(new Instruction(op.LOAD, i.left, stack));
+      inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
+      inStorage.remove(i.left);
+    }
+    if (i.right != null && inStorage.contains(i.right)) {
+      inOrder.add(new Instruction(op.LOAD, i.right, stack));
+      inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
+      inStorage.remove(i.right);
+    }
+    // Load items in func_call
+    Instruction ii = i;
+    switch (i.inst) {
+      case CALL:
+        for (Result r : i.func_params) {
+          // Load parameter if stored
+          if (inStorage.contains(r)) {
+            inOrder.add(new Instruction(op.LOAD, r, stack));
+            inOrder.get(inOrder.size() - 1).blockLoc = i.blockLoc;
+            inStorage.remove(r);
+          }
+        }
+        functionCall(i); // Add all save Reg and Load reg instructions with SP + FP
+        break;
+      case MOVE:
+        ii = new Instruction(op.ADD, reg0, i.left);
+        ii.regno = i.right.var.OG.regno;
+        inOrder.add(ii);
+        break;
+      default:
+        inOrder.add(ii);
+    }
+  }
+
+  public void generateSimpleInstruction(Instruction inst) {
+    switch (inst.inst) {
+      case OR:
+        makeDLXAssembly(DLX.OR, inst);
+        break;
+      case AND:
+        makeDLXAssembly(DLX.AND, inst);
+        break;
+      case ADD:
+      case ADDA:
+        makeDLXAssembly(DLX.ADD, inst);
+        break;
+      case CMP:
+        makeDLXAssembly(DLX.CMP, inst);
+        break;
+      case SUB:
+        makeDLXAssembly(DLX.SUB, inst);
+        break;
+      case MUL:
+        makeDLXAssembly(DLX.MUL, inst);
+        break;
+      case DIV:
+        makeDLXAssembly(DLX.DIV, inst);
+        break;
+      case POW:
+        makeDLXAssembly(DLX.POW, inst);
+        break;
+      case MOD:
+        makeDLXAssembly(DLX.MOD, inst);
+        break;
+      case NEG: // Dont need to check for constant because optimization should fold
+        add(DLX.assemble(DLX.XORI, inst.regno, inst.right.inst.regno + 2));
+        break;
+      case READ:
+        add(read(inst));
+        break;
+      case WRITE:
+      case WRITENL:
+        add(write(inst));
+        break;
+    }
   }
 }

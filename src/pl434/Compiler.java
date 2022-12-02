@@ -901,6 +901,7 @@ public class Compiler {
   public void regAlloc(int numRegs) {
     ssa.fixUpSSA(); // LOOK HERE LANCE! - Momo <3
     ssa.instantiateUsedAt();
+    System.out.println(ssa.asDotGraph());
     ssa.countUpResults();
     for (Block block : ssa.roots) {
       initializeLiveness(block);
@@ -1125,9 +1126,9 @@ public class Compiler {
       // We will always start from the left most register
       boolean successfully_allocated = false;
       for (int registerNumber = 0; registerNumber < numRegs; registerNumber++) {
+        int instruction_number = liveIntervals.get(variable).opening;
         if (registerMap.get(registerNumber) == null) {
           // This register has not been used before, so we are clear to assign
-          int instruction_number = liveIntervals.get(variable).opening;
           ArrayList<RegisterAlloc> allocationHistory = new ArrayList<RegisterAlloc>();
           allocationHistory.add(
             new RegisterAlloc(instruction_number, variable)
@@ -1136,12 +1137,18 @@ public class Compiler {
           registerMap.put((Integer) registerNumber, allocationHistory);
           successfully_allocated = true;
           Instruction thisInstruction = liveIntervals.get(variable).instruction;
-          thisInstruction.regno = registerNumber;
+          switch (thisInstruction.inst) {
+            case MOVE:
+            case PHI:
+              thisInstruction.right.var.OG.regno = registerNumber;
+              break;
+            default:
+              thisInstruction.regno = registerNumber;
+          }
           break;
         } else {
           // The register has been used before
           // Check if it is available
-          int instruction_number = liveIntervals.get(variable).opening;
           String currentlyStoredVariable = registerMap
             .get(registerNumber)
             .get(registerMap.get(registerNumber).size() - 1)
@@ -1150,7 +1157,13 @@ public class Compiler {
             .closing;
 
           // The current register is holding a dead variable, so we can replace it
-          boolean holdingDeadVariable = instruction_number >= deathInstruction;
+          Instruction thisInstruction = liveIntervals.get(variable).instruction;
+          boolean holdingDeadVariable =
+            instruction_number >= deathInstruction &&
+            (
+              thisInstruction.inst == op.MOVE || thisInstruction.inst == op.PHI
+            ) ||
+            instruction_number > deathInstruction;
           if (holdingDeadVariable) {
             RegisterAlloc placement = new RegisterAlloc(
               Integer.valueOf(instruction_number),
@@ -1158,9 +1171,14 @@ public class Compiler {
             );
             registerMap.get(registerNumber).add(placement);
             successfully_allocated = true;
-            Instruction thisInstruction = liveIntervals.get(variable)
-              .instruction;
-            thisInstruction.regno = registerNumber;
+            switch (thisInstruction.inst) {
+              case MOVE:
+              case PHI:
+                thisInstruction.right.var.OG.regno = registerNumber;
+                break;
+              default:
+                thisInstruction.regno = registerNumber;
+            }
             break;
           }
         }
@@ -1202,6 +1220,20 @@ public class Compiler {
             min = check.getResult().result_count;
             loadResult = check.getResult();
           }
+        }
+        int reg =
+          (
+            loadResult.kind == Result.VAR
+              ? loadResult.var.OG.regno
+              : loadResult.inst.regno
+          );
+        switch (thisInstruction.inst) {
+          case MOVE:
+          case PHI:
+            thisInstruction.right.var.OG.regno = reg;
+            break;
+          default:
+            thisInstruction.regno = reg;
         }
         thisInstruction.storeThese.add(loadResult); // Place under store
 
@@ -1327,15 +1359,31 @@ public class Compiler {
   }
 
   public boolean instructionContainsResult(Instruction i, Result r) {
-    if (i.left != null && i.left.inst.regno == r.inst.regno) {
+    if (
+      i.left != null &&
+      (
+        (i.left.kind == Result.VAR && i.left.var.OG.regno == r.inst.regno) ||
+        i.left.inst.regno == r.inst.regno
+      )
+    ) {
       return true;
     }
-    if (i.right != null && i.right.inst.regno == r.inst.regno) {
+    if (
+      i.right != null &&
+      (
+        (i.right.kind == Result.VAR && i.right.var.OG.regno == r.inst.regno) ||
+        i.right.inst.regno == r.inst.regno
+      )
+    ) {
       return true;
     }
     if (i.func_params != null) {
       for (Result rr : i.func_params) {
-        if (r.inst.regno == rr.inst.regno) {
+        if (
+          rr.kind == Result.VAR &&
+          rr.var.OG.regno == r.inst.regno ||
+          r.inst.regno == rr.inst.regno
+        ) {
           return true;
         }
       }
