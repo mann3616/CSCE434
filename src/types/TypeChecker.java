@@ -549,9 +549,9 @@ public class TypeChecker implements NodeVisitor {
           case "printInt":
             checker = (checker == null ? new IntType() : checker);
           case "printFloat":
-            checker = (checker == null ? new IntType() : checker);
+            checker = (checker == null ? new FloatType() : checker);
           case "printBool":
-            checker = (checker == null ? new IntType() : checker);
+            checker = (checker == null ? new BoolType() : checker);
             if (
               argList.list.size() == 1 &&
               argList.list.get(0).getClass().equals(checker.getClass())

@@ -70,6 +70,7 @@ public class CodeGen {
       generateFromBlock(b);
     }
     generateInstructions();
+    // System.out.println("We have " + dlx_inst.size() + " instructions");
     int[] instConvert = new int[dlx_inst.size()];
     int x = 0;
     for (Integer i : dlx_inst) {
@@ -87,15 +88,17 @@ public class CodeGen {
   }
 
   public void generateInOrder(Block block) {
-    blockPC.put(block, inOrder.size() + 2); // +2 because that is the amount of instructions added before hand
+    blockPC.put(block, inOrder.size()); // +2 because that is the amount of instructions added before hand
     for (Instruction i : block.instructions) {
       genIOInstruction(i);
     }
   }
 
   public void generateInstructions() {
+    int index = 0;
     for (Instruction i : inOrder) {
       // Store items to free up regs
+      // System.out.println(dlx_inst.size());
       switch (i.inst) {
         case STORE:
           if (i.right == stack) {
@@ -126,7 +129,7 @@ public class CodeGen {
             DLX.assemble(
               DLX.BGE,
               i.left.inst.regno + 2,
-              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+              blockPC.get(i.right.proc) - index
             )
           );
           break;
@@ -135,7 +138,7 @@ public class CodeGen {
             DLX.assemble(
               DLX.BGT,
               i.left.inst.regno + 2,
-              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+              blockPC.get(i.right.proc) - index
             )
           );
           break;
@@ -144,7 +147,7 @@ public class CodeGen {
             DLX.assemble(
               DLX.BLE,
               i.left.inst.regno + 2,
-              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+              blockPC.get(i.right.proc) - index
             )
           );
           break;
@@ -153,7 +156,7 @@ public class CodeGen {
             DLX.assemble(
               DLX.BLT,
               i.left.inst.regno + 2,
-              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+              blockPC.get(i.right.proc) - index // PHI instruction isnt being used
             )
           );
           break;
@@ -162,7 +165,7 @@ public class CodeGen {
             DLX.assemble(
               DLX.BNE,
               i.left.inst.regno + 2,
-              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+              blockPC.get(i.right.proc) - index
             )
           );
           break;
@@ -171,7 +174,7 @@ public class CodeGen {
             DLX.assemble(
               DLX.BEQ,
               i.left.inst.regno + 2,
-              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
+              blockPC.get(i.right.proc) - index
             )
           );
           break;
@@ -186,16 +189,12 @@ public class CodeGen {
           }
           break;
         case BRA:
-          add(
-            DLX.assemble(
-              DLX.BSR,
-              blockPC.get(i.right.proc) - blockPC.get(i.blockLoc)
-            )
-          );
+          add(DLX.assemble(DLX.BSR, blockPC.get(i.right.proc) - index));
           break;
         default:
           generateSimpleInstruction(i);
       }
+      index++;
     }
   }
 
@@ -256,8 +255,8 @@ public class CodeGen {
   static final int FCR = 27;
   static final int FCL = 28;
   static final int B = 13;
-  static final int BCR = 33;
-  static final int BCL = 34;
+  static final int BCR = 20;
+  static final int BCL = 21;
 
   public int genTypeCTX(Instruction inst) {
     if (
@@ -336,12 +335,10 @@ public class CodeGen {
         );
         break;
       case ICL:
-      case BCL:
         offset--;
         Result hold1 = notCon;
         notCon = conRes;
         conRes = hold1;
-      case BCR:
       case ICR:
       case I:
       case B:
@@ -456,7 +453,34 @@ public class CodeGen {
     }
     // Load items in func_call
     Instruction ii = i;
+    // if (
+    //   i.left != null &&
+    //   i.left.isVariable() &&
+    //   i.left.var.OG.name.startsWith("y")
+    // ) {
+    //   System.out.println(i.left.var.OG.regno);
+    // }
+    // if (
+    //   i.right != null &&
+    //   i.right.isVariable() &&
+    //   i.right.var.OG.name.startsWith("y")
+    // ) {
+    //   System.out.println(i.right.var.OG.regno);
+    // }
     switch (i.inst) {
+      case POW:
+      case DIV:
+      case SUB:
+        if (i.left.kind == Result.CONST) {
+          inOrder.add(new Instruction(op.ADD, reg0, i.left));
+          inOrder.get(inOrder.size() - 1).regno = -1; // Place into 1
+          i.left.inst = inOrder.get(inOrder.size() - 1);
+          i.left.kind = Result.INST;
+        }
+        inOrder.add(i);
+        break;
+      case PHI:
+        break;
       case CALL:
         for (Result r : i.func_params) {
           // Load parameter if stored
@@ -492,6 +516,17 @@ public class CodeGen {
           inOrder.add(ii);
         }
         break;
+      case NEG:
+        if (i.right.kind == Result.CONST) {
+          inOrder.add(new Instruction(op.ADD, reg1, i.right));
+          inOrder.get(inOrder.size() - 1).regno = -1;
+          Result r = new Result();
+          r.kind = Result.INST;
+          r.inst = inOrder.get(inOrder.size() - 1);
+          i.right = r;
+        }
+        inOrder.add(i);
+        break;
       default:
         inOrder.add(ii);
     }
@@ -499,6 +534,8 @@ public class CodeGen {
 
   public void generateSimpleInstruction(Instruction inst) {
     switch (inst.inst) {
+      case PHI:
+        break;
       case OR:
         makeDLXAssembly(DLX.OR, inst);
         break;
@@ -528,7 +565,20 @@ public class CodeGen {
         makeDLXAssembly(DLX.MOD, inst);
         break;
       case NEG: // Dont need to check for constant because optimization should fold
-        add(DLX.assemble(DLX.XORI, inst.regno, inst.right.inst.regno + 2));
+        if (inst.right.kind == Result.VAR) {
+          add(
+            DLX.assemble(
+              DLX.XORI,
+              inst.regno + 2,
+              inst.right.var.OG.regno + 2,
+              1
+            )
+          );
+        } else {
+          add(
+            DLX.assemble(DLX.XORI, inst.regno + 2, inst.right.inst.regno + 2, 1)
+          );
+        }
         break;
       case READ:
         add(read(inst));
@@ -537,6 +587,17 @@ public class CodeGen {
       case WRITENL:
         add(write(inst));
         break;
+    }
+  }
+
+  public boolean cannotFlip(int num) {
+    switch (num) {
+      case DLX.DIV:
+      case DLX.POW:
+      case DLX.SUB:
+        return true;
+      default:
+        return false;
     }
   }
 }

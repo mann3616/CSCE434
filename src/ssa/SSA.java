@@ -157,7 +157,7 @@ public class SSA implements NodeVisitor {
     //removeEmpties();
     DominatorTree tree = new DominatorTree(this);
     // Do we add the phi instructions now?
-    System.out.println(asDotGraph());
+    //System.out.println(asDotGraph());
     Comparator c = new Comparator<Block>() {
       @Override
       public int compare(Block o1, Block o2) {
@@ -328,19 +328,29 @@ public class SSA implements NodeVisitor {
 
     // Ending last ifSequence block
     Block lastThen = currBlock;
-    addCurr();
+    if (!lastThen.instructions.isEmpty() || node.elseSequence() != null) {
+      addCurr();
+    }
 
     //Adding else block (even if it is not an else) to jump statement for relation() and adds edge
     oldBlock.addEdge(currBlock, "else");
 
     if (node.elseSequence() != null) {
+      Instruction kk = new Instruction(op.BRA);
+      lastThen.addInstruction(kk);
       node.elseSequence().accept(this);
       //Add reference to the currBlock so that these blocks can be related to after the if/else statement
       Block lastElseBlock = currBlock;
       addCurr();
       lastElseBlock.addEdge(currBlock, "");
+      Result rn = new Result();
+      rn.proc = currBlock;
+      rn.kind = Result.PROC;
+      kk.right = rn;
     }
-    lastThen.addEdge(currBlock, "");
+    if (lastThen != currBlock) {
+      lastThen.addEdge(currBlock, "");
+    }
     currBlock.isJoinNode = true;
     currBlock.endIfNode = true;
   }
@@ -547,7 +557,7 @@ public class SSA implements NodeVisitor {
           f = new IntType();
           break;
       }
-      if (i != 0) {
+      if (i != 3) {
         currBlock.instructions.get(currBlock.instructions.size() - 1).readType =
           f;
       }
@@ -678,9 +688,23 @@ public class SSA implements NodeVisitor {
         for (int i = 0; i < stop; i++) {
           if (
             b.edges.get(i).instructions.isEmpty()
-            //&& !b.edges.get(i).isJoinNode
+            // ||
+            // (
+            //   b.edgeLabels.get(i).equals("then")
+            //   // &&
+            //   // b.edges.get(i).instructions.get(0).inst == op.MOVE // If the only instruction is a bra instruction maybe add later for now it works
+            // )
           ) {
             for (Block bb : b.edges.get(i).edges) {
+              for (Instruction in : b.instructions) {
+                if (
+                  in.right != null &&
+                  in.right.kind == Result.PROC &&
+                  in.right.proc == b.edges.get(i)
+                ) {
+                  in.right.proc = bb;
+                }
+              }
               changed = true;
               b.addEdge(bb, b.edgeLabels.get(i));
               bb.parents.remove(b.edges.get(i));
@@ -744,6 +768,18 @@ public class SSA implements NodeVisitor {
     }
   }
 
+  public void removeInstruction(Instruction i) {
+    for (Block b : blocks) {
+      for (Instruction ii : b.instructions) {
+        if (i.my_num > ii.my_num) continue;
+        ii.my_num--;
+      }
+    }
+    for (Block b : blocks) {
+      b.instructions.remove(i);
+    }
+  }
+
   public void fixUpSSA() {
     // Removing all eliminated instructions
     for (Block b : blocks) {
@@ -751,13 +787,8 @@ public class SSA implements NodeVisitor {
       for (int j = 0; j < size; j++) {
         Instruction i = b.instructions.get(j);
         if (!i.eliminated) continue;
-        for (Block fixer : blocks) {
-          for (Instruction ii : fixer.instructions) {
-            if (i.my_num > ii.my_num) continue;
-            ii.my_num--;
-          }
-        }
-        b.instructions.remove(j--);
+        removeInstruction(i);
+        j--;
         size--;
       }
     }
@@ -766,6 +797,24 @@ public class SSA implements NodeVisitor {
     removeEmpties();
     //Remove all empty blocks
     blocks.removeIf(o -> o.instructions.isEmpty());
+    // ArrayList<Block> toRm = new ArrayList<>();
+    // for (Block b : blocks) {
+    //   if (b.edges.size() > 1) {
+    //     Instruction last = b.instructions.get(b.instructions.size() - 1);
+    //     if (last.inst == op.BRA) {
+    //       Block rm = null;
+    //       for (Block jj : b.edges) {
+    //         if (jj != last.right.proc) {
+    //           rm = last.right.proc;
+    //           break;
+    //         }
+    //       }
+    //       b.edges.remove(rm);
+    //       toRm.add(rm);
+    //     }
+    //   }
+    // }
+    // blocks.removeAll(toRm);
   }
 
   public void flipAllBreaks() {

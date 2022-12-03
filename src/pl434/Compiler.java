@@ -1,6 +1,9 @@
 package pl434;
 
 import ast.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -786,6 +789,14 @@ public class Compiler {
     }
 
     // Now take the SSA and print it as a dotGraph
+    PrintStream out;
+    try {
+      out = new PrintStream("elim.dot");
+      out.print(ssa.asDotGraph());
+    } catch (FileNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     return ssa.asDotGraph();
   }
 
@@ -800,6 +811,7 @@ public class Compiler {
             change = true;
           }
           break;
+        case "as":
         case "cf":
           //Constant folding
           while (optimize.constant_folding()) {
@@ -901,7 +913,13 @@ public class Compiler {
   public void regAlloc(int numRegs) {
     ssa.fixUpSSA(); // LOOK HERE LANCE! - Momo <3
     ssa.instantiateUsedAt();
-    //System.out.println(ssa.asDotGraph());
+    PrintStream out;
+    try {
+      out = new PrintStream("elimAfter.dot");
+      out.print(ssa.asDotGraph());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     ssa.countUpResults();
     for (Block block : ssa.roots) {
       initializeLiveness(block);
@@ -914,10 +932,9 @@ public class Compiler {
         allRegisterMaps.get(block),
         allLiveIntervals.get(block)
       );
-
       // Prints all the underlying notes
-      printLiveInfo(block);
-      printRegisterAllocation(allRegisterMaps.get(block));
+      // printLiveInfo(block);
+      // printRegisterAllocation(allRegisterMaps.get(block));
     }
     // Result.printAllResults();
 
@@ -966,7 +983,10 @@ public class Compiler {
             break;
           default:
             if (currentInstruction.left != null) {
-              if (currentInstruction.left.isVariable()) {
+              if (
+                currentInstruction.left.isVariable() &&
+                currentInstruction.left.var.getVersion() != -1
+              ) {
                 usedSet.add(currentInstruction.left.var.name);
               } else {
                 if (currentInstruction.left.kind == Result.INST) {
@@ -975,7 +995,10 @@ public class Compiler {
               }
             }
             if (currentInstruction.right != null) {
-              if (currentInstruction.right.isVariable()) {
+              if (
+                currentInstruction.right.isVariable() &&
+                currentInstruction.right.var.getVersion() != -1
+              ) {
                 usedSet.add(currentInstruction.right.var.name);
               } else {
                 if (currentInstruction.right.kind == Result.INST) {
@@ -1120,11 +1143,15 @@ public class Compiler {
       allLiveIntervals.get(block)
     );
     // Fill registerMap here
+    // Symbol notNull = null;
     for (String variable : declarations) {
       // We will always start from the left most register
+      // if (notNull != null) {
+      //   System.out.println(notNull.regno);
+      // }
       boolean successfully_allocated = false;
+      int instruction_number = liveIntervals.get(variable).opening;
       for (int registerNumber = 0; registerNumber < numRegs; registerNumber++) {
-        int instruction_number = liveIntervals.get(variable).opening;
         if (registerMap.get(registerNumber) == null) {
           // This register has not been used before, so we are clear to assign
           ArrayList<RegisterAlloc> allocationHistory = new ArrayList<RegisterAlloc>();
@@ -1139,12 +1166,74 @@ public class Compiler {
             case MOVE:
             case PHI:
               thisInstruction.right.var.OG.regno = registerNumber;
+              // if (notNull == null) {
+              //   notNull = thisInstruction.right.var.OG;
+              // }
               break;
             default:
               thisInstruction.regno = registerNumber;
           }
           break;
-        } else {
+        } else if (
+          liveIntervals.get(
+            registerMap
+              .get(registerNumber)
+              .get(registerMap.get(registerNumber).size() - 1)
+              .variable
+          )
+            .instruction.inst !=
+          op.MOVE &&
+          liveIntervals.get(
+            registerMap
+              .get(registerNumber)
+              .get(registerMap.get(registerNumber).size() - 1)
+              .variable
+          )
+            .instruction.inst !=
+          op.PHI
+        ) {
+          // The register has been used before
+          // Check if it is available
+          String currentlyStoredVariable = registerMap
+            .get(registerNumber)
+            .get(registerMap.get(registerNumber).size() - 1)
+            .variable;
+          int deathInstruction = liveIntervals.get(currentlyStoredVariable)
+            .closing;
+
+          // The current register is holding a dead variable, so we can replace it
+          Instruction thisInstruction = liveIntervals.get(variable).instruction;
+          boolean holdingDeadVariable =
+            instruction_number >= deathInstruction &&
+            (
+              thisInstruction.inst == op.MOVE || thisInstruction.inst == op.PHI
+            ) ||
+            instruction_number > deathInstruction;
+          if (holdingDeadVariable) {
+            RegisterAlloc placement = new RegisterAlloc(
+              Integer.valueOf(instruction_number),
+              variable
+            );
+            registerMap.get(registerNumber).add(placement);
+            successfully_allocated = true;
+            switch (thisInstruction.inst) {
+              case MOVE:
+              case PHI:
+                thisInstruction.right.var.OG.regno = registerNumber;
+                break;
+              default:
+                thisInstruction.regno = registerNumber;
+            }
+            break;
+          }
+        }
+      }
+      if (!successfully_allocated) {
+        for (
+          int registerNumber = 0;
+          registerNumber < numRegs;
+          registerNumber++
+        ) {
           // The register has been used before
           // Check if it is available
           String currentlyStoredVariable = registerMap
@@ -1257,6 +1346,7 @@ public class Compiler {
     }
   }
 
+  // Has nothing to do with adding instruction to VariableInfo
   private void calculateLiveIntervals(
     HashMap<String, VariableInfo> liveIntervals,
     HashMap<String, ArrayList<VariableInfo>> liveRanges

@@ -981,7 +981,7 @@ public class Optimize {
             break;
         }
         index++;
-        if (i.eliminated) {
+        if (i.eliminated && i.usedAt != null) {
           Instruction nxt = i.usedAt;
           if (nxt.inst == op.CALL) {
             for (Result r : nxt.func_params) {

@@ -155,7 +155,10 @@ public class Block {
     Block prev
   ) {
     // If there is a move then we do not reset latest, if there
-    if (visited.contains(root)) {
+    if (
+      visited.contains(root) ||
+      (prev != null && root.parsVisited.contains(prev))
+    ) {
       return;
     }
     if (prev != null) {
