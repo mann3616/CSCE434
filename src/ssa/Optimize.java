@@ -12,6 +12,7 @@ public class Optimize {
 
   SSA ssa;
   Symbol subSymbol;
+  String subSym = "$";
 
   public Optimize(SSA ssa) {
     subSymbol = new Symbol("$t", new VoidType());
@@ -278,7 +279,8 @@ public class Optimize {
       // Now that we have updated the list with the instructions then we add the delimiter
       Result res = new Result();
       res.kind = Result.VAR;
-      res.var = new Symbol(subSymbol, true);
+      subSym += "t.";
+      res.var = new Symbol(subSym, new VoidType());
       res.storeResult();
       fuList.add(new Instruction(op.MOVE, null, res)); // Set left to null until after forLoop
     }

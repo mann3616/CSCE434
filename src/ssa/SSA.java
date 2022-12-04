@@ -301,6 +301,8 @@ public class SSA implements NodeVisitor {
     if (node.relation() != null) {
       node.relation().accept(this);
       addInstruction(new Instruction(op.RET, null, currRes));
+    } else {
+      addInstruction(new Instruction(op.RET, null, null));
     }
   }
 
@@ -940,5 +942,26 @@ public class SSA implements NodeVisitor {
       }
     }
     return b;
+  }
+
+  public void setAddresses(Block root) {
+    HashSet<Symbol> symbols = new HashSet<>();
+    int count = 1;
+    for (Instruction i : getAllInstruction(root)) {
+      switch (i.inst) {
+        case PHI:
+          if (!symbols.contains(i.third.var.OG)) {
+            i.third.var.OG.address = count++;
+            symbols.add(i.third.var.OG);
+          }
+          break;
+        case MOVE:
+          if (!symbols.contains(i.right.var.OG)) {
+            i.right.var.OG.address = count++;
+            symbols.add(i.right.var.OG);
+          }
+          break;
+      }
+    }
   }
 }

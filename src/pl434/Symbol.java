@@ -1,5 +1,6 @@
 package pl434;
 
+import java.util.ArrayList;
 import javax.management.RuntimeErrorException;
 import ssa.Block;
 import ssa.Instruction;
@@ -20,6 +21,11 @@ public class Symbol {
   public Symbol OG;
   public int global_counter = -1; // Only for function
   public Block func_block;
+  public static final int GLOBAL = 0;
+  public static final int LOCAL = 1;
+  public static final int PARAM = 2;
+  public int scope = 0;
+  public ArrayList<Symbol> params = new ArrayList<>();
 
   public Symbol(String name, Type type) {
     loaded = false;

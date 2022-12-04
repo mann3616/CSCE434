@@ -321,12 +321,17 @@ public class Compiler {
         Token currentVariable = expectRetrieve(Kind.IDENT);
         String id = currentVariable.lexeme();
         // Declare Variable in Symbol table make node
+        Symbol sym = tryDeclareVariable(
+          currentVariable,
+          new Symbol(id, variableType)
+        );
+        if (inMain) {
+          sym.scope = Symbol.GLOBAL;
+        } else {
+          sym.scope = Symbol.LOCAL;
+        }
         variableList.add(
-          new VariableDeclaration(
-            lineNumber(),
-            charPosition(),
-            tryDeclareVariable(currentVariable, new Symbol(id, variableType))
-          )
+          new VariableDeclaration(lineNumber(), charPosition(), sym)
         );
         // Store variable decl node
       } while (accept(Kind.COMMA));
@@ -599,6 +604,8 @@ public class Compiler {
         id,
         new Symbol(id.lexeme(), functionType)
       );
+      simba.params.addAll(func_symbols);
+      func_symbols.clear();
       functionList.add(
         new FunctionDeclaration(
           id.lineNumber(),
@@ -611,6 +618,8 @@ public class Compiler {
     }
     return functionList;
   }
+
+  ArrayList<Symbol> func_symbols = new ArrayList();
 
   private TypeList formalParam() {
     TypeList list = new TypeList();
@@ -651,7 +660,12 @@ public class Compiler {
       paramType = new ArrayType(paramType, i);
     }
     String id = variable.lexeme();
-    tryDeclareVariable(variable, new Symbol(variable.lexeme(), paramType));
+    Symbol ss = tryDeclareVariable(
+      variable,
+      new Symbol(variable.lexeme(), paramType)
+    );
+    ss.scope = Symbol.PARAM;
+    func_symbols.add(ss);
     return paramType;
   }
 
@@ -670,6 +684,8 @@ public class Compiler {
   DeclarationList vars;
   DeclarationList funcs;
   StatementSequence mainSeq;
+
+  boolean inMain = true;
 
   private void computation() {
     initSymbolTable();
@@ -733,6 +749,7 @@ public class Compiler {
     }
 
     vars = varDecl();
+    inMain = false;
     funcs = funcDecl();
     expect(Kind.OPEN_BRACE);
     mainSeq = statSeq();
@@ -1044,6 +1061,11 @@ public class Compiler {
               currentInstruction.right.isVariable()
             ) {
               definedSet.add("(" + currentInstruction.my_num + ")");
+            } else {
+              switch (currentInstruction.inst) {
+                case READ:
+                  definedSet.add("(" + currentInstruction.my_num + ")");
+              }
             }
 
             break;
@@ -1116,10 +1138,11 @@ public class Compiler {
     );
     while (availableVariables.size() != 0) {
       String lowest_variable = availableVariables.iterator().next();
-      int lowest_opening = liveIntervals.get(lowest_variable).opening;
+      int lowest_opening = liveIntervals.get(lowest_variable)
+        .instruction.my_num;
       for (String variable : availableVariables) {
         // If this variable has the most low opening, add to declarations, remove from available variables
-        int opening = liveIntervals.get(variable).opening;
+        int opening = liveIntervals.get(variable).instruction.my_num;
         if (opening < lowest_opening) {
           lowest_opening = opening;
           lowest_variable = variable;
@@ -1131,6 +1154,8 @@ public class Compiler {
 
     return declarations;
   }
+
+  public static HashMap<Instruction, ArrayList<Integer>> iMap = new HashMap<>();
 
   private void allocateRegisters(
     Block block,
@@ -1151,7 +1176,9 @@ public class Compiler {
       // }
       boolean successfully_allocated = false;
       int instruction_number = liveIntervals.get(variable).opening;
+      ArrayList<Integer> intSet = new ArrayList<>();
       for (int registerNumber = 0; registerNumber < numRegs; registerNumber++) {
+        intSet.add(registerNumber);
         if (registerMap.get(registerNumber) == null) {
           // This register has not been used before, so we are clear to assign
           ArrayList<RegisterAlloc> allocationHistory = new ArrayList<RegisterAlloc>();
@@ -1272,10 +1299,10 @@ public class Compiler {
       }
 
       if (!successfully_allocated) {
-        System.out.println("We must spill!");
-        System.out.println(
-          "It was not possible to find room for variable " + variable
-        );
+        // System.out.println("We must spill!");
+        // System.out.println(
+        //   "It was not possible to find room for variable " + variable
+        // );
         // Here we spill
         // Evict something from memory
         // Is there a good heuristic for this?
@@ -1288,6 +1315,7 @@ public class Compiler {
         // Get result that best matches
         Result loadResult = null;
         int min = 100000;
+        int registerNum = 0;
         for (
           int registerNumber = 0;
           registerNumber < numRegs;
@@ -1305,9 +1333,11 @@ public class Compiler {
             min > check.getResult().result_count
           ) {
             min = check.getResult().result_count;
+            registerNum = registerNumber;
             loadResult = check.getResult();
           }
         }
+        // SHould we store instructions?
         int reg =
           (
             loadResult.kind == Result.VAR
@@ -1322,9 +1352,104 @@ public class Compiler {
           default:
             thisInstruction.regno = reg;
         }
-        thisInstruction.storeThese.add(loadResult); // Place under store
-
+        thisInstruction.storeThese.add(loadResult);
+        RegisterAlloc placement = new RegisterAlloc(
+          Integer.valueOf(instruction_number),
+          variable
+        );
+        registerMap.get(registerNum).add(placement);
         continue;
+      }
+      boolean doIt = false;
+      for (Instruction i : ssa.getAllInstruction(block)) {
+        if (i == liveIntervals.get(variable).instruction) {
+          doIt = true;
+        }
+        if (doIt) {
+          iMap.put(i, intSet);
+        }
+      }
+    }
+    // Everytime a MOVE happens with said register
+    // We need to STORE first
+    // Variable cannot be dead
+    // Use InSet to measure who is active
+    // Use your own set to see who has been changed (at each change claim others with matching regno to have to switch)
+    // Loop through all instructions keep track of the InSet (measures change)
+    // If a variable is updated then we will read this as change, if an instruction is ADDED then we read as change other wise no
+    // If a variable is loaded back just to be used (no MOVE) then we dont say to store again this is why we loop and put in perspective of variable cuz it will know if it's necessary to store it when someone takes over
+    HashMap<Integer, String> changed = new HashMap<>(); // Currently in register
+    HashSet<String> last = new HashSet<>();
+    for (String variable : declarations) {
+      // Find my register number
+      Instruction regInst = liveIntervals.get(variable).instruction;
+      int reg = -1;
+      Result toStore = null;
+      if (regInst.inst == op.MOVE || regInst.inst == op.PHI) {
+        reg = regInst.right.var.OG.regno;
+        toStore = regInst.right;
+      } else {
+        reg = regInst.regno;
+        if (
+          regInst.usedAt.left != null &&
+          regInst.usedAt.left.isInstruction() &&
+          regInst.usedAt.left.inst == regInst
+        ) {
+          toStore = regInst.usedAt.left;
+        }
+        if (
+          regInst.usedAt.right != null &&
+          regInst.usedAt.right.isInstruction() &&
+          regInst.usedAt.right.inst == regInst
+        ) {
+          toStore = regInst.usedAt.right;
+        }
+      }
+      boolean isChanged = true;
+      for (Instruction i : ssa.getAllInstruction(block)) {
+        // Find change or if no change check if the current Instruction is a MOVE or PHI
+        // Just Compare in to out
+        if (!i.OutSet.contains(variable)) continue; // If this variable lacks relevance then skip
+        // Just have to check if the Instruction is move or phi and the OG has the same register and the
+        // Anytime there is a MOVE or PHI where the OutSet contains me, and InSet contained another variable with my regno
+        if (
+          !i.InSet.contains(variable) && i.OutSet.contains(variable)
+        ) continue; // This is already done above so we can go ahead and continue
+        // Check if the currentInstruction changes me so im changed then if a register wants to use a register I am holding
+        if (
+          (i.inst == op.MOVE || i.inst == op.PHI) &&
+          i.right.var.OG == regInst.right.var.OG
+        ) {
+          isChanged = true;
+        }
+        // Check if isChanged and is someone in the current Instruction to be used or loaded that has your regno
+        if (isChanged && !instructionContainsResult(i, toStore)) {
+          if (
+            i.left != null && i.left.isVariable() && i.left.var.OG.regno == reg
+          ) {
+            i.storeThese.add(regInst.right);
+          }
+          if (
+            i.left != null && i.left.isInstruction() && i.left.inst.regno == reg
+          ) {
+            i.storeThese.add(regInst.right);
+          }
+          if (
+            i.right != null &&
+            i.right.isVariable() &&
+            i.right.var.OG.regno == reg
+          ) {
+            i.storeThese.add(toStore);
+          }
+          if (
+            i.right != null &&
+            i.right.isInstruction() &&
+            i.right.inst.regno == reg
+          ) {
+            i.storeThese.add(toStore);
+          }
+          isChanged = false;
+        }
       }
     }
   }
@@ -1449,18 +1574,20 @@ public class Compiler {
   public boolean instructionContainsResult(Instruction i, Result r) {
     if (
       i.left != null &&
+      i.left.kind == r.kind &&
       (
-        (i.left.kind == Result.VAR && i.left.var.OG.regno == r.inst.regno) ||
-        i.left.inst.regno == r.inst.regno
+        (i.left.kind == Result.VAR && i.left.var.OG == r.var.OG) ||
+        (i.left.kind == Result.INST && i.left.inst == r.inst)
       )
     ) {
       return true;
     }
     if (
       i.right != null &&
+      i.right.kind == r.kind &&
       (
-        (i.right.kind == Result.VAR && i.right.var.OG.regno == r.inst.regno) ||
-        i.right.inst.regno == r.inst.regno
+        (i.right.kind == Result.VAR && i.right.var.OG == r.var.OG) ||
+        (i.right.kind == Result.INST && i.right.inst == r.inst)
       )
     ) {
       return true;
@@ -1468,9 +1595,11 @@ public class Compiler {
     if (i.func_params != null) {
       for (Result rr : i.func_params) {
         if (
-          rr.kind == Result.VAR &&
-          rr.var.OG.regno == r.inst.regno ||
-          r.inst.regno == rr.inst.regno
+          r.kind == rr.kind &&
+          (
+            (rr.kind == Result.VAR && rr.var.OG == r.var.OG) ||
+            (rr.kind == Result.INST && r.inst == rr.inst)
+          )
         ) {
           return true;
         }

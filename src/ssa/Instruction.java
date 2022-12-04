@@ -40,6 +40,7 @@ public class Instruction {
   }
 
   public int kind = 0;
+  public int addy = -1;
   public Type readType = new IntType();
   public static int instruction_num = 0;
   public boolean eliminated = false;
@@ -47,7 +48,7 @@ public class Instruction {
   public Result refResult = null;
   public Block blockLoc = null;
   public int my_num;
-  public Result left, right, third; // TODO: third is for the third Result that needs to be printed out
+  public Result left, right, third = null; // TODO: third is for the third Result that needs to be printed out
   HashMap<Block, Result> phiBtoR = new HashMap<>();
   List<Symbol> doPhiOn;
   public ArrayList<Result> func_params;
