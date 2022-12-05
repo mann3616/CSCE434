@@ -60,6 +60,8 @@ public class CodeGen {
     ssa.flipAllBreaks();
   }
 
+  boolean inFunc = false;
+
   public int[] generateCode() {
     Block main = ssa.main;
     for (Block b : ssa.inOrderBlock(main)) {
@@ -75,6 +77,7 @@ public class CodeGen {
 
     ssa.setAddresses(main);
     generateFromBlock(main);
+    inFunc = true;
     for (Block b : ssa.roots) {
       if (b == main) continue;
       ssa.setAddresses(b);
@@ -234,9 +237,7 @@ public class CodeGen {
           add(DLX.assemble(DLX.JSR, i.right.value * 4));
           break;
         case RET:
-          if (i.right.endFunc) {
-            add(DLX.assemble(DLX.RET, i.right.value));
-          }
+          add(DLX.assemble(DLX.RET, i.right.value));
           break;
         case BRA:
           add(DLX.assemble(DLX.BSR, i.right.value - index));
@@ -420,7 +421,7 @@ public class CodeGen {
     inOrder.get(inOrder.size() - 1).addy = funcSymbol.global_counter * -1;
     // Point here as frame pointer
     inOrder.add(new Instruction(op.ADD, stack, reg0)); // Set frame pointer to the location of stack
-    inOrder.get(inOrder.size() - 1).regno = FP; // + 2 later
+    inOrder.get(inOrder.size() - 1).regno = FP - 2; // + 2 later
 
     // Save param space // Push these
     for (int i = call.func_params.size() - 2; i >= 0; i--) { // Use stack instead to find
@@ -596,6 +597,14 @@ public class CodeGen {
         if (ii.left.kind == Result.INST && ii.left.inst.inst == op.READ) {
           ii.left.inst.regno = ii.right.var.OG.regno;
           inOrder.add(ii.left.inst);
+        } else if (
+          ii.left.kind == Result.INST && ii.left.inst.inst == op.CALL
+        ) {
+          reg1.kind = Result.REG;
+          reg1.inst.regno = 1;
+          ii = new Instruction(op.ADD, reg0, reg1);
+          ii.regno = i.right.var.OG.regno;
+          inOrder.add(ii);
         } else {
           ii = new Instruction(op.ADD, reg0, i.left);
           ii.regno = i.right.var.OG.regno;
@@ -614,17 +623,19 @@ public class CodeGen {
         inOrder.add(i);
         break;
       case RET:
-        if (i.right.endFunc) {
-          inOrder.add(new Instruction(op.RET, reg0));
-          break;
-        }
-        if (i.right != null) { // Store from right to R29 + 4 (going up)
+        if (i.right != null && !i.right.endFunc) { // Store from right to R29 + 4 (going up)
           inOrder.add(new Instruction(op.ADD, i.right, reg0));
           inOrder.get(inOrder.size() - 1).regno = -1; // Stores to R1
         }
-        inOrder.add(new Instruction(op.LOAD, pc, frame)); // Retrieves Return address into pc
-        inOrder.get(inOrder.size() - 1).addy = -1; // 1 below frame
-        inOrder.add(new Instruction(op.RET, reg0)); // Return using pc
+        if (inFunc) {
+          inOrder.add(new Instruction(op.LOAD, pc, frame)); // Retrieves Return address into pc
+          inOrder.get(inOrder.size() - 1).addy = -1; // 1 below frame
+          inOrder.add(new Instruction(op.RET, pc)); // Return using pc
+          inOrder.get(inOrder.size() - 1).right.endFunc = true;
+        } else {
+          inOrder.add(new Instruction(op.RET, reg0)); // Return using pc
+          inOrder.get(inOrder.size() - 1).right.endFunc = true;
+        }
         break;
       default:
         inOrder.add(ii);

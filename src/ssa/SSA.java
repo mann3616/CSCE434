@@ -122,12 +122,12 @@ public class SSA implements NodeVisitor {
     node.body().accept(this);
     node.function.global_counter = global;
     global = hold;
-    Result end = new Result();
-    end.kind = Result.CONST;
-    end.value = 0;
-    end.endFunc = true;
-    end.storeResult();
-    addInstruction(new Instruction(op.RET, null, end));
+    // Result end = new Result();
+    // end.kind = Result.CONST;
+    // end.value = 0;
+    // end.endFunc = true;
+    // end.storeResult();
+    //addInstruction(new Instruction(op.RET, null, end));
     addCurr();
   }
 

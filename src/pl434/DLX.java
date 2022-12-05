@@ -48,23 +48,23 @@ public class DLX {
       boolean returned = false;
       while (!returned) {
         // uncomment to iteratively step through program
-        // System.err.print(instrString(M[PC]));
-        // for (int i = 31; i > 27; i--) {
-        //   System.err.println("R[" + i + "] :: " + R[i]);
-        // }
-        // for (int i = 8; i > 0; i--) {
-        //   System.err.println("R[" + i + "] :: " + R[i]);
-        // }
-        // for (int i = 0; i < 40; i += 4) {
-        //   System.err.println(
-        //     "--M[" + (R[30] - i) / 4 + "] :: " + M[(R[30] - i) / 4]
-        //   );
-        // }
-        // try {
-        //   System.in.read();
-        // } catch (Exception e) {
-        //   e.printStackTrace();
-        // }
+        System.err.print(instrString(M[PC]));
+        for (int i = 31; i > 27; i--) {
+          System.err.println("R[" + i + "] :: " + R[i]);
+        }
+        for (int i = 8; i > 0; i--) {
+          System.err.println("R[" + i + "] :: " + R[i]);
+        }
+        for (int i = 0; i < 40; i += 4) {
+          System.err.println(
+            "--M[" + (R[30] - i) / 4 + "] :: " + M[(R[30] - i) / 4]
+          );
+        }
+        try {
+          System.in.read();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
 
         R[0] = 0;
         disassemble(M[PC]); // init op, a, b, c
