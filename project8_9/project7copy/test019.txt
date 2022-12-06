@@ -1,0 +1,28 @@
+// Macy Drew
+// Orphan function elimination with nested function calls
+// (should not remove either function, since main calls tarzan and tarzan calls batman)
+main
+
+int a, b, c;
+
+function batman(): void {
+    int a;
+    let a = 5;
+    return;
+};
+
+function tarzan(): void {
+    int c;
+    let c = 4;
+    call batman();
+    return;
+};
+
+{
+    let a = 3;
+    let b = 4;
+    let c = 5;
+    call tarzan();
+
+    return;
+}.

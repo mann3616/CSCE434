@@ -1,0 +1,19 @@
+main
+
+int i, j, cp, b;
+{
+    let i = 0;
+    let j = 0;
+    let cp = 30;
+    while(i< 10) do
+        let b = 10;
+        while(j< 10) do
+            let b = b + 1;
+            let j += 1;
+        od;
+        let b = 10;
+        let i += 1;
+    od;
+    let b = b + cp;
+    call printInt(b);
+}.

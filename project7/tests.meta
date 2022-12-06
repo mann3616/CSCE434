@@ -6,3 +6,38 @@ test003, cp cf dce
 test004, max
 test005, max
 test006, as cp ofe
+test006, as cp
+test007, ofe as
+test008, as dce
+test009, cf cp cpp dce max
+test009, cf cp cpp dce
+test010, cp
+test011, dce
+test012, ofe
+test013, cp cpp cse dce
+test014, dce
+test015, cp
+test016, cp dce
+test017, cp cpp
+test019, ofe
+test100, cp cse cf dce
+test101, cp cf cpp cse dce max
+test102, cp cf cpp as dce max
+test103, cp dce ofe
+test104, cp cf dce
+test105, max
+test106, dce max
+test107, as max
+test108, cpp cse dce
+test109, cse dce
+test110, cpp dce
+test110, ofe
+test111, cp cf cpp cse dce
+test112, cp cf dce
+test113, cpp dce max
+test114, max
+test115, cp cf dce max
+test116, cp cf dce max
+test200, cf
+test201, cse
+test202, cpp

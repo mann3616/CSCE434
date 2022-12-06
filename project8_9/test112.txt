@@ -1,0 +1,26 @@
+main
+
+int a, A, a_0, printInt;
+
+// cp cf dce
+{
+    let a = 5 + 2;
+    let A = a * -10;
+    let a_0 = A;
+    let printInt = 3 - 3;
+    let printInt = a;
+    let A++;
+    let A--;
+    let a += 5 + 2;
+    let a -= 5 + -5;
+    let a *= (a_0-a_0+1); // as
+    let a /= a;
+    call printInt(a); // 1
+    call println();
+    call printInt(a_0); // -70
+    call println();
+    call printInt(A); // -70
+    call println();
+    call printInt(printInt); // 7
+    call println();
+}.

@@ -1,0 +1,15 @@
+main
+
+int i, j;
+int[3][3] x, y, z;
+
+// cpp cse dce
+{
+    repeat
+        repeat
+            let x[i][j] = y[i][j] + z[i][j];
+            let j += 1;
+        until(j>2);
+        let i += 1;
+    until(i>2);
+}.

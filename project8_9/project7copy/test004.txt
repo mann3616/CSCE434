@@ -1,0 +1,24 @@
+//max
+main
+
+int a,b,c,d,e;
+int x,y,z;
+
+{
+    let a = call readInt(); //1
+    let b = call readInt(); //2 
+    let x = 1;
+    let y = a + b;
+    let z = y * y;
+    let c = y * x;
+    let e = a + b;
+    let d = e * e;
+    let e = x - 1;
+    let b = e + 4;
+    let x = a + b;
+    let y = y * x; // 3 * 5
+
+    call printInt(x); // 5
+    call printInt(y); // 15
+
+}.

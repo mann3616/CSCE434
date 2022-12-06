@@ -1,0 +1,24 @@
+// Emory Fields
+// Testing if statement within repeat statement
+
+main
+int a, b;
+{
+    let a = 1;
+	let b = 0;
+    repeat
+        call printInt(b);
+        let b = a + 2;
+        if (a == b) then 
+            call printInt(b);
+        else
+            let b ++; 
+        fi;
+        let a++;
+        call printInt(b);
+    until (b >= 10);
+
+   call printInt(a);
+   call printInt(b);
+}
+.

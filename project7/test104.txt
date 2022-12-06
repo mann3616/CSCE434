@@ -1,0 +1,28 @@
+// simple parsing test
+
+main
+
+int a, A, a_0, prInt;
+
+// cp cf dce
+{
+    let a = 5 + 2;
+    let A = a * -10;
+    let a_0 = A;
+    let prInt = 3 - 3;
+    let prInt = a;
+    let A++;
+    let A--;
+    let a += 5 + 2;
+    let a -= 5 + -5;
+    let a *= (a_0-a_0+1);
+    let a /= a;
+    call printInt(a); // 1
+    call println();
+    call printInt(a_0); // -70
+    call println();
+    call printInt(A); // -70
+    call println();
+    call printInt(prInt); // 7
+    call println();
+}.

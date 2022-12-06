@@ -1,0 +1,33 @@
+main
+
+int a,x,y,z,m,n;
+
+function foo(int x, int y, int a): int {
+    while(x > 0) do // phi only for x and a
+        let a = a + y;
+        let x -= 1;
+    od;
+    return a + y;
+};
+
+function bar(): void {
+    call printInt(x);
+    call printInt(y);
+    call printInt(a);
+    call printInt(n); // global prints
+    let z = a + y;
+};
+
+{
+    let m = call readInt();
+    let n = call readInt(); // cannot eliminate
+    let z = call foo(m,n,0);
+    call printInt(z);
+
+    let x = m + 1;
+    let y = n;
+    let a = 100;
+    // cannot eliminate these as used in bar
+    call bar();
+    call printInt(z);
+}.

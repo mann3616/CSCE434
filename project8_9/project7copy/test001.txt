@@ -1,0 +1,19 @@
+// CP CF
+// q will be killed by phi of while
+// t is uninitialized
+main
+int q, f, af, t;
+{
+	let f = 2;
+	let q = f;
+	if (2 < 3) then            
+		while (6 > f) do
+			let af = f + 6;
+			let f = q + 2;
+			let q = f;
+		od;
+		let t = f + 5;
+	fi;
+	let af = t + f + q; // 11 + 6 + 6
+	call printInt(af); // 23
+}.

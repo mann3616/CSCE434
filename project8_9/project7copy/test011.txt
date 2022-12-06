@@ -1,0 +1,19 @@
+// Lance Abuan
+// Testing dead code elimination with non-needed branches
+
+main
+int x, y;
+{
+    let x = 10;
+	let y = 1;
+	if (x < y) then
+		if (x < y) then
+			let x = x * y;
+		else
+			let y = 26;
+		fi;
+	else
+		call printInt(x);
+	fi;
+
+}.

@@ -1,0 +1,20 @@
+main
+
+int x, y, b;
+
+{
+    let x = 12;
+    let y = 7 - x / 2;
+    call printInt(y * (24 / x + 2));
+
+    let x = 1;
+    let y = x + 2;
+
+    if(x == y) then
+        let b = x;
+    else
+        let b = y;
+    fi;
+    let b = 8;  // b in if stat can be eliminated
+    call printInt(b);
+}.

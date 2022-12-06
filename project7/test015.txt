@@ -1,0 +1,29 @@
+// Kyle Owens
+// Testing constant propagation through conditional statements
+
+main
+
+int a, b, c, d, e, f, g;
+
+{
+    let a = call readInt();
+    let b = call readInt();
+    let c = a + b;
+
+    call printInt(g);
+    let g = call readInt();
+    let g = 0;
+
+    if (g < 10) then
+        if (c < d) then
+            let g = 1;
+        else
+            let g = 2;
+        fi;
+        call printInt(g);
+    else
+        let g = 3;
+    fi;
+
+    call printInt(g);
+}.

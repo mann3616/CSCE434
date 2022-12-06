@@ -6,7 +6,7 @@ int u,v,r,s,t,w;
 int x,y,z;
 
 {
-    let w = 20; //call readInt();
+    let w = call readInt(); // call with dummy, that's 20
     
     let y = w;
     let z = 4;
@@ -15,7 +15,7 @@ int x,y,z;
     let r = w * w;
     let t = r + v;
     let s = u * t;
-    call printInt(s);
+    call printInt(s); // 6 * 800 = 4800
     call println();
 
 }.

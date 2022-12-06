@@ -1,0 +1,13 @@
+main
+
+int i, j, k;
+
+// cp cse cf
+{
+    let i = 0;
+    let i = 1;
+    let j = 2;
+    let k = (i + j) * (i + j);
+
+    call printInt(k);
+}.

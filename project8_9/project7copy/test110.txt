@@ -1,0 +1,36 @@
+main
+
+int foo, too;
+int af;
+
+function bar (int n) : int
+{
+    call printInt(n);
+    return n;
+};
+
+function foo (int x) : int
+{
+    int par, q;
+
+    let q = 9;
+    let par = 3;
+    while (3 < par) do
+        let q = par + q;
+        while (4 >= q) do
+            let q = par - q;
+        od;
+        let par = q - 3;
+    od;
+    let x = par + q;
+    return x;
+};
+
+// ofe
+{
+    let foo = 3 + too;
+    let af = foo + 6;
+    call printInt(foo); // 3
+    call printInt(af); // 9
+    call println();
+}.

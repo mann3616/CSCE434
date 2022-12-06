@@ -1,0 +1,18 @@
+// dce ofe
+
+main
+
+int a, b, c, d;
+
+function foo (int n) : int
+{
+    call printInt(n);
+    return n;
+};
+
+// dce ofe
+{
+    let a = 3;
+    let b = 5;
+    let c = call foo(a * b); //function should still be called even if c is unused.
+}.

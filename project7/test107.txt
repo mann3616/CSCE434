@@ -1,0 +1,24 @@
+main
+// Arithmetic Simplification - as
+int x, y, z;
+bool a, b;
+{
+    let y = 2;
+    let x = y * 2;
+    let x = 2 * y;
+    let x = x + 2 * y + x;
+    let x = y * 1;
+    let x = y * z; // z uninitialized
+    let x = y * 0;
+    let x = y ^ 0;
+    let x = 0 / y;
+    let x = y - y;
+    let x = y / y;
+    let x = y + 0;
+    let z = (x + y) - y;
+
+    let b = false;
+    let a = b or true;
+    let a = b and false;
+
+}.

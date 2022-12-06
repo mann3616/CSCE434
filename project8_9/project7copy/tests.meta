@@ -1,0 +1,43 @@
+test000, cp cf dce, 10
+test000, cp, 10
+test001, cf cp max, 10
+test002, cse, 10
+test003, cp cf dce, 10
+test004, max, 10
+test005, max, 10
+test006, as cp ofe, 10
+test006, as cp, 10
+test007, ofe as, 10
+test008, as dce, 10
+test009, cf cp cpp dce max, 10
+test009, cf cp cpp dce, 10
+test010, cp, 10
+test011, dce, 10
+test012, ofe, 10
+test013, cp cpp cse dce, 10
+test014, dce, 10
+test015, cp, 10
+test016, cp dce, 10
+test017, cp cpp, 10
+test019, ofe, 10
+test100, cp cse cf dce, 10
+test101, cp cf cpp cse dce max, 10
+test102, cp cf cpp as dce max, 10
+test103, cp dce ofe, 10
+test104, cp cf dce, 10
+test105, max, 10
+test106, dce max, 10
+test107, as max, 10
+test108, cpp cse dce, 10
+test109, cse dce, 10
+test110, cpp dce, 10
+test110, ofe, 10
+test111, cp cf cpp cse dce, 10
+test112, cp cf dce, 10
+test113, cpp dce max, 10
+test114, max, 10
+test115, cp cf dce max, 10
+test116, cp cf dce max, 10
+test200, cf, 10
+test201, cse, 10
+test202, cpp, 10

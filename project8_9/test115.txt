@@ -1,0 +1,19 @@
+// Can be used for optimization also: CP, CF
+// q will be killed by phi of while
+// t is uninitialized
+main
+int q, f, af, t;
+{
+	let f = 2;
+	let q = f;
+	if (3 < 3) then            
+		while (10 > 6) do
+			let af = f + 6;
+			let f = q + 2;
+			let q = f;
+		od;
+		let t = f + 5;
+	fi;
+	let af = t + f + q;
+	call printInt(af);
+}.

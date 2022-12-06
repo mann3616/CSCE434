@@ -1,0 +1,25 @@
+//Logan Perry
+//Testing global variables and function calls for dce
+
+main
+int i, j;
+
+function foo() : void {
+	let i = 4;
+};
+
+function baz() : void {
+	let j = 1;
+};
+
+{
+	let i = 1;
+	let j = 0;
+	let i = j;
+	call foo();
+	call baz();
+	let j = i;
+	call foo();
+  call printInt(i); //4
+  call printInt(j); //4
+}.

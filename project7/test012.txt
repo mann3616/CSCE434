@@ -1,0 +1,21 @@
+// Matthew Tran
+// Testing ofe after dce
+
+main
+
+int a, b, c, d;
+
+function foo(int p) : int {
+    int x;
+    let x = p*2;
+    return call bar();
+};
+function bar() : int {
+    return call foo(42);
+};
+{
+    if (2 > 3) then
+        call printInt(call foo(call readInt()));
+    fi;
+    call println();
+}.

@@ -1,0 +1,32 @@
+// Rushil Udani
+// sort 5 integers known at compile time with a sorting network
+// this entire sort can be done at compile time, 
+// cp cf cpp dce max
+
+main
+	int a, b, c, d, e;
+	int tmp;
+{
+	let a = 31;
+	let b = 69;
+	let c = 110;
+	let d = 52;
+	let e = 8;
+
+	// sorting network of size 5
+	if (a < d) then let tmp = a; let a = d; let d = tmp; fi;
+	if (b < e) then let tmp = b; let b = e; let e = tmp; fi;
+	if (a < c) then let tmp = a; let a = c; let c = tmp; fi;
+	if (b < d) then let tmp = b; let b = d; let d = tmp; fi;
+	if (a < b) then let tmp = a; let a = b; let b = tmp; fi;
+	if (c < e) then let tmp = c; let c = e; let e = tmp; fi;
+	if (b < c) then let tmp = b; let b = c; let c = tmp; fi;
+	if (d < e) then let tmp = d; let d = e; let e = tmp; fi;
+	if (c < d) then let tmp = c; let c = d; let d = tmp; fi;
+
+	call printInt(a); // 110
+	call printInt(b); // 69
+	call printInt(c); // 52
+	call printInt(d); // 31
+	call printInt(e); // 8
+}.

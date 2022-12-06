@@ -1,11 +1,26 @@
 test010, dce, 2
+test010, cp cf dce max, 2
 test011, max, 10
 test012, max, 5
 test013, max, 5
 test014, max, 5
 test015, cpp, 5
 test017, dce, 5
+test017, max, 12
 test000, cp cse cf dce, 10
 test005, max, 10
 test007, cp cf cpp as dce max, 5
+test008, cse max, 8
+test110, max, 8
+test111, cf cp dce, 4
+test112, as cp cf dce max, 6
+test113, max, 8
+test114, dce, 2
+test114, max, 4
+test114, as cf max, 4
+test115, cp cpp cf dce max, 8
+test116, max, 4
+test118, cp cpp cf as dce max, 12
+test118, max, 8
+test119, cf cp cpp max, 2
 test009, max, 5

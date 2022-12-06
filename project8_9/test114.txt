@@ -1,0 +1,14 @@
+//cf dce 
+//uninitialized vars as
+
+main 
+int a,b,c,d;
+{
+    let a = b+c+d+0; 
+    let b = a*a+b*b*1;
+    let a = 5+2*b;
+    let c = 2*c+d;
+    let a = a+c*b+d; 
+    let d = 5 + 2 * 10 + 2;
+    call printInt(d);
+}.

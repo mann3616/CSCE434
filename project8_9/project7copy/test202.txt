@@ -1,0 +1,17 @@
+// copy propagation transitive test
+
+main
+
+int a, b, c, d;
+
+{
+    let b = a;
+    let c = b;
+    let d = c;
+    let d = d + 1;
+
+    call printInt(a); // 0
+    call printInt(b); // 0
+    call printInt(c); // 0
+    call printInt(d); // 1
+}.

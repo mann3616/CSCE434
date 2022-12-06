@@ -1,0 +1,49 @@
+main
+// cse dce
+
+function without_loop():void{
+
+    int a,b,c,d,e,x,y;
+
+    let b = c + d;
+    let e = c + d;
+    if(b == e) then
+        let x = c + d;
+        let a = b + c;
+    else
+        let y = a + b;
+    fi;
+    let x = a + b;
+    let y = c + d;
+
+    let x = b * c / 1;
+    let y = b * c / 1;
+    call printInt(x); // 0 
+    call printInt(y); // 0
+};
+
+function with_loop():void{
+
+    int w,x,y,z;
+    int i;
+    let i = 0;
+    while(i <10) do
+        let x = i + y + z;
+        let y = i + y + z;
+        if(x == y) then
+            let w = 2 * i + x + y;
+            let z = 1 * i + z + y;
+        else
+            let y = 3 * i + w + x;
+        fi;
+        let w = w + x + i;
+        let z = x + y + 2;
+        let i++;
+    od;
+    call printInt(w); // 103344
+};
+
+{
+    call without_loop();
+    call with_loop();
+}.

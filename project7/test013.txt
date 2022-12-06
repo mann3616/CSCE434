@@ -1,0 +1,21 @@
+// Max Smith
+// cp cpp cse dce
+
+main
+
+int a, b, c, d, e;
+
+{
+	let e = call readInt();
+
+	let a = 5;
+	let b = e;
+	let c = e * e;
+	let d = b * b;
+	let e = 4;
+	let a = e * e;
+	
+	call printInt(a);
+	call printInt(d);
+	call printInt(e);
+}.

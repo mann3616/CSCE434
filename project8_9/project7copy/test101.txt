@@ -1,0 +1,65 @@
+main
+
+int a, b, c, x, y, cnt, z,d,e,f,h,g;
+
+function test1():void{
+    int a, b;
+    let a = 1;
+    let b = 2;
+
+    if (a > b) then
+        let a++;
+    else
+        let b += 3;
+        let a = call readInt(); // readInt should not be eliminated
+        let a = (b + b) * 1;
+    fi;
+    //phi?
+    if (a < b) then
+        let a -= 2;
+    fi;
+    //phi?
+    call printInt(a);
+    call printInt(b);
+    call println();
+};
+
+function test2():int{
+    //slide ex
+    let x = a + b;
+    let y = a * b;
+    while(y > a + b) do  // y > x
+        let a = a + 1;
+        let x = a + b;
+    od;
+    return x;
+};
+
+function test3():void{
+    if(call readBool()) then
+        let b = a;
+        let c = b;
+        let d = c;
+        let e = d;
+    else
+        let b = a;
+        let c = b;
+        let d = c;
+    fi;
+    // do we need phi for c and d?
+    call printInt(c);
+    call printInt(d);
+    call printInt(e);
+};
+
+{
+    let b = call readInt();
+    let a = b;
+    let c = a;
+    let d = a + b;
+    let e = d;
+    let d = a;
+    let f = e;
+    call printInt(d);
+
+}.

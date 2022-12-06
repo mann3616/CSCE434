@@ -1,0 +1,64 @@
+// Vinesh Ravuri
+// Non-exhaustive tests for some arithmetic simplification
+// Contains one uninitialized variable warning, global c should be initialized from function call
+main
+
+int a, b, c, d, e;
+
+function foo() : void {
+    let c = 3;
+};
+
+{
+    let a = 0;
+    call printInt(b);
+    let b = 1;
+    call foo();
+    call printInt(c);
+    let c = 2;
+    let d = 10;
+
+    // Multiplication test
+    let e = d * 0;
+    call printInt(d);
+
+    let e = d * a;
+    call printInt(d);
+
+    let e = d * 1;
+    call printInt(d);
+
+    let e = d * b;
+    call printInt(d);
+
+    let e = d * 2;
+    call printInt(d);
+
+    let e = d * c;
+    call printInt(d);
+
+    // Division test
+    let e = d / 1;
+    call printInt(d);
+
+    let e = d / b;
+    call printInt(d);
+
+    let e = 0 / d;
+    call printInt(d);
+
+    let e = a / d;
+    call printInt(d);
+
+    let e = d / d;
+    call printInt(d);
+
+    // Power test
+    let d = d ^ 1;
+    call printInt(d);
+
+    let d = 1 ^ d;
+    call printInt(d);
+}.
+
+// 15 numbers 0 3 10 10 10 10 10 10 10 10 10 10 10 10 1

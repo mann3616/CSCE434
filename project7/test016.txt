@@ -1,0 +1,16 @@
+// Josh Shin
+// DCE and Constant Propagation
+
+main 
+
+int a, b, c, d;
+
+{
+  let a = 1;
+  let b = 2;
+  let c = a + b;
+  let d = c + a;
+  let a = c;
+  let c = d + c;
+  call printInt(c);
+}.

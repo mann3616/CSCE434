@@ -1,0 +1,48 @@
+//Nathan Purwosumarto
+//Test case for ofe with two dead functions that call each other and a dead recursive function
+//Also tests arithmetic simplification in function body, function calls, and conditional statements
+
+main
+
+int myNum;
+
+function dead_a(int a) : int {
+    if (not a % 4 == 0) then
+        return call dead_b(a) + 1;
+    else
+        return a;
+    fi;
+};
+
+function dead_b(int b) : int {
+    return call dead_a(b ^ 2);
+};
+
+function dead_fibonacci(int a) : int {
+    if (a <= 0) then
+        return 0;
+    else
+        if (a <= 2) then
+            return 1;
+        else
+            return call dead_fibonacci(a - 1) + call dead_fibonacci(a - 2);
+        fi;
+    fi;
+};
+
+function increment(int a) : int {
+    return (a + 1) * 1;
+};
+
+{
+    let myNum = call readInt() * 1; // one phi instruction should be generated for myNum inside repeat block
+    call printInt((myNum + 0) * 1);
+    call printFloat(1.0 * 6.8);
+    if (myNum / 1 > 5) then
+        call printInt(call increment(1 * myNum / 1) * 1 + (0 - myNum));
+    fi;
+    let myNum = call readInt() / 1;
+    repeat
+        let myNum--;
+    until (myNum - 1 * 1 == 0);
+}.
